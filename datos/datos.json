@@ -1,0 +1,54 @@
+{
+    "usuarios": [
+        {
+            "id_usuario": 1,
+            "tipo": "alumno",
+            "identificador": "A2023001",
+            "nombre": "Carlos",
+            "ap_paterno": "Cruz",
+            "ap_materno": "Castillo"
+        },
+        {
+            "id_usuario": 2,
+            "tipo": "personal",
+            "identificador": "PLZ-8891",
+            "nombre": "Ana",
+            "ap_paterno": "Lopez",
+            "ap_materno": "Garcia"
+        },
+        {
+            "id_usuario": 3,
+            "tipo": "visitante",
+            "identificador": "VIS-001",
+            "nombre": "Juan",
+            "ap_paterno": "Perez",
+            "ap_materno": "Hernandez"
+        }
+    ],
+    "registros": [
+        {
+            "id_usuario": 1,
+            "identificador": "A2023001",
+            "nombre": "Carlos Cruz Castillo",
+            "fecha": "2026-04-20",
+            "hora_entrada": "18:20:48",
+            "hora_salida": "18:32:41"
+        },
+        {
+            "id_usuario": 2,
+            "identificador": "PLZ-8891",
+            "nombre": "Ana Lopez Garcia",
+            "fecha": "2026-04-20",
+            "hora_entrada": "18:20:56",
+            "hora_salida": null
+        },
+        {
+            "id_usuario": 3,
+            "identificador": "VIS-001",
+            "nombre": "Juan Perez Hernandez",
+            "fecha": "2026-04-20",
+            "hora_entrada": "18:21:06",
+            "hora_salida": null
+        }
+    ]
+}
