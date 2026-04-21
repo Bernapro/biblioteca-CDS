@@ -49,6 +49,14 @@
             "fecha": "2026-04-20",
             "hora_entrada": "18:21:06",
             "hora_salida": null
+        },
+        {
+            "id_usuario": 1,
+            "identificador": "A2023001",
+            "nombre": "Carlos Cruz Castillo",
+            "fecha": "2026-04-20",
+            "hora_entrada": "19:32:36",
+            "hora_salida": null
         }
     ]
 }
