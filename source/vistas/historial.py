@@ -7,7 +7,7 @@ def historial_view(page):
 
     # cargar datos desde JSON
     def cargar_datos():
-        with open("source/datos/datos.json", "r") as f:
+        with open("C:\\Users\\angel\\Downloads\\xd\\biblioteca-CDS\\source\\datos\\datos.json", "r") as f:
             return json.load(f)
 
     data = cargar_datos()

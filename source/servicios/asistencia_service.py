@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-RUTA = "source/datos/datos.json"
+RUTA = "C:\\Users\\angel\\Downloads\\xd\\biblioteca-CDS\\source\\datos\\datos.json"
 
 
 def cargar_datos():
