@@ -1,44 +1,24 @@
 import flet as ft
 import json
 from datetime import datetime
+from pathlib import Path
 
+DATA_PATH = Path(__file__).resolve().parent.parent / "datos" / "datos.json"
 
 def historial_view(page):
 
-    # cargar datos desde JSON
+    # ===== COLORES =====
+    AZUL = "#3B82F6"
+    FONDO = "#EAF1F7"
+
+    # ===== CARGAR DATOS =====
     def cargar_datos():
-        with open("C:\\Users\\angel\\Downloads\\xd\\biblioteca-CDS\\source\\datos\\datos.json", "r") as f:
+        with DATA_PATH.open("r", encoding="utf-8") as f:
             return json.load(f)
 
     data = cargar_datos()
 
-    mensaje = ft.Text("", size=14)
-
-    # CONTROLES DE FILTRO
-    input_busqueda = ft.TextField(
-        hint_text="Buscar por Identificador o nombre...",
-        expand=True,
-        color="black",
-        border_color="black"
-    )
-
-    input_fecha_inicio = ft.TextField(
-        hint_text="Fecha inicio (YYYY-MM-DD)",
-        width=200,
-        color="black",
-        border_color="black"
-    )
-
-    input_fecha_fin = ft.TextField(
-        hint_text="Fecha fin (YYYY-MM-DD)",
-        width=200,
-        color="black",
-        border_color="black"
-    )
-
-    tabla_container = ft.Column(scroll="auto", expand=True)
-
-    # FUNCION PARA VALIDAR FECHA
+    # ===== VALIDAR FECHA =====
     def fecha_valida(fecha):
         try:
             datetime.strptime(fecha, "%Y-%m-%d")
@@ -46,43 +26,75 @@ def historial_view(page):
         except:
             return False
 
-    # FUNCION PARA FILTRAR Y MOSTRAR RESULTADOS
-    def filtrar(e=None):
+    # ===== INPUTS =====
+    input_busqueda = ft.TextField(
+        hint_text="Buscar por identificador o nombre...",
+        prefix_icon=ft.Icons.SEARCH,
+        expand=True,
+        color="black",
+        text_style=ft.TextStyle(color="black"),
+    )
 
+    input_fecha_inicio = ft.TextField(
+        hint_text="Fecha inicio (YYYY-MM-DD)",
+        width=200,
+        color="black",
+        text_style=ft.TextStyle(color="black"),
+    )
+
+    input_fecha_fin = ft.TextField(
+        hint_text="Fecha fin (YYYY-MM-DD)",
+        width=200,
+        color="black",
+        text_style=ft.TextStyle(color="black"),
+    )
+
+    tabla_container = ft.Column(scroll="auto", expand=True)
+
+    # ===== FILTROS =====
+    filtros = ft.Container(
+        bgcolor="white",
+        border_radius=20,
+        padding=15,
+        shadow=ft.BoxShadow(blur_radius=15, color="black12"),
+        content=ft.Row(
+            [
+                input_busqueda,
+                input_fecha_inicio,
+                input_fecha_fin,
+                ft.ElevatedButton(
+                    "Buscar",
+                    on_click=lambda e: filtrar(),
+                    style=ft.ButtonStyle(
+                        bgcolor=AZUL,
+                        color="white"
+                    )
+                )
+            ],
+            spacing=15
+        )
+    )
+
+    # ===== FILTRAR Y MOSTRAR RESULTADOS =====
+    def filtrar(e=None):
         texto = input_busqueda.value.strip().lower() if input_busqueda.value else ""
         f_inicio = input_fecha_inicio.value.strip()
         f_fin = input_fecha_fin.value.strip()
 
-        # RESET VISUAL
-        input_fecha_inicio.border_color = "black"
-        input_fecha_fin.border_color = "black"
-        mensaje.value = ""
-
         # VALIDAR FECHAS
         if f_inicio and not fecha_valida(f_inicio):
-            mensaje.value = "⚠️ Fecha inicio inválida (YYYY-MM-DD)"
-            mensaje.color = "red"
-            input_fecha_inicio.border_color = "red"
-            page.update()
             return
 
         if f_fin and not fecha_valida(f_fin):
-            mensaje.value = "⚠️ Fecha fin inválida (YYYY-MM-DD)"
-            mensaje.color = "red"
-            input_fecha_fin.border_color = "red"
-            page.update()
             return
 
         registros_filtrados = []
 
         for r in data["registros"]:
-
-         
             if texto:
                 if texto not in r["identificador"].lower() and texto not in r["nombre"].lower():
                     continue
 
-           
             if f_inicio and r["fecha"] < f_inicio:
                 continue
 
@@ -107,24 +119,21 @@ def historial_view(page):
                 )
             )
 
-      
-        if not filas:
-            mensaje.value = "⚠️ No se encontraron registros"
-            mensaje.color = "orange"
-
         # CREAR TABLA CON LOS RESULTADOS
         tabla = ft.DataTable(
+            expand=True,
             columns=[
-                ft.DataColumn(ft.Text("Identificador", color="black")),
-                ft.DataColumn(ft.Text("Nombre completo", color="black")),
-                ft.DataColumn(ft.Text("Fecha", color="black")),
-                ft.DataColumn(ft.Text("Hora entrada", color="black")),
-                ft.DataColumn(ft.Text("Hora salida", color="black")),
+                ft.DataColumn(ft.Text("Identificador", color="black", weight="bold")),
+                ft.DataColumn(ft.Text("Nombre completo", color="black", weight="bold")),
+                ft.DataColumn(ft.Text("Fecha", color="black", weight="bold")),
+                ft.DataColumn(ft.Text("Hora entrada", color="black", weight="bold")),
+                ft.DataColumn(ft.Text("Hora salida", color="black", weight="bold")),
             ],
             rows=filas,
             column_spacing=40,
             heading_row_height=50,
             data_row_min_height=50,
+            heading_row_color="#F1F5F9",
         )
 
         tabla_container.controls.clear()
@@ -132,49 +141,43 @@ def historial_view(page):
 
         page.update()
 
-    # FILTRAR AL CAMBIAR TEXTO O FECHAS
-    input_busqueda.on_change = filtrar
-
-    # BUSCAR AL PRESIONAR BOTÓN
-    btn_buscar = ft.ElevatedButton(
-        "Buscar",
-        on_click=filtrar
-    )
-
     # FILTRAR AL INICIAR
     filtrar()
 
+    # FILTRAR AL CAMBIAR TEXTO
+    input_busqueda.on_change = filtrar
+
+    # ===== TABLA SCROLL =====
+    tabla_scroll = ft.Container(
+        expand=True,
+        bgcolor="white",
+        border_radius=20,
+        padding=15,
+        shadow=ft.BoxShadow(blur_radius=15, color="black12"),
+        content=ft.Column(
+            [tabla_container],
+            scroll=ft.ScrollMode.AUTO
+        )
+    )
+
+    # ===== MAIN =====
     return ft.Container(
         expand=True,
-        padding=25,
+        padding=30,
+        bgcolor=FONDO,
         content=ft.Column(
             [
                 ft.Text("Historial de visitas", size=32, weight="bold", color="black"),
-                ft.Text("Sistema de control digital - Registro de asistencias", color="black"),
-
-                #  FILTROS
-                ft.Row(
-                    [
-                        input_busqueda,
-                        input_fecha_inicio,
-                        input_fecha_fin,
-                        btn_buscar
-                    ],
-                    spacing=15
+                ft.Text(
+                    "Sistema de control digital - Registro de asistencias",
+                    color="black"
                 ),
 
-                mensaje, 
+                filtros,
 
-                # tabla
-                ft.Container(
-                    expand=True,
-                    padding=20,
-                    bgcolor="white",
-                    border_radius=25,
-                    shadow=ft.BoxShadow(blur_radius=20, color="black12"),
-                    content=tabla_container
-                )
+                tabla_scroll
             ],
-            spacing=20
+            spacing=20,
+            expand=True
         )
     )

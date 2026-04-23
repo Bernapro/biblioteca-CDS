@@ -1,17 +1,18 @@
 import json
 from datetime import datetime
+from pathlib import Path
 
-RUTA = "C:\\Users\\angel\\Downloads\\xd\\biblioteca-CDS\\source\\datos\\datos.json"
-
+BASE_DIR = Path(__file__).resolve().parent.parent
+RUTA = BASE_DIR / "datos" / "datos.json"
 
 def cargar_datos():
-    with open(RUTA, "r") as f:
+    with RUTA.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def guardar_datos(data):
-    with open(RUTA, "w") as f:
-        json.dump(data, f, indent=4)
+    with RUTA.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
 
 def registrar_qr(qr):
