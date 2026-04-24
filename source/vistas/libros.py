@@ -50,9 +50,9 @@ def libros_view(page):
                     width=250,
                     hint_text="Buscar por título o autor...",
                     prefix_icon=ft.Icons.SEARCH,
-                    color="black",                 # 🔥 texto negro
-                    cursor_color="black",          # 🔥 cursor negro
-                    hint_style=ft.TextStyle(color="#6B7280")  # 🔥 placeholder más visible
+                    color="black",               
+                    cursor_color="black",          
+                    hint_style=ft.TextStyle(color="#6B7280")  
                 ),
                 ft.Dropdown(
                     width=180,
@@ -99,6 +99,7 @@ def libros_view(page):
         expand=True,
         padding=30,
         bgcolor=FONDO,
+        border_radius=30,  
         content=ft.Column(
             [
                 ft.Text("Catálogo de libros", size=32, weight="bold", color="black"),

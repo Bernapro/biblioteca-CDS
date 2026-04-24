@@ -187,6 +187,7 @@ def reportes_view(page):
         expand=True,
         padding=30,
         bgcolor=FONDO,
+        border_radius=30,  
         content=ft.Column(
             [
                 ft.Text("Reportes", size=32, weight="bold", color="black"),

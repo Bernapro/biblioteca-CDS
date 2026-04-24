@@ -12,7 +12,8 @@ from vistas.incidencias import incidencias_view
 
 def main(page: ft.Page):
     page.title = "Sistema Biblioteca UNACH"
-    page.bgcolor = "#EAF1F7"
+
+    page.bgcolor = "#9ec9ff"
 
     # Tamaño ventana
     page.window_width = 1400
@@ -20,10 +21,10 @@ def main(page: ft.Page):
     page.window_min_width = 1200
     page.window_min_height = 800
 
-    # CONTENEDOR PRINCIPAL
+    # CONTENIDO DINÁMICO
     content_area = ft.Container(expand=True)
 
-    # LAYOUT GLOBAL (para actualizar sidebar)
+    # LAYOUT GLOBAL
     layout = ft.Row(expand=True)
 
     # ===== CAMBIO DE VISTA =====
@@ -31,33 +32,29 @@ def main(page: ft.Page):
         content_area.content = vista(page)
         page.update()
 
-    # ===== ESTADO DEL MENU =====
+    # ===== ESTADO =====
     selected = {"index": 0}
 
     # ===== SELECCIONAR =====
     def seleccionar(index):
         selected["index"] = index
 
-        if index == 0:
-            cambiar_vista(dashboard_view)
-        elif index == 1:
-            cambiar_vista(asistencia_view)
-        elif index == 2:
-            cambiar_vista(historial_view)
-        elif index == 3:
-            cambiar_vista(reportes_view)
-        elif index == 4:
-            cambiar_vista(libros_view)
-        elif index == 5:
-            cambiar_vista(prestamos_view)
-        elif index == 6:
-            cambiar_vista(incidencias_view)
+        vistas = [
+            dashboard_view,
+            asistencia_view,
+            historial_view,
+            reportes_view,
+            libros_view,
+            prestamos_view,
+            incidencias_view,
+        ]
 
-        # 🔥 reconstruir sidebar
+        cambiar_vista(vistas[index])
+
         layout.controls[0] = build_sidebar()
         page.update()
 
-    # ===== ITEM DEL MENU =====
+    # ===== ITEM =====
     def menu_item(icon, texto, index):
         activo = selected["index"] == index
 
@@ -70,13 +67,11 @@ def main(page: ft.Page):
                         bgcolor="#3B82F6" if activo else "transparent",
                         border_radius=5
                     ),
-
                     ft.Icon(
                         icon,
                         size=22,
                         color="#3B82F6" if activo else "#6B7280"
                     ),
-
                     ft.Text(
                         texto,
                         size=15,
@@ -84,9 +79,8 @@ def main(page: ft.Page):
                         color="#111827" if activo else "#374151"
                     ),
                 ],
-                alignment=ft.MainAxisAlignment.START,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=12
+                spacing=12,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
             padding=12,
             border_radius=12,
@@ -98,15 +92,18 @@ def main(page: ft.Page):
     def build_sidebar():
         return ft.Container(
             width=250,
-            margin=ft.margin.only(left=10, top=10, bottom=10),
+            margin=ft.margin.only(left=20, top=20, bottom=20),
             padding=20,
             border_radius=20,
             bgcolor="white",
-            shadow=ft.BoxShadow(blur_radius=20, color="black12"),
+            shadow=ft.BoxShadow(
+                blur_radius=25,
+                color="black12",
+                offset=ft.Offset(0, 10)
+            ),
             content=ft.Column(
                 [
                     ft.Text("UNACH", size=22, weight="bold", color="#111827"),
-
                     ft.Divider(height=20, color="transparent"),
 
                     menu_item(ft.Icons.HOME, "Principal", 0),
@@ -124,35 +121,27 @@ def main(page: ft.Page):
     # ===== VISTA INICIAL =====
     cambiar_vista(dashboard_view)
 
-    # ===== ARMAR LAYOUT =====
     layout.controls = [
         build_sidebar(),
         content_area
     ]
 
-    # ===== FONDO DEGRADADO =====
+   
     page.add(
-    ft.Container(
-        expand=True,
-        gradient=ft.LinearGradient(
-            colors=["#cfe8ff", "#9ec9ff"],
-            begin=ft.alignment.Alignment(-1, -1),
-            end=ft.alignment.Alignment(1, 1)
-        ),
-        content=ft.Container(
+        ft.Container(
             expand=True,
-            margin=20,
+            margin=20, 
             padding=20,
             border_radius=30,
-            bgcolor="#F8FAFC",  # 🔥 blanco semi transparente
+            bgcolor="#F1F5F9",  
             shadow=ft.BoxShadow(
                 blur_radius=30,
-                color="black26",
+                color="black12",
                 offset=ft.Offset(0, 10)
             ),
             content=layout
         )
     )
-)
+
 
 ft.run(main)

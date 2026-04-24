@@ -158,6 +158,7 @@ def incidencias_view(page):
         expand=True,
         padding=30,
         bgcolor=FONDO,
+        border_radius=30,  
         content=ft.Column(
             [
                 ft.Text("Incidencias", size=32, weight="bold", color="black"),

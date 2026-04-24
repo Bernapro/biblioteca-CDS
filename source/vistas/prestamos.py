@@ -127,7 +127,7 @@ def prestamos_view(page):
         shadow=ft.BoxShadow(blur_radius=15, color="black12"),
         content=ft.Column(
             [tabla],
-            scroll=ft.ScrollMode.AUTO  # 🔥 scroll SOLO en filas
+            scroll=ft.ScrollMode.AUTO  
         )
     )
 
@@ -136,6 +136,7 @@ def prestamos_view(page):
         expand=True,
         padding=30,
         bgcolor=FONDO,
+        border_radius=30,
         content=ft.Column(
             [
                 ft.Text("Préstamos de libros", size=32, weight="bold", color="black"),
