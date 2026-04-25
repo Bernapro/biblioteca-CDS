@@ -7,6 +7,7 @@ from Presentacion.PantallaHistorial import PantallaHistorial as ph
 from Presentacion.PantallaIncidencia import PantallaIncidencias as pin
 from Presentacion.PantallaLibros import PantallaLibros as pl
 from Presentacion.PantallaPrestamos import PantallaPrestamos as pp
+from Presentacion.PantallaReportes import PantallaReportes as pr
 
 class PantallaPrincipal(ft.Container):
     
@@ -30,11 +31,11 @@ class PantallaPrincipal(ft.Container):
         self.index_actual = 0
         
         # Instanciar el Sidebar
-        self.sidebar = ml(self)
+        self.sidebar = ml(on_menu_click=self.cambiar_vista, active_index=0)
         
         self.vistas = [
             dsh(self.main_page), pa(self.main_page), 
-            ph(self.main_page), ft.Text("Vista Reportes"), 
+            ph(self.main_page), pr(self.main_page), 
             pl(self.main_page), pp(self.main_page), 
             pin(self.main_page)
         ]
