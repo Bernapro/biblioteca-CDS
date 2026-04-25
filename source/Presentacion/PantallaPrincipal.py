@@ -3,6 +3,7 @@ import flet as ft
 from Presentacion.MenuLateral import MenuLateral as ml
 from Presentacion.PantallaAsistencia import PantallaAsistencia as pa
 from Presentacion.Dashboard import PantallaDashboard as dsh
+from Presentacion.Historial import PantallaHistorial as ph
 
 class PantallaPrincipal(ft.Container):
     
@@ -30,7 +31,7 @@ class PantallaPrincipal(ft.Container):
         
         self.vistas = [
             dsh(self.main_page), pa(self.main_page), 
-            ft.Text("Vista Historial"), ft.Text("Vista Reportes"), 
+            ph(self.main_page), ft.Text("Vista Reportes"), 
             ft.Text("Vista Libros"), ft.Text("Vista Préstamos"), 
             ft.Text("Vista Incidencias")
         ]
