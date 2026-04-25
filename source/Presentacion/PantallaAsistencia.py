@@ -71,13 +71,17 @@ class PantallaAsistencia(ft.Container):
         self.resultado.value = mensaje
         self.update() # Actualizamos la vista con el resultado final
 
+    def ir_a_registro(self, e):
+        # Evento click del botón (por ahora solo imprime en consola)
+        print("Navegando a PantallaRegistroUsuario...")
+
     # ===== CONSTRUCCIÓN DE LA INTERFAZ =====
     def build_ui(self):
         
         # --- Panel QR ---
         panel_qr = ft.Container(
             expand=1,  # CLAVE
-            height=320,
+            height=260,
             bgcolor="#F3F4F6",
             border_radius=20,
             padding=20,
@@ -96,7 +100,7 @@ class PantallaAsistencia(ft.Container):
         # --- Panel Input ---
         panel_input = ft.Container(
             expand=1,  # CLAVE
-            height=320,
+            height=260,
             bgcolor="#F3F4F6",
             border_radius=20,
             padding=20,
@@ -165,10 +169,21 @@ class PantallaAsistencia(ft.Container):
                                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                                 spacing=20
                             )
+                        ),
+
+                        # --- Botón Registrar Usuario ---
+                        ft.OutlinedButton(
+                            "Registrar nuevo usuario",
+                            icon=ft.Icons.PERSON_ADD,
+                            style=ft.ButtonStyle(
+                                color=self.AZUL,
+                                shape=ft.RoundedRectangleBorder(radius=8)
+                            ),
+                            on_click=self.ir_a_registro
                         )
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                    spacing=25
+                    spacing=15
                 )
             )
         )
