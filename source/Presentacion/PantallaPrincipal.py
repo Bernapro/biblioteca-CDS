@@ -2,6 +2,7 @@ import flet as ft
 
 from Presentacion.MenuLateral import MenuLateral as ml
 from Presentacion.PantallaAsistencia import PantallaAsistencia as pa
+from Presentacion.Dashboard import PantallaDashboard as dsh
 
 class PantallaPrincipal(ft.Container):
     
@@ -27,8 +28,14 @@ class PantallaPrincipal(ft.Container):
         # Instanciar el Sidebar
         self.sidebar = ml(self)
         
+        self.vistas = [
+            dsh(self.main_page), pa(self.main_page), 
+            ft.Text("Vista Historial"), ft.Text("Vista Reportes"), 
+            ft.Text("Vista Libros"), ft.Text("Vista Préstamos"), 
+            ft.Text("Vista Incidencias")
+        ]
         # Área de contenido
-        self.content_area = ft.Container(expand=True)
+        self.content_area = ft.Container(expand=True, content=self.vistas[0])
         
         # Instanciar las vistas (Deben ser clases que hereden de ft.Container)
         # self.vistas = [
@@ -38,12 +45,6 @@ class PantallaPrincipal(ft.Container):
         # ]
         
         # Para propósitos de prueba sin los imports reales:
-        self.vistas = [
-            ft.Text("Vista Principal"), pa(self.main_page), 
-            ft.Text("Vista Historial"), ft.Text("Vista Reportes"), 
-            ft.Text("Vista Libros"), ft.Text("Vista Préstamos"), 
-            ft.Text("Vista Incidencias")
-        ]
 
         # Layout general
         self.content = ft.Row(
