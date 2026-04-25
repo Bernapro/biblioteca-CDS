@@ -4,6 +4,7 @@ from Presentacion.MenuLateral import MenuLateral as ml
 from Presentacion.PantallaAsistencia import PantallaAsistencia as pa
 from Presentacion.Dashboard import PantallaDashboard as dsh
 from Presentacion.Historial import PantallaHistorial as ph
+from Presentacion.Incidencia import PantallaIncidencias as pin
 
 class PantallaPrincipal(ft.Container):
     
@@ -33,7 +34,7 @@ class PantallaPrincipal(ft.Container):
             dsh(self.main_page), pa(self.main_page), 
             ph(self.main_page), ft.Text("Vista Reportes"), 
             ft.Text("Vista Libros"), ft.Text("Vista Préstamos"), 
-            ft.Text("Vista Incidencias")
+            pin(self.main_page)
         ]
         # Área de contenido
         self.content_area = ft.Container(expand=True, content=self.vistas[0])
