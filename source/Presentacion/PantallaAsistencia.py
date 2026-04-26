@@ -3,6 +3,9 @@ import flet as ft
 # IMPORTACIÓN DE SERVICIO (Se mantiene igual)
 from Negocio.asistencia_service import registrar_qr
 
+# Importar la nueva pantalla de registro
+from Presentacion.PantallaRegistroUsuario import PantallaRegistroUsuario
+
 
 class PantallaAsistencia(ft.Container):
     def __init__(self, page: ft.Page):
@@ -72,8 +75,9 @@ class PantallaAsistencia(ft.Container):
         self.update() # Actualizamos la vista con el resultado final
 
     def ir_a_registro(self, e):
-        # Evento click del botón (por ahora solo imprime en consola)
-        print("Navegando a PantallaRegistroUsuario...")
+        # Cambiamos el contenido de esta pantalla a la de Registro
+        self.content = PantallaRegistroUsuario(self._page, vista_anterior=self)
+        self.update()
 
     # ===== CONSTRUCCIÓN DE LA INTERFAZ =====
     def build_ui(self):

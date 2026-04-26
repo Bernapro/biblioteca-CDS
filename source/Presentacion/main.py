@@ -16,4 +16,4 @@ def main(page: ft.Page):
     page.add(app)
 
 def run():
-    ft.run(main)
+    ft.app(target=main)
