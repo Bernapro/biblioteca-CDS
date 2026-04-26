@@ -1,4 +1,5 @@
 import flet as ft
+import datetime
 
 class PantallaRegistroUsuario(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
@@ -12,24 +13,42 @@ class PantallaRegistroUsuario(ft.Container):
         self.TEXT = "#111827"
         self.CARD = "white"
 
-        # ==========================================
-        # 1. CAMPOS GENERALES (Tabla: Usuario)
-        # ==========================================
+        
+        # CAMPOS GENERALES (Tabla: Usuario)
+        
         self.nombre = self._crear_input("Nombre(s)", width=350)
         
-        # Apellidos en una sola fila para ahorrar espacio
+        # Apellidos en una sola fila
         self.ap_paterno = self._crear_input("Apellido Paterno", width=165)
         self.ap_materno = self._crear_input("Apellido Materno", width=165)
         self.row_apellidos = ft.Row([self.ap_paterno, self.ap_materno], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
         
-        # Fecha e Identificador en una sola fila
-        self.fecha_nacimiento = self._crear_input("Fecha Nacimiento (YYYY-MM-DD)", width=165)
-        self.identificador = self._crear_input("Identificador Único", width=165)
+        # --- CONFIGURACIÓN DEL CALENDARIO ---
+        self.calendario = ft.DatePicker(
+            on_change=self.seleccionar_fecha,
+            first_date=datetime.datetime(1950, 1, 1),
+            last_date=datetime.datetime.now(), # No permitimos fechas en el futuro
+        )
+
+        # Fecha (Botón de calendario) e Identificador en una sola fila
+        self.fecha_nacimiento = ft.TextField(
+            label="Fecha Nacimiento",
+            width=165,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+            read_only=True, # Evita que el usuario escriba letras a lo loco
+            suffix_icon=ft.Icons.CALENDAR_MONTH, # Icono de calendario
+            on_click=lambda e: self._page.open(self.calendario) # Abre el calendario
+        )
+        
+        self.identificador = self._crear_input("Identificador Único ", width=165)
         self.row_datos_extra = ft.Row([self.fecha_nacimiento, self.identificador], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
 
-        # ==========================================
-        # 2. SELECTOR DE TIPO (El detonador)
-        # ==========================================
+        
+        # SELECTOR DE TIPO (El detonador)
+        
         self.tipo_usuario = ft.Dropdown(
             label="Tipo de Usuario",
             width=350,
@@ -43,24 +62,24 @@ class PantallaRegistroUsuario(ft.Container):
             on_change=self.cambiar_campos
         )
 
-        # ==========================================
-        # 3. CAMPOS ESPECÍFICOS (Subtablas)
-        # ==========================================
         
-        # Campos de Alumno
-        self.matricula = self._crear_input("Matrícula", width=165)
-        self.grupo = self._crear_input("Grado y Grupo", width=165)
-        self.row_alumno = ft.Row([self.matricula, self.grupo], spacing=20, alignment=ft.MainAxisAlignment.CENTER, visible=False)
+        # CAMPOS ESPECÍFICOS (Subtablas)
+        
+        
+        # Campos de Alumno (Semestre y Grupo abajo)
+        self.semestre = self._crear_input("Semestre", width=165)
+        self.grupo = self._crear_input("Grupo", width=165)
+        self.row_semestre_grupo = ft.Row([self.semestre, self.grupo], spacing=20, alignment=ft.MainAxisAlignment.CENTER, visible=False)
         
         # Campos de Personal
-        self.n_plaza = self._crear_input("Número de plaza (n_plaza)", width=350, visible=False)
+        self.n_plaza = self._crear_input("Número de plaza", width=350, visible=False)
         
-        # Campos de Visitante (La imagen se corta, asumo que no hay más campos)
+        # Campos de Visitante
         self.mensaje_visitante = ft.Text("✓ El visitante no requiere datos adicionales", color="green", visible=False)
 
         # Contenedor dinámico que refrescaremos
         self.contenedor_dinamico = ft.Column(
-            controls=[self.row_alumno, self.n_plaza, self.mensaje_visitante],
+            controls=[self.row_semestre_grupo, self.n_plaza, self.mensaje_visitante],
             spacing=15, 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
@@ -68,29 +87,36 @@ class PantallaRegistroUsuario(ft.Container):
         self.build_ui()
 
     # Herramienta para crear inputs rápido
-    def _crear_input(self, label, width, visible=True): # <--- Agregamos visible=True aquí
+    def _crear_input(self, label, width, visible=True):
         return ft.TextField(
             label=label, 
             width=width, 
-            visible=visible, # <--- Y se lo pasamos al TextField aquí
+            visible=visible,
             border_color="#D1D5DB", 
             border_radius=12,
             focused_border_color=self.AZUL, 
             text_style=ft.TextStyle(color=self.TEXT)
         )
 
+    # Atrapa la fecha seleccionada en el calendario y la escribe
+    def seleccionar_fecha(self, e):
+        if self.calendario.value:
+            # Convierte la fecha del calendario al formato YYYY-MM-DD
+            self.fecha_nacimiento.value = self.calendario.value.strftime("%Y-%m-%d")
+            self.fecha_nacimiento.update()
+
     # Lógica para mostrar campos según la selección
     def cambiar_campos(self, e):
         tipo = self.tipo_usuario.value
         
         # Apagamos todo primero
-        self.row_alumno.visible = False
+        self.row_semestre_grupo.visible = False
         self.n_plaza.visible = False
         self.mensaje_visitante.visible = False
         
         # Prendemos lo que toca
         if tipo == "Alumno":
-            self.row_alumno.visible = True
+            self.row_semestre_grupo.visible = True
         elif tipo == "Personal":
             self.n_plaza.visible = True
         elif tipo == "Visitante":
@@ -120,11 +146,10 @@ class PantallaRegistroUsuario(ft.Container):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
-        card = ft.Container(
+        inner_card = ft.Container(
             bgcolor=self.CARD,
             padding=40,
             border_radius=30,
-            width=700, # Un poco más ancho para que quepan bien las dos columnas
             shadow=ft.BoxShadow(blur_radius=20, color="black26"),
             content=ft.Column(
                 [
@@ -147,12 +172,24 @@ class PantallaRegistroUsuario(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )
         )
+        
+        card = ft.Container(
+            width=660,
+            border_radius=40,
+            padding=30,
+            gradient=ft.LinearGradient(
+                colors=["#cfe8ff", "#9ec9ff"],
+                begin=ft.Alignment(-1, -1),
+                end=ft.Alignment(1, 1)
+            ),
+            content=inner_card
+        )
         self.content = ft.Row([card], alignment=ft.MainAxisAlignment.CENTER)
 
 # Zona de pruebas solitaria
 if __name__ == "__main__":
     def main(page: ft.Page):
         page.bgcolor = "#F0F4F8"
-        page.scroll = "auto"
+        page.scroll = "auto" # Permite scroll si la pantalla es pequeña
         page.add(PantallaRegistroUsuario(page))
     ft.app(target=main)
