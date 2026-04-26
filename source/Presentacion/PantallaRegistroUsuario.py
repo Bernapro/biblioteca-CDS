@@ -30,22 +30,22 @@ class PantallaRegistroUsuario(ft.Container):
             first_date=datetime.datetime(1950, 1, 1),
             last_date=datetime.datetime.now(), 
         )
+        
+        # calendario al overlay de la página
+        self._page.overlay.append(self.calendario)
 
-        # Fecha (Botón de calendario) e Identificador en una sola fila
+        # Fecha Nacimiento (ancho completo)
         self.fecha_nacimiento = ft.TextField(
             label="Fecha Nacimiento",
-            width=165,
+            width=350,
             border_color="#D1D5DB",
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
             read_only=True, # Evita que el usuario escriba letras a lo loco
             suffix_icon=ft.Icons.CALENDAR_MONTH, # Icono de calendario
-            on_click=lambda e: setattr(self.calendario, "open", True) or self._page.update() # Abre el calendario al hacer click
+            on_click=self.abrir_calendario # Abre el calendario al hacer click
         )
-        
-        self.identificador = self._crear_input("Identificador Único ", width=165)
-        self.row_datos_extra = ft.Row([self.fecha_nacimiento, self.identificador], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
 
         
         # SELECTOR DE TIPO (El detonador)
@@ -68,8 +68,41 @@ class PantallaRegistroUsuario(ft.Container):
         
         
         # Campos de Alumno (Semestre y Grupo abajo)
-        self.semestre = self._crear_input("Semestre", width=165)
-        self.grupo = self._crear_input("Grupo", width=165)
+        self.matricula = self._crear_input("Matrícula", width=350, visible=False)
+        
+        self.licenciatura = ft.Dropdown(
+            label="Licenciatura",
+            width=350,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+            options=[
+                
+            ],
+            visible=False
+        )
+        
+        self.semestre = ft.Dropdown(
+            label="Semestre",
+            width=165,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+            options=[]
+        )
+        
+        self.grupo = ft.Dropdown(
+            label="Grupo",
+            width=165,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+            options=[]
+        )
+        
         self.row_semestre_grupo = ft.Row([self.semestre, self.grupo], spacing=20, alignment=ft.MainAxisAlignment.CENTER, visible=False)
         
         # Campos de Personal
@@ -80,7 +113,7 @@ class PantallaRegistroUsuario(ft.Container):
 
         # Contenedor dinámico que refrescaremos
         self.contenedor_dinamico = ft.Column(
-            controls=[self.row_semestre_grupo, self.n_plaza, self.mensaje_visitante],
+            controls=[self.matricula, self.licenciatura, self.row_semestre_grupo, self.n_plaza, self.mensaje_visitante],
             spacing=15, 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
@@ -106,17 +139,26 @@ class PantallaRegistroUsuario(ft.Container):
             self.fecha_nacimiento.value = self.calendario.value.strftime("%Y-%m-%d")
             self.fecha_nacimiento.update()
 
+    # Abre el calendario
+    def abrir_calendario(self, e):
+        self.calendario.open = True
+        self._page.update()
+
     # Lógica para mostrar campos según la selección
     def cambiar_campos(self, e):
         tipo = self.tipo_usuario.value
         
         # Apagamos todo primero
+        self.matricula.visible = False
+        self.licenciatura.visible = False
         self.row_semestre_grupo.visible = False
         self.n_plaza.visible = False
         self.mensaje_visitante.visible = False
         
         # Prendemos lo que toca
         if tipo == "Alumno":
+            self.matricula.visible = True
+            self.licenciatura.visible = True
             self.row_semestre_grupo.visible = True
         elif tipo == "Personal":
             self.n_plaza.visible = True
@@ -137,7 +179,7 @@ class PantallaRegistroUsuario(ft.Container):
             [
                 self.nombre,
                 self.row_apellidos,
-                self.row_datos_extra,
+                self.fecha_nacimiento,
                 ft.Divider(height=10, color="transparent"),
                 self.tipo_usuario,
                 self.contenedor_dinamico
@@ -184,12 +226,10 @@ class PantallaRegistroUsuario(ft.Container):
             ),
             content=inner_card
         )
-        self.content = ft.Row([card], alignment=ft.MainAxisAlignment.CENTER)
-
-# Zona de pruebas solitaria
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.bgcolor = "#F0F4F8"
-        page.scroll = "auto" # Permite scroll si la pantalla es pequeña
-        page.add(PantallaRegistroUsuario(page))
-    ft.app(target=main)
+        
+        self.content = ft.Column(
+            [card], 
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO
+        )
