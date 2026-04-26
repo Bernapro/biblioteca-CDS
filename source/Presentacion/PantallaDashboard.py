@@ -128,7 +128,7 @@ class PantallaDashboard(ft.Container):
             border_radius=15,
             gradient=ft.LinearGradient(colors=["#60A5FA", "#1D4ED8"]),
             content=ft.Text("Generar Reporte", size=16, color="white", weight="bold")
-        )
+            )
 
     # ===== CONSTRUCCIÓN DE LA INTERFAZ =====
     def build_ui(self):

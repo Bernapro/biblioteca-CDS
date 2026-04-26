@@ -23,11 +23,12 @@ class PantallaRegistroUsuario(ft.Container):
         self.ap_materno = self._crear_input("Apellido Materno", width=165)
         self.row_apellidos = ft.Row([self.ap_paterno, self.ap_materno], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
         
+        
         # --- CONFIGURACIÓN DEL CALENDARIO ---
         self.calendario = ft.DatePicker(
             on_change=self.seleccionar_fecha,
             first_date=datetime.datetime(1950, 1, 1),
-            last_date=datetime.datetime.now(), # No permitimos fechas en el futuro
+            last_date=datetime.datetime.now(), 
         )
 
         # Fecha (Botón de calendario) e Identificador en una sola fila
@@ -40,7 +41,7 @@ class PantallaRegistroUsuario(ft.Container):
             text_style=ft.TextStyle(color=self.TEXT),
             read_only=True, # Evita que el usuario escriba letras a lo loco
             suffix_icon=ft.Icons.CALENDAR_MONTH, # Icono de calendario
-            on_click=lambda e: self._page.open(self.calendario) # Abre el calendario
+            on_click=lambda e: setattr(self.calendario, "open", True) or self._page.update() # Abre el calendario al hacer click
         )
         
         self.identificador = self._crear_input("Identificador Único ", width=165)
@@ -59,7 +60,7 @@ class PantallaRegistroUsuario(ft.Container):
                 ft.dropdown.Option("Personal"),
                 ft.dropdown.Option("Visitante"),
             ],
-            on_change=self.cambiar_campos
+            on_select=self.cambiar_campos
         )
 
         
@@ -122,9 +123,8 @@ class PantallaRegistroUsuario(ft.Container):
         elif tipo == "Visitante":
             self.mensaje_visitante.visible = True
             
-        # Actualizamos la vista
-        self.contenedor_dinamico.update()
-        self._page.update()
+        # LA SOLUCIÓN: Actualizamos el propio componente principal
+        self.update()
 
     def cancelar(self, e):
         if self.vista_anterior:
