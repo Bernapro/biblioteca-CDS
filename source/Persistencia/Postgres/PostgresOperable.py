@@ -19,6 +19,6 @@ class PostgresOperable(ABC):
         pass
 
     @abstractmethod
-    def set_pkeys(self, args: dict):
+    def set_pkey(self, args: dict):
         pass
 
