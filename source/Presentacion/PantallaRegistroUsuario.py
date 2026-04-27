@@ -109,11 +109,20 @@ class PantallaRegistroUsuario(ft.Container):
         self.n_plaza = self._crear_input("Número de plaza", width=350, visible=False)
         
         # Campos de Visitante
-        self.mensaje_visitante = ft.Text("✓ El visitante no requiere datos adicionales", color="green", visible=False)
+        self.institucion = ft.Dropdown(
+            label="Institución",
+            width=350,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+            options=[],
+            visible=False
+        )
 
         # Contenedor dinámico que refrescaremos
         self.contenedor_dinamico = ft.Column(
-            controls=[self.matricula, self.licenciatura, self.row_semestre_grupo, self.n_plaza, self.mensaje_visitante],
+            controls=[self.matricula, self.licenciatura, self.row_semestre_grupo, self.n_plaza, self.institucion],
             spacing=15, 
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
@@ -153,7 +162,7 @@ class PantallaRegistroUsuario(ft.Container):
         self.licenciatura.visible = False
         self.row_semestre_grupo.visible = False
         self.n_plaza.visible = False
-        self.mensaje_visitante.visible = False
+        self.institucion.visible = False
         
         # Prendemos lo que toca
         if tipo == "Alumno":
@@ -163,7 +172,7 @@ class PantallaRegistroUsuario(ft.Container):
         elif tipo == "Personal":
             self.n_plaza.visible = True
         elif tipo == "Visitante":
-            self.mensaje_visitante.visible = True
+            self.institucion.visible = True
             
         # LA SOLUCIÓN: Actualizamos el propio componente principal
         self.update()
