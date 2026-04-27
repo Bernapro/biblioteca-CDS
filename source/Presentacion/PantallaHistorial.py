@@ -18,13 +18,13 @@ class PantallaHistorial(ft.Container):
         self.BORDE = "#E5E7EB"
 
         # ===== CONTROLES DINÁMICOS =====
-        self.txt_fecha_inicio = ft.Text("Fecha inicio", color="#6B7280")
-        self.txt_fecha_fin = ft.Text("Fecha fin", color="#6B7280")
+        self.txt_fecha_inicio = ft.Text("Fecha inicio", color="#111827")
+        self.txt_fecha_fin = ft.Text("Fecha fin", color="#111827")
 
         self.fecha_inicio_picker = ft.DatePicker(on_change=self.seleccionar_inicio)
         self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
 
-        # Los DatePickers necesitan agregarse al overlay de la página principal
+        # Los DatePickers necesitan aagregarse al overlay de la página principal
         self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
 
         self.input_busqueda = ft.TextField(
@@ -32,7 +32,10 @@ class PantallaHistorial(ft.Container):
             prefix_icon=ft.Icons.SEARCH,
             expand=True,
             border_radius=12,
-            on_change=self.filtrar
+            on_change=self.filtrar,
+
+            text_style=ft.TextStyle(color=self.TEXTO),
+            hint_style=ft.TextStyle(color="9CA3AF"),
         )
 
         self.tabla_container = ft.Column(scroll="auto", expand=True)
@@ -86,11 +89,6 @@ class PantallaHistorial(ft.Container):
 
     # ===== FILTROS Y TABLA =====
     def filtrar(self, e=None):
-        # 💡 AQUÍ VA TU LÓGICA FUTURA PARA BD:
-        # texto = self.input_busqueda.value
-        # f_inicio = self.txt_fecha_inicio.value ...
-        
-        # Como quitamos el JSON, inicializamos las filas vacías
         filas = [] 
 
         tabla = ft.DataTable(

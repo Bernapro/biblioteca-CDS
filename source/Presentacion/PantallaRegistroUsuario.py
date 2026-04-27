@@ -157,6 +157,8 @@ class PantallaRegistroUsuario(ft.Container):
     def cambiar_campos(self, e):
         tipo = self.tipo_usuario.value
         
+        self.tipo_usuario.text_style = ft.TextStyle(color=self.TEXT)
+        self.tipo_usuario.label_style = ft.TextStyle(color=self.TEXT)
         # Apagamos todo primero
         self.matricula.visible = False
         self.licenciatura.visible = False
@@ -206,7 +208,7 @@ class PantallaRegistroUsuario(ft.Container):
                 [
                     ft.Icon(ft.Icons.PERSON_ADD_ALT_1, size=50, color=self.AZUL),
                     ft.Text("Registro de usuario", size=26, weight="bold", color=self.TEXT),
-                    ft.Text("Completa los datos base y selecciona el rol", size=14, color="gray"),
+                    ft.Text("Completa los datos base y selecciona el rol", size=14, color="black"),
                     ft.Divider(height=15, color="transparent"),
                     
                     formulario,
