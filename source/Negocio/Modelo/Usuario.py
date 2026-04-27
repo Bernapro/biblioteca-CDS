@@ -11,8 +11,6 @@ class Usuario(PostgresOperable):
         self.__tipo_usuario = tipo_usuario
         self.__identificador = identificador
     
-    def __init__(self):
-        pass
 
     def get_table_name(self):
         return "usuario"
@@ -74,6 +72,3 @@ class Usuario(PostgresOperable):
         
     def setIdentificador(self, identificador):
         self.__identificador = identificador    
-
-
-    

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from Persistencia.Postgres.PostgresOperable import PostgresOperable
 
 
 class Repositorio(ABC):
@@ -11,7 +12,7 @@ class Repositorio(ABC):
         pass
 
     @abstractmethod
-    def guardar(self, entidad):
+    def guardar(self, objeto: PostgresOperable):
         pass
 
     @abstractmethod
