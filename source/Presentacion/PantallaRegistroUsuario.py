@@ -146,11 +146,11 @@ class PantallaRegistroUsuario(ft.Container):
     def on_carrera_change(self, e):
         self.actualizar_grupos()
 
-    # 🔥 CORREGIDO
+    #CORREGIDO
     def on_semestre_change(self, e):
         self.actualizar_grupos()
 
-    # 🔥 NUEVO CORE
+    # NUEVO CORE
     def actualizar_grupos(self):
         if not self.semestre.value or not self.licenciatura.value:
             return
