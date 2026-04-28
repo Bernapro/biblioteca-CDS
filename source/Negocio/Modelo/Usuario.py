@@ -2,24 +2,24 @@ from Persistencia.Postgres.PostgresOperable import PostgresOperable
 
 class Usuario(PostgresOperable):
 
-    def __init__(self, id_usuario, nombre, ap_paterno, ap_materno, fecha_nacimiento, tipo_usuario, identificador):
-        self.__id_usuario = id_usuario
-        self.__nombre = nombre
-        self.__ap_paterno = ap_paterno
-        self.__ap_materno = ap_materno
-        self.__fecha_nacimiento = fecha_nacimiento
-        self.__tipo_usuario = tipo_usuario
-        self.__identificador = identificador
+    def __init__(self, id_usuario= None, nombre= "", ap_paterno= "", ap_materno= "", fecha_nacimiento= None, tipo_usuario= "", identificador= ""):
+        self._id_usuario = id_usuario
+        self._nombre = nombre
+        self._ap_paterno = ap_paterno
+        self._ap_materno = ap_materno
+        self._fecha_nacimiento = fecha_nacimiento
+        self._tipo_usuario = tipo_usuario
+        self._identificador = identificador
     
 
     def get_table_name(self):
         return "usuario"
     
     def get_columns(self):
-        self.columns = {"id_usuario": self.__id_usuario, "nombre": self.__nombre,
-                        "ap_paterno": self.__ap_paterno, "ap_materno": self.__ap_materno,
-                        "fecha_nacimiento": self.__fecha_nacimiento, "tipo_usuario": self.__tipo_usuario,
-                        "identificador": self.__identificador}
+        self.columns = {"nombre": self._nombre,
+                        "ap_paterno": self._ap_paterno, "ap_materno": self._ap_materno,
+                        "fecha_nacimiento": self._fecha_nacimiento, "tipo_usuario": self._tipo_usuario,
+                        "identificador": self._identificador}
         return self.columns
     
     def get_pkey(self):
@@ -29,46 +29,55 @@ class Usuario(PostgresOperable):
         pass
 
     def set_columns(self, args):
-        pass
+        self._nombre = args["nombre"]
+        self._ap_paterno = args["ap_paterno"]
+        self._ap_materno = args["ap_materno"]
+        self._fecha_nacimiento = args["fecha_nacimiento"]
+        self._tipo_usuario = args["tipo_usuario"]
+        self._identificador = args["identificador"]
+
 
     def getId_usuario(self):
-        return self.__id_usuario
+        return self._id_usuario
     
     def getNombre(self):
-        return self.__nombre
+        return self._nombre
     
     def getAp_paterno(self):
-        return self.__ap_paterno
+        return self._ap_paterno
     
     def getAp_materno(self):
-        return self.__ap_materno
+        return self._ap_materno
     
     def getFecha_nacimiento(self):
-        return self.__fecha_nacimiento
+        return self._fecha_nacimiento
     
     def getTipo_usuario(self):
-        return self.__tipo_usuario
+        return self._tipo_usuario
     
     def getIdentificador(self):
-        return self.__identificador
+        return self._identificador
     
     def setId_usuario(self, id_usuario):
-        self.__id_usuario = id_usuario
+        self._id_usuario = id_usuario
         
     def setNombre(self, nombre):
-        self.__nombre = nombre
+        self._nombre = nombre
         
     def setAp_paterno(self, ap_paterno):
-        self.__ap_paterno = ap_paterno  
+        self._ap_paterno = ap_paterno  
     
     def setAp_materno(self, ap_materno):
-        self.__ap_materno = ap_materno
+        self._ap_materno = ap_materno
         
     def setFecha_nacimiento(self, fecha_nacimiento):
-        self.__fecha_nacimiento = fecha_nacimiento
+        self._fecha_nacimiento = fecha_nacimiento
         
     def setTipo_usuario(self, tipo_usuario):
-        self.__tipo_usuario = tipo_usuario
+        self._tipo_usuario = tipo_usuario
         
     def setIdentificador(self, identificador):
-        self.__identificador = identificador    
+        self._identificador = identificador    
+
+    def getPadre(self):
+        pass

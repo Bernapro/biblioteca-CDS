@@ -17,7 +17,8 @@ class RepositorioImpl(Repositorio):
     def guardar(self, objeto):
         if self.__crud:
             valores = tuple(objeto.get_columns().values())
-            self.__crud.create(objeto.get_table_name(), objeto.get_columns().keys(), valores)
+            return self.__crud.create(objeto.get_table_name(), objeto.get_columns().keys(), valores)
+        return None
         
 
     def eliminar(self, id):

@@ -15,4 +15,3 @@ class CRUDimp(CRUD):
     )
         with self.pool.get_connection() as conn:
             return conn.execute(query, valores).fetchone()
-        

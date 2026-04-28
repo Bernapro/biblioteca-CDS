@@ -1,5 +1,6 @@
 import flet as ft
 import datetime
+from Negocio.Modelo.Alumno import Alumno
 
 from Negocio.catalogos_service import (
     obtener_carreras,
@@ -9,15 +10,18 @@ from Negocio.catalogos_service import (
     obtener_grupos_filtrados  # 🔥 NUEVO
 )
 
-from Negocio.usuario_service import registrar_usuario
+from Negocio.Controlador.ControladorRegistroUsuario import ControladorPantallaRegistroUsuario
 
 
 class PantallaRegistroUsuario(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
         super().__init__()
+        self.control = ControladorPantallaRegistroUsuario(self)
         self._page = page
         self.vista_anterior = vista_anterior
         self.expand = True
+
+        self.usuarios= {"Alumno": Alumno(), "Personal": None, "Visitante": None}
         
         self.AZUL = "#3B82F6"
         self.TEXT = "#111827"
@@ -168,30 +172,6 @@ class PantallaRegistroUsuario(ft.Container):
         self.grupo.value = None
         self.update()
 
-    def guardar_usuario(self, e):
-
-        tipo = self.tipo_usuario.value
-
-        identificador = None
-
-        if tipo == "Alumno":
-            identificador = self.matricula.value
-        elif tipo == "Personal":
-            identificador = self.n_plaza.value
-        else:
-            identificador = f"VIS-{self.nombre.value}"
-
-        data = {
-            "nombre": self.nombre.value,
-            "ap_paterno": self.ap_paterno.value,
-            "ap_materno": self.ap_materno.value,
-            "fecha": self.fecha_nacimiento.value,
-            "tipo": tipo.upper(),
-            "identificador": identificador
-        }
-
-        print(registrar_usuario(data))
-
     def _crear_input(self, label, width, visible=True):
         return ft.TextField(
             label=label, 
@@ -200,7 +180,8 @@ class PantallaRegistroUsuario(ft.Container):
             border_color="#D1D5DB", 
             border_radius=12,
             focused_border_color=self.AZUL, 
-            text_style=ft.TextStyle(color=self.TEXT)
+            text_style=ft.TextStyle(color=self.TEXT),
+            value= ""
         )
 
     def seleccionar_fecha(self, e):
@@ -281,7 +262,8 @@ class PantallaRegistroUsuario(ft.Container):
                                 bgcolor=self.AZUL,
                                 color="white",
                                 width=150,
-                                on_click=self.guardar_usuario
+                                data="btn_guardar",
+                                on_click=self.control.guardar_usuario
                             )
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
