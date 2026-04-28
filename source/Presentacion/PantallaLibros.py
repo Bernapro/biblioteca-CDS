@@ -1,7 +1,10 @@
 import flet as ft
+from Persistencia.Postgres.Pool.DBPoolBiblioteca import db_biblioteca
 
 
 class PantallaLibros(ft.Container):
+
+    # Constructor
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
@@ -14,22 +17,11 @@ class PantallaLibros(ft.Container):
         self.bgcolor = self.FONDO
         self.border_radius = 30
 
-        # =============================
-        # BASE LOCAL TEMPORAL
-        # =============================
-        self.libros = [
-            {"titulo": "El principito", "autor": "Antoine", "estado": "Disponible"},
-            {"titulo": "1984", "autor": "Orwell", "estado": "Prestado"},
-            {"titulo": "Cien años", "autor": "García Márquez", "estado": "Disponible"},
-            {"titulo": "Don Quijote", "autor": "Cervantes", "estado": "Disponible"},
-        ]
+        self.autores_seleccionados = []
 
-        # =============================
-        # FILTROS
-        # =============================
         self.input_busqueda = ft.TextField(
             width=250,
-            hint_text="Buscar por título o autor...",
+            hint_text="Buscar por título o ISBN...",
             prefix_icon=ft.Icons.SEARCH,
             color="black",
             bgcolor="white",
@@ -64,9 +56,36 @@ class PantallaLibros(ft.Container):
         self.build_ui()
         self.refrescar_grid()
 
-    # =====================================================
-    # CAMPO ESTILIZADO
-    # =====================================================
+    #Obtener Libros desde BD
+    def obtener_libros_bd(self):
+        query = "SELECT isbn, titulo FROM libro ORDER BY titulo"
+
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()    
+
+    # Obtener autores desde BD
+    def obtener_autores_bd(self):
+        query = "SELECT id, pseudonimo FROM autor ORDER BY pseudonimo"
+
+        with db_biblioteca.get_connection() as conn:
+            autores = conn.execute(query).fetchall()
+
+        return autores
+    
+    # Obtener editoriales desde BD
+    def obtener_editoriales_bd(self):
+        query = "SELECT id, editorial FROM editorial ORDER BY editorial"
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()
+
+    # Obtener categorías desde BD
+    def obtener_categorias_bd(self):
+        query = "SELECT id, categoria FROM categoria ORDER BY categoria"
+
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()
+
+    # Campo de texto estilizado
     def campo_negro(self, label, hint=None):
         return ft.TextField(
             label=label,
@@ -80,10 +99,8 @@ class PantallaLibros(ft.Container):
             expand=True
         )
 
-    # =====================================================
-    # CARD LIBRO
-    # =====================================================
-    def build_card_libro(self, titulo, autor, estado):
+    # Card libro
+    def build_card_libro(self, titulo, isbn, estado):
         return ft.Container(
             width=200,
             height=220,
@@ -94,8 +111,21 @@ class PantallaLibros(ft.Container):
             content=ft.Column(
                 [
                     ft.Icon(ft.Icons.MENU_BOOK, size=60, color=self.AZUL),
-                    ft.Text(titulo, weight="bold", size=14, color="black"),
-                    ft.Text(autor, size=12, color="black"),
+
+                    ft.Text(
+                        titulo,
+                        weight="bold",
+                        size=14,
+                        color="black",
+                        text_align="center"
+                    ),
+
+                    ft.Text(
+                        f"ISBN: {isbn}",
+                        size=12,
+                        color="#374151"
+                    ),
+
                     ft.Container(
                         padding=5,
                         border_radius=10,
@@ -113,121 +143,229 @@ class PantallaLibros(ft.Container):
             )
         )
 
-    # =====================================================
-    # REFRESCAR GRID
-    # =====================================================
+    # Refrescar grid
     def refrescar_grid(self, libros_filtrados=None):
-        datos = libros_filtrados if libros_filtrados else self.libros
-
+        if libros_filtrados:
+            datos = libros_filtrados
+        else:
+            datos = self.obtener_libros_bd()
         self.grid_libros.controls = [
             self.build_card_libro(
                 libro["titulo"],
-                libro["autor"],
-                libro["estado"]
+                libro["isbn"],
+                "Disponible" #Aqui se podra obtener el estado real del libro desde la base de datos, pero por ahora está fijo.
             )
             for libro in datos
         ]
 
         self._page.update()
 
-    # =====================================================
-    # BUSCAR
-    # =====================================================
+    # Buscar libros
     def buscar_libros(self, e):
         texto = (self.input_busqueda.value or "").lower()
         estado = self.dropdown_disponibilidad.value or "Todos"
 
+        libros_bd = self.obtener_libros_bd()
         filtrados = []
 
-        for libro in self.libros:
+        for libro in libros_bd:
             coincide_texto = (
                 texto in libro["titulo"].lower()
-                or texto in libro["autor"].lower()
+                or texto in libro["isbn"].lower()
             )
 
-            coincide_estado = (
-                estado == "Todos"
-                or libro["estado"] == estado
-            )
+            # Como no hay estado en BD, todos son "Disponible"
+            coincide_estado = (estado == "Todos" or estado == "Disponible")
 
             if coincide_texto and coincide_estado:
                 filtrados.append(libro)
 
         self.refrescar_grid(filtrados)
 
-    # =====================================================
-    # CERRAR DIALOG
-    # =====================================================
+    # Modal seleccionar autores
+    def abrir_modal_autores(self, e, texto_autores):
+        autores_bd = self.obtener_autores_bd()
+
+        checks = []
+
+        for autor in autores_bd:
+            checks.append(
+                ft.Checkbox(
+                    label=autor["pseudonimo"],
+                    data=autor["id"],
+                    value=autor["id"] in self.autores_seleccionados
+                )
+            )
+
+        dialog_autores = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Seleccionar autores", color="black"),
+            content=ft.Container(
+                width=400,
+                height=400,
+                content=ft.Column(
+                    checks,
+                    scroll=ft.ScrollMode.AUTO
+                )
+            ),
+            actions=[
+                ft.TextButton(
+                    "Cancelar",
+                    on_click=lambda ev: self.cerrar_dialog(dialog_autores)
+                ),
+                ft.ElevatedButton(
+                    "Aceptar",
+                    on_click=lambda ev: self.confirmar_autores(
+                        dialog_autores,
+                        checks,
+                        texto_autores
+                    )
+                )
+            ]
+        )
+
+        self._page.overlay.append(dialog_autores)
+        dialog_autores.open = True
+        self._page.update()
+
+    # Confirmar autores
+    def confirmar_autores(self, dialog, checks, texto_autores):
+        self.autores_seleccionados = [
+            c.data for c in checks if c.value
+        ]
+
+        seleccionados_texto = [
+            c.label for c in checks if c.value
+        ]
+
+        texto_autores.value = (
+            ", ".join(seleccionados_texto)
+            if seleccionados_texto
+            else "Ningún autor seleccionado"
+        )
+
+        self._page.update()
+        dialog.open = False
+        self._page.update()
+
+    # Cerrar dialog
     def cerrar_dialog(self, dialog):
         dialog.open = False
         self._page.update()
 
-    # =====================================================
-    # MODAL
-    # =====================================================
+    # Modal agregar libro
     def abrir_modal_agregar(self, e):
+
+        self.autores_seleccionados = []
 
         isbn = self.campo_negro("ISBN")
         titulo = self.campo_negro("Título")
 
-        autor = ft.Dropdown(
-            label="Autor",
-            bgcolor="white",
-            color="black",
-            text_style=ft.TextStyle(color="black"),
-            label_style=ft.TextStyle(color="black"),
-            expand=True,
-            options=[
-                ft.dropdown.Option(text="Gabriel García Márquez"),
-                ft.dropdown.Option(text="George Orwell"),
-            ]
+        texto_autores = ft.Text(
+            "Ningún autor seleccionado",
+            color="#374151",
+            size=12,
+            overflow=ft.TextOverflow.ELLIPSIS
         )
 
+        caja_autores = ft.Container(
+            bgcolor="white",
+            border=ft.border.all(1, "#D1D5DB"),
+            border_radius=10,
+            padding=12,
+            height=50,
+            expand=True,
+            content=ft.Row(
+                [texto_autores],
+                spacing=0
+            )
+        )
+
+        boton_autores = ft.ElevatedButton(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.GROUP, size=18, color="white"),
+                    ft.Text("Seleccionar autores", color="white", size=13),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=8
+            ),
+            width=220,
+            height=50,
+            style=ft.ButtonStyle(
+                bgcolor="#6366F1",
+                shape=ft.RoundedRectangleBorder(radius=10)
+            ),
+            on_click=lambda ev: self.abrir_modal_autores(ev, texto_autores)
+        )
+
+        # Cargar datos desde BD
+        editoriales_bd = self.obtener_editoriales_bd()
+        categorias_bd = self.obtener_categorias_bd()
+
+        # Dropdown Editorial
         editorial = ft.Dropdown(
             label="Editorial",
+            options=[
+                ft.dropdown.Option(
+                    text=ed["editorial"],
+                    key=str(ed["id"])
+                ) for ed in editoriales_bd
+            ],
             bgcolor="white",
             color="black",
-            text_style=ft.TextStyle(color="black"),
-            label_style=ft.TextStyle(color="black"),
-            expand=True,
-            options=[
-                ft.dropdown.Option(text="Penguin"),
-                ft.dropdown.Option(text="Planeta"),
-            ]
+            expand=True
         )
 
+        # Dropdown Categoría
         categoria = ft.Dropdown(
             label="Categoría",
+            options=[
+                ft.dropdown.Option(
+                    text=cat["categoria"],
+                    key=str(cat["id"])
+                ) for cat in categorias_bd
+            ],
             bgcolor="white",
             color="black",
-            text_style=ft.TextStyle(color="black"),
-            label_style=ft.TextStyle(color="black"),
-            expand=True,
-            options=[
-                ft.dropdown.Option(text="Literatura"),
-                ft.dropdown.Option(text="Programación"),
-            ]
+            expand=True
         )
 
         edicion = self.campo_negro("Edición")
         fecha = self.campo_negro("Fecha impresión", "YYYY-MM-DD")
+        ejemplares = self.campo_negro("Cantidad de ejemplares")
         dewey = self.campo_negro("Dewey")
         cdu = self.campo_negro("CDU")
         lcc = self.campo_negro("LCC")
-        ejemplares = self.campo_negro("Cantidad de ejemplares")
 
         dialog = ft.AlertDialog(
             modal=True,
             bgcolor="#F8FAFC",
             title=ft.Text("Añadir libro", color="black"),
             content=ft.Container(
-                width=800,
+                width=900,
                 content=ft.Column(
                     [
                         ft.Row([isbn, titulo], spacing=15),
-                        ft.Row([autor, editorial], spacing=15),
-                        ft.Row([categoria, edicion], spacing=15),
-                        ft.Row([fecha, ejemplares], spacing=15),
+
+                        ft.Text(
+                            "Autores",
+                            size=13,
+                            weight="bold",
+                            color="#374151"
+                        ),
+
+                        ft.Row(
+                            [
+                                boton_autores,
+                                caja_autores
+                            ],
+                            spacing=15
+                        ),
+
+                        ft.Row([editorial, categoria], spacing=15),
+                        ft.Row([edicion, fecha], spacing=15),
+                        ft.Row([ejemplares], spacing=15),
                         ft.Row([dewey, cdu, lcc], spacing=15),
                     ],
                     spacing=15,
@@ -237,18 +375,13 @@ class PantallaLibros(ft.Container):
             actions=[
                 ft.TextButton(
                     "Cancelar",
-                    style=ft.ButtonStyle(color="#2563EB"),
                     on_click=lambda ev: self.cerrar_dialog(dialog)
                 ),
                 ft.ElevatedButton(
                     "Guardar",
                     bgcolor=self.AZUL,
                     color="white",
-                    on_click=lambda ev: self.guardar_libro(
-                        dialog,
-                        titulo,
-                        autor
-                    )
+                    on_click=lambda ev: self.guardar_libro(dialog, isbn, titulo, editorial, categoria)
                 )
             ]
         )
@@ -257,38 +390,100 @@ class PantallaLibros(ft.Container):
         dialog.open = True
         self._page.update()
 
-    # =====================================================
-    # GUARDAR
-    # =====================================================
-    def guardar_libro(self, dialog, titulo, autor):
+    # Guardar libro
+    def guardar_libro(self, dialog, isbn, titulo, editorial, categoria):
 
-        if not titulo.value or not autor.value:
+        # Validación básica
+        if not isbn.value or not titulo.value:
             self._page.snack_bar = ft.SnackBar(
-                ft.Text("Título y Autor son obligatorios")
+                ft.Text("ISBN y Título son obligatorios")
             )
             self._page.snack_bar.open = True
             self._page.update()
             return
 
-        self.libros.append({
-            "titulo": titulo.value,
-            "autor": autor.value,
-            "estado": "Disponible"
-        })
+        # Obtener IDs
+        editorial_id = editorial.value
+        categoria_id = categoria.value
 
-        dialog.open = False
+        # Validar dropdowns
+        if not editorial_id or not categoria_id:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Debes seleccionar editorial y categoría")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
 
-        self.refrescar_grid()
+        # VALIDACIÓN DE AUTORES
+        if not self.autores_seleccionados:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Debes seleccionar al menos un autor")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
 
-        self._page.snack_bar = ft.SnackBar(
-            ft.Text("Libro añadido correctamente")
-        )
-        self._page.snack_bar.open = True
-        self._page.update()
+        try:
+            with db_biblioteca.get_connection() as conn:
 
-    # =====================================================
-    # UI
-    # =====================================================
+                # 1. Insertar libro
+                conn.execute(
+                    """
+                    INSERT INTO libro (isbn, titulo, editorial)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (
+                        isbn.value,
+                        titulo.value,
+                        int(editorial_id)
+                    )
+                )
+
+                # 2. Insertar autores
+                for autor_id in self.autores_seleccionados:
+                    conn.execute(
+                        """
+                        INSERT INTO libro_autor (isbn, autor)
+                        VALUES (%s, %s)
+                        """,
+                        (
+                            isbn.value,
+                            autor_id
+                        )
+                    )
+
+                # 3. Insertar categoría 
+                conn.execute(
+                    """
+                    INSERT INTO libro_categoria (isbn, categoria)
+                    VALUES (%s, %s)
+                    """,
+                    (
+                        isbn.value,
+                        int(categoria_id)
+                    )
+                )
+
+            # Cerrar modal
+            dialog.open = False
+            self.refrescar_grid()
+
+            # Mensaje éxito
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Libro añadido correctamente")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+
+        except Exception as e:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text(f"Error al guardar: {str(e)}")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+
+    # UI principal
     def build_ui(self):
 
         filtros = ft.Container(
@@ -326,12 +521,20 @@ class PantallaLibros(ft.Container):
 
         self.content = ft.Column(
             [
-                ft.Text("Catálogo de libros", size=32, weight="bold", color="black"),
+                ft.Text(
+                    "Catálogo de libros",
+                    size=32,
+                    weight="bold",
+                    color="black"
+                ),
+
                 ft.Text(
                     "Busca y gestiona el catálogo de libros registrados en el sistema",
                     color="black"
                 ),
+
                 filtros,
+
                 self.grid_libros
             ],
             spacing=20,
