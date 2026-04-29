@@ -30,7 +30,7 @@ class Visitante(Usuario):
 
     def set_columns(self, args):
         super().set_columns(args)
-        self.__id_institucion = args["id_institucion"]
+        self.__id_institucion = args["institucion"]   # ✔
 
     def getInstitucion(self):
         return self.__id_institucion

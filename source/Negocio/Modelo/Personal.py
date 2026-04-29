@@ -30,7 +30,7 @@ class Personal(Usuario):
 
     def set_columns(self, args):
         super().set_columns(args)
-        self.__n_plaza = args["n_plaza"]
+        self.__n_plaza = args["identificador"]  
 
     def getPlaza(self):
         return self.__n_plaza

@@ -3,12 +3,13 @@ from Persistencia.Postgres.PostgresOperable import PostgresOperable
 
 
 class Repositorio(ABC):
+
     @abstractmethod
-    def obtener_todos(self):
+    def obtener_todos(self, nombre_tabla: str):
         pass
 
     @abstractmethod
-    def obtener_por_id(self, id):
+    def obtener_por_id(self, nombre_tabla: str, id):
         pass
 
     @abstractmethod
@@ -16,5 +17,5 @@ class Repositorio(ABC):
         pass
 
     @abstractmethod
-    def eliminar(self, id):
+    def eliminar(self, nombre_tabla: str, id):
         pass
