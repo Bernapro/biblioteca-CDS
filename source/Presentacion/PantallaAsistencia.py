@@ -31,12 +31,14 @@ class PantallaAsistencia(ft.Container):
         self.input_qr = ft.TextField(
             hint_text="Ingresa código QR",
             width=240,
+            autofocus=True,
             text_style=ft.TextStyle(color=self.TEXT),
             hint_style=ft.TextStyle(color=self.TEXT),
             border_radius=12,
             border_color="#D1D5DB",
             prefix_icon=ft.Icons.PERSON,
-            on_submit=self.procesar_qr
+            on_submit=self.procesar_qr,
+            on_change=lambda e: self.limpiar_mensaje()
         )
 
         self.build_ui()
@@ -45,27 +47,31 @@ class PantallaAsistencia(ft.Container):
     # MENSAJE DINÁMICO
     # =========================
     def mostrar_resultado(self, tipo, nombre):
+
         if tipo == "ENTRADA":
-            self.mensaje_final.value = f"✅ Entrada registrada\n{nombre}"
-            self.mensaje_final.color = "green"
+            self.mensaje_final.value = f"✅ Entrada registrada correctamente\n{nombre}"
+            self.mensaje_final.color = "#16A34A"  # verde elegante
 
         elif tipo == "SALIDA":
-            self.mensaje_final.value = f"👋 Salida registrada\n{nombre}"
-            self.mensaje_final.color = "blue"
+            self.mensaje_final.value = f"👋 Salida registrada correctamente\n{nombre}"
+            self.mensaje_final.color = "#2563EB"  # azul elegante
 
         elif tipo == "NO_ENCONTRADO":
             self.mensaje_final.value = "❌ Usuario no encontrado"
-            self.mensaje_final.color = "red"
+            self.mensaje_final.color = "#DC2626"
 
         elif tipo == "INVALIDO":
-            self.mensaje_final.value = "⚠️ Código inválido"
-            self.mensaje_final.color = "red"
+            self.mensaje_final.value = "⚠️ Ingresa un código válido"
+            self.mensaje_final.color = "#D97706"
 
         else:
             self.mensaje_final.value = ""
 
         self.update()
 
+    def limpiar_mensaje(self):
+        self.mensaje_final.value = ""
+        self.update()
     # =========================
     # PROCESAR QR (CORREGIDO)
     # =========================
@@ -149,7 +155,7 @@ class PantallaAsistencia(ft.Container):
                 shadow=ft.BoxShadow(blur_radius=25, color="black26"),
                 content=ft.Column(
                     [
-                        ft.Text("Registro de usuario", size=30, weight="bold", color=self.TEXT),
+                        ft.Text("Registro de asistencia", size=30, weight="bold", color=self.TEXT),
                         ft.Text("Escanea tu código QR para ingresar", size=16, color=self.TEXT_SECONDARY),
 
                         ft.Row(

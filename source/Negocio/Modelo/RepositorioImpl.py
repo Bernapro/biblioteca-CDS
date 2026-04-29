@@ -37,17 +37,56 @@ class RepositorioImpl(Repositorio):
         )
 
     def obtener_registro_abierto(self, id_usuario):
-        return self.__crud.read_one(
-            "registro",
-            {
-                "id_usuario": id_usuario,
-                "hora_salida": None
-            }
-        )
+        query = """
+            SELECT *
+            FROM registro
+            WHERE id_usuario = %s
+            AND fecha_salida IS NULL
+            ORDER BY fecha_entrada DESC
+            LIMIT 1
+        """
 
-    def registrar_salida(self, id_registro, hora_salida):
-        return self.__crud.update(
-            "registro",
-            {"hora_salida": hora_salida},
-            {"id_registro": id_registro}
-        )
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query, (id_usuario,)).fetchone()
+
+    def registrar_salida(self, id_registro):
+        query = """
+            UPDATE registro
+            SET fecha_salida = CURRENT_TIMESTAMP
+            WHERE id_registro = %s
+            RETURNING *
+        """
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query, (id_registro,)).fetchone()
+        
+    def cerrar_registros_abiertos(self):
+        query = """
+            UPDATE registro
+            SET fecha_salida = DATE_TRUNC('day', fecha_entrada) + INTERVAL '23:59:59'
+            WHERE fecha_salida IS NULL
+            AND fecha_entrada < CURRENT_DATE
+        """
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            conn.execute(query)
+            
+#historial
+    def obtener_historial(self):
+        query = """
+            SELECT 
+                u.identificador,
+                u.nombre,
+                u.ap_paterno,
+                u.ap_materno,
+                r.fecha_entrada,
+                r.fecha_salida
+            FROM registro r
+            INNER JOIN usuario u 
+                ON r.id_usuario = u.id_usuario
+            ORDER BY r.fecha_entrada DESC
+        """
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query).fetchall()
+        

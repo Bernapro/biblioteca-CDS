@@ -61,7 +61,13 @@ class PantallaPrincipal(ft.Container):
         )
 
     def cambiar_vista(self, index):
-        # 1. Cambiamos el contenido
-        self.content_area.content = self.vistas[index]
-        # 2. Actualizamos la pantalla (ahora es 100% seguro)
+        # 1. Cambiar vista
+        vista = self.vistas[index]
+        self.content_area.content = vista
+
+        # 2. 🔥 SI LA VISTA TIENE actualizar(), EJECÚTALO
+        if hasattr(vista, "actualizar"):
+            vista.actualizar()
+
+        # 3. Refrescar UI
         self.content_area.update()

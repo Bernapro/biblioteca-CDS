@@ -5,7 +5,7 @@ class PantallaHistorial(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
-
+        
         # Propiedades del Contenedor Principal (Fondo de la vista)
         self.expand = True
         self.padding = 30
@@ -87,9 +87,51 @@ class PantallaHistorial(ft.Container):
             )
         )
 
+
     # ===== FILTROS Y TABLA =====
     def filtrar(self, e=None):
-        filas = [] 
+        from Negocio.Controlador.ControladorHistorial import ControladorHistorial
+
+        control = ControladorHistorial()
+        datos = control.obtener_historial()
+
+        texto = self.input_busqueda.value.lower() if self.input_busqueda.value else ""
+
+        fecha_inicio = self.txt_fecha_inicio.value
+        fecha_fin = self.txt_fecha_fin.value
+
+        filas = []
+
+        for d in datos:
+
+            # 🔍 FILTRO TEXTO
+            if texto:
+                if texto not in d["identificador"].lower() and texto not in d["nombre"].lower():
+                    continue
+
+            #  FILTRO FECHAS
+            if self.fecha_valida(fecha_inicio) and d["fecha"] < fecha_inicio:
+                continue
+
+            if self.fecha_valida(fecha_fin) and d["fecha"] > fecha_fin:
+                continue
+
+            # FORMATO HORAS
+            
+            entrada = d["entrada"] if d["entrada"] else "-"
+            salida = d["salida"] if d["salida"] != "-" else "-"
+
+            filas.append(
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(d["identificador"], color=self.TEXTO)),
+                        ft.DataCell(ft.Text(d["nombre"], color=self.TEXTO)),
+                        ft.DataCell(ft.Text(d["fecha"], color=self.TEXTO)),
+                        ft.DataCell(ft.Text(entrada, color=self.TEXTO)),
+                        ft.DataCell(ft.Text(salida, color=self.TEXTO)),
+                    ]
+                )
+            )
 
         tabla = ft.DataTable(
             columns=[
@@ -99,22 +141,26 @@ class PantallaHistorial(ft.Container):
                 ft.DataColumn(ft.Text("Hora entrada", weight="bold", color=self.TEXTO)),
                 ft.DataColumn(ft.Text("Hora salida", weight="bold", color=self.TEXTO)),
             ],
-            rows=filas, # Se llena con la lista vacía o con los datos futuros
+            rows=filas,
             heading_row_color="#F3F4F6",
+            data_text_style=ft.TextStyle(color="#000000"),
         )
 
         self.tabla_container.controls.clear()
         self.tabla_container.controls.append(tabla)
-        
-        # Solo actualizar si el contenedor ya está en pantalla
+
         if e is not None:
             self.update()
+
     def limpiar(self, e):
         self.input_busqueda.value = ""
         self.txt_fecha_inicio.value = "Fecha inicio"
         self.txt_fecha_fin.value = "Fecha fin"
         self.filtrar()
         self.update()
+
+    def actualizar(self):
+        self.filtrar()
 
     # ===== CONSTRUCCIÓN DE LA INTERFAZ =====
     def build_ui(self):
@@ -155,7 +201,7 @@ class PantallaHistorial(ft.Container):
             [
                 ft.Column(
                     [
-                        ft.Text("Historial de visitas", size=32, weight="bold", color=self.TEXTO),
+                        ft.Text("Historial de asistencias", size=32, weight="bold", color=self.TEXTO),
                         ft.Text("Sistema de control digital - Registro de asistencias", color=self.TEXTO),
                     ],
                     spacing=5

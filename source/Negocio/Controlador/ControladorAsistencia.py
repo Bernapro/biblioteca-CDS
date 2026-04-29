@@ -1,4 +1,3 @@
-from datetime import datetime
 
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
@@ -13,16 +12,13 @@ class ControladorAsistencia:
         self.__repo = RepositorioImpl(CRUDimp(db))
 
     def procesar_qr(self, e):
-        id_control = e.control.data
 
-        if id_control == "btn_qr":
+        if e.control.data == "btn_qr":
 
             qr = self.__pantalla.input_qr.value.strip()
 
-
-            if not qr or len(qr) < 3:
+            if not qr:
                 return {"estado": "INVALIDO", "nombre": ""}
-
 
             usuario = self.__repo.buscar_usuario_por_identificador(qr)
 
@@ -32,36 +28,20 @@ class ControladorAsistencia:
             id_usuario = usuario["id_usuario"]
 
             nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
+# cerrar registros viejos primero
+            self.__repo.cerrar_registros_abiertos()
+            registro_abierto = self.__repo.obtener_registro_abierto(id_usuario)
 
-
-            registros = self.__repo.obtener_todos("registro")
-
-            registro_abierto = None
-
-            for r in reversed(registros):
-                if r["id_usuario"] == id_usuario and r["hora_salida"] is None:
-                    registro_abierto = r
-                    break
-
-            # =========================
-            # DECISIÓN
-            # =========================
             if not registro_abierto:
                 nuevo = Registro(id_usuario=id_usuario)
                 self.__repo.guardar(nuevo)
-
                 estado = "ENTRADA"
 
             else:
-                hora_salida = datetime.now().time()
-
                 self.__repo.registrar_salida(
-                    registro_abierto["id_registro"],
-                    hora_salida
+                    registro_abierto["id_registro"]
                 )
-
                 estado = "SALIDA"
-
 
             self.__pantalla.input_qr.value = ""
             self.__pantalla.update()
