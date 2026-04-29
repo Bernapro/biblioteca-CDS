@@ -1,6 +1,8 @@
-import flet as ft
-from Persistencia.Postgres.Pool.DBPoolBiblioteca import db_biblioteca
+from urllib import response
 
+import flet as ft
+from Infraestructura.API.libros_api import crear_libro, obtener_libros
+from Persistencia.Postgres.Pool.DBPoolBiblioteca import db_biblioteca #Temporal
 
 class PantallaLibros(ft.Container):
 
@@ -56,35 +58,6 @@ class PantallaLibros(ft.Container):
         self.build_ui()
         self.refrescar_grid()
 
-    #Obtener Libros desde BD
-    def obtener_libros_bd(self):
-        query = "SELECT isbn, titulo FROM libro ORDER BY titulo"
-
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()    
-
-    # Obtener autores desde BD
-    def obtener_autores_bd(self):
-        query = "SELECT id, pseudonimo FROM autor ORDER BY pseudonimo"
-
-        with db_biblioteca.get_connection() as conn:
-            autores = conn.execute(query).fetchall()
-
-        return autores
-    
-    # Obtener editoriales desde BD
-    def obtener_editoriales_bd(self):
-        query = "SELECT id, editorial FROM editorial ORDER BY editorial"
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()
-
-    # Obtener categorías desde BD
-    def obtener_categorias_bd(self):
-        query = "SELECT id, categoria FROM categoria ORDER BY categoria"
-
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()
-
     # Campo de texto estilizado
     def campo_negro(self, label, hint=None):
         return ft.TextField(
@@ -98,6 +71,25 @@ class PantallaLibros(ft.Container):
             label_style=ft.TextStyle(color="black"),
             expand=True
         )
+    
+    def obtener_autores_bd(self):
+        query = "SELECT id, pseudonimo FROM autor ORDER BY pseudonimo"
+
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()
+        
+    def obtener_editoriales_bd(self):
+        query = "SELECT id, editorial FROM editorial ORDER BY editorial"
+
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()
+    
+    def obtener_categorias_bd(self):
+        query = "SELECT id, categoria FROM categoria ORDER BY categoria"
+
+        with db_biblioteca.get_connection() as conn:
+            return conn.execute(query).fetchall()
+
 
     # Card libro
     def build_card_libro(self, titulo, isbn, estado):
@@ -145,27 +137,52 @@ class PantallaLibros(ft.Container):
 
     # Refrescar grid
     def refrescar_grid(self, libros_filtrados=None):
-        if libros_filtrados:
-            datos = libros_filtrados
-        else:
-            datos = self.obtener_libros_bd()
-        self.grid_libros.controls = [
-            self.build_card_libro(
-                libro["titulo"],
-                libro["isbn"],
-                "Disponible" #Aqui se podra obtener el estado real del libro desde la base de datos, pero por ahora está fijo.
-            )
-            for libro in datos
-        ]
+        try:
+            if libros_filtrados:
+                datos = libros_filtrados
+            else:
+                response = obtener_libros()
 
-        self._page.update()
+                if response.status_code != 200:
+                    self._page.snack_bar = ft.SnackBar(
+                        ft.Text("Error al cargar libros")
+                    )
+                    self._page.snack_bar.open = True
+                    self._page.update()
+                    return
+
+                datos = response.json()["contenido"]
+
+            self.grid_libros.controls = [
+                self.build_card_libro(
+                    libro["titulo"],
+                    libro["isbn"],
+                    "Disponible"
+                )
+                for libro in datos
+            ]
+
+            self._page.update()
+
+        except Exception as e:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text(f"Error: {str(e)}")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
 
     # Buscar libros
     def buscar_libros(self, e):
         texto = (self.input_busqueda.value or "").lower()
         estado = self.dropdown_disponibilidad.value or "Todos"
 
-        libros_bd = self.obtener_libros_bd()
+        response = obtener_libros()
+
+        if response.status_code != 200:
+            return
+
+        libros_bd = response.json()["contenido"]
+
         filtrados = []
 
         for libro in libros_bd:
@@ -174,8 +191,9 @@ class PantallaLibros(ft.Container):
                 or texto in libro["isbn"].lower()
             )
 
-            # Como no hay estado en BD, todos son "Disponible"
-            coincide_estado = (estado == "Todos" or estado == "Disponible")
+            coincide_estado = (
+                estado == "Todos" or estado == "Disponible"
+            )
 
             if coincide_texto and coincide_estado:
                 filtrados.append(libro)
@@ -299,7 +317,7 @@ class PantallaLibros(ft.Container):
             on_click=lambda ev: self.abrir_modal_autores(ev, texto_autores)
         )
 
-        # Cargar datos desde BD
+        # Obtener datos desde BD
         editoriales_bd = self.obtener_editoriales_bd()
         categorias_bd = self.obtener_categorias_bd()
 
@@ -393,7 +411,6 @@ class PantallaLibros(ft.Container):
     # Guardar libro
     def guardar_libro(self, dialog, isbn, titulo, editorial, categoria):
 
-        # Validación básica
         if not isbn.value or not titulo.value:
             self._page.snack_bar = ft.SnackBar(
                 ft.Text("ISBN y Título son obligatorios")
@@ -402,12 +419,7 @@ class PantallaLibros(ft.Container):
             self._page.update()
             return
 
-        # Obtener IDs
-        editorial_id = editorial.value
-        categoria_id = categoria.value
-
-        # Validar dropdowns
-        if not editorial_id or not categoria_id:
+        if not editorial.value or not categoria.value:
             self._page.snack_bar = ft.SnackBar(
                 ft.Text("Debes seleccionar editorial y categoría")
             )
@@ -415,7 +427,6 @@ class PantallaLibros(ft.Container):
             self._page.update()
             return
 
-        # VALIDACIÓN DE AUTORES
         if not self.autores_seleccionados:
             self._page.snack_bar = ft.SnackBar(
                 ft.Text("Debes seleccionar al menos un autor")
@@ -425,60 +436,49 @@ class PantallaLibros(ft.Container):
             return
 
         try:
-            with db_biblioteca.get_connection() as conn:
+            data = {
+                "isbn": isbn.value,
+                "titulo": titulo.value,
 
-                # 1. Insertar libro
-                conn.execute(
-                    """
-                    INSERT INTO libro (isbn, titulo, editorial)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (
-                        isbn.value,
-                        titulo.value,
-                        int(editorial_id)
-                    )
+                "editorialId": int(editorial.value),
+
+                "edicion": "",
+                "fechaPublicacion": None,
+                "dewey": "",
+                "clasificacionDelCongreso": "",
+                "clasificacionDecimalUniversal": "",
+
+                "autoresIds": self.autores_seleccionados,
+                "categoriasIds": [int(categoria.value)]
+            }
+
+            print("DATA ENVIADA:", data)
+
+            response = crear_libro(data)
+
+            print("STATUS:", response.status_code)
+            print("RESPUESTA:", response.text)
+
+            if response.status_code == 201:
+                dialog.open = False
+
+                self.refrescar_grid()
+
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("Libro añadido correctamente")
                 )
 
-                # 2. Insertar autores
-                for autor_id in self.autores_seleccionados:
-                    conn.execute(
-                        """
-                        INSERT INTO libro_autor (isbn, autor)
-                        VALUES (%s, %s)
-                        """,
-                        (
-                            isbn.value,
-                            autor_id
-                        )
-                    )
-
-                # 3. Insertar categoría 
-                conn.execute(
-                    """
-                    INSERT INTO libro_categoria (isbn, categoria)
-                    VALUES (%s, %s)
-                    """,
-                    (
-                        isbn.value,
-                        int(categoria_id)
-                    )
+            else:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text(f"Error API: {response.text}")
                 )
 
-            # Cerrar modal
-            dialog.open = False
-            self.refrescar_grid()
-
-            # Mensaje éxito
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text("Libro añadido correctamente")
-            )
             self._page.snack_bar.open = True
             self._page.update()
 
         except Exception as e:
             self._page.snack_bar = ft.SnackBar(
-                ft.Text(f"Error al guardar: {str(e)}")
+                ft.Text(f"Error conexión API: {str(e)}")
             )
             self._page.snack_bar.open = True
             self._page.update()
