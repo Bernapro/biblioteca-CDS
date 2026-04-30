@@ -34,8 +34,7 @@ class Usuario(PostgresOperable):
         self._ap_materno = args["ap_materno"]
         self._fecha_nacimiento = args["fecha_nacimiento"]
         self._tipo_usuario = args["tipo_usuario"]
-        self._identificador = args["identificador"]
-
+        self._identificador = args.get("identificador")
 
     def getId_usuario(self):
         return self._id_usuario

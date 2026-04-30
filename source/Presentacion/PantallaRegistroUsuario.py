@@ -133,8 +133,19 @@ class PantallaRegistroUsuario(ft.Container):
             visible=False
         )
 
+        self.identificador_preview = ft.TextField(
+            label="Identificador",
+            width=350,
+            read_only=True,
+            visible=False,
+            border_color="#D1D5DB",
+            border_radius=12,
+            focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
+        )
+
         self.contenedor_dinamico = ft.Column(
-            controls=[self.matricula, self.licenciatura, self.row_semestre_grupo, self.n_plaza, self.institucion],
+            controls=[self.matricula, self.licenciatura, self.row_semestre_grupo, self.n_plaza, self.institucion, self.identificador_preview],
             spacing=15,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
@@ -209,12 +220,22 @@ class PantallaRegistroUsuario(ft.Container):
         try:
             self.preparar_identificador()
 
-            self.control.guardar_usuario(e)
+            resultado = self.control.guardar_usuario(e)
 
-            # ✅ ÉXITO
-            self.mostrar_mensaje("Usuario registrado correctamente", "green")
+            if resultado:
+                identificador = resultado["identificador"]
 
-            self.limpiar_campos()
+                if identificador:
+                    self.identificador_preview.value = identificador   # 🔥 CLAVE
+                    self.identificador_preview.visible = True
+                    mensaje = f"Usuario registrado: {identificador}"
+                else:
+                    mensaje = "Usuario registrado correctamente"
+
+                self.mostrar_mensaje(mensaje, "green")
+                self.update()
+
+                self.limpiar_campos()
 
         except Exception as ex:
 
@@ -267,6 +288,9 @@ class PantallaRegistroUsuario(ft.Container):
         elif tipo == "Visitante":
             self.institucion.visible = True
 
+            siguiente = self.control.obtener_siguiente_vis()
+            self.identificador_preview.value = siguiente
+            self.identificador_preview.visible = True
         self.update()
 
     def cancelar(self, e):
@@ -376,7 +400,7 @@ class PantallaRegistroUsuario(ft.Container):
                                 color="white",
                                 width=150,
                                 data="btn_guardar",
-                                on_click=self.guardar_con_preparacion  # 🔥 CAMBIO CLAVE
+                                on_click=self.guardar_con_preparacion 
                             )
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,

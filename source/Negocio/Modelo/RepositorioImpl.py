@@ -29,6 +29,13 @@ class RepositorioImpl(Repositorio):
             {f"id_{nombre_tabla}": id}
         )
     
+    def obtener_siguiente_vis(self):
+        query = "SELECT last_value + 1 AS siguiente FROM seq_visitante"
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            result = conn.execute(query).fetchone()
+            return f"VIS-{result['siguiente']}"
+
     #asistencia
     def buscar_usuario_por_identificador(self, identificador):
         return self.__crud.read_one(
