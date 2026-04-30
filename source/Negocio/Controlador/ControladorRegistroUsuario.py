@@ -16,24 +16,51 @@ class ControladorPantallaRegistroUsuario():
         id = e.control.data
         if id == "btn_guardar":
             instancia = self.__pantalla.usuarios[self.__pantalla.tipo_usuario.value]
+
             self.llenar_usuario(instancia)
+
             usr = instancia.getPadre()
-            print(usr.get_columns())
+
             usrPersistente = self.__repo.guardar(usr)
-            print(usrPersistente)
+
             if usrPersistente:
                 instancia.setId_usuario(usrPersistente["id_usuario"])
+
                 objPersistente = self.__repo.guardar(instancia)
-                print(objPersistente)
 
+                # 🔥 NUEVO: regresar identificador
+                return {
+                    "id_usuario": usrPersistente["id_usuario"],
+                    "identificador": usrPersistente["identificador"]
+                }
 
+        return None
 
     def data_usuario(self):
-        return dict({"nombre": self.__pantalla.nombre.value, "ap_paterno": self.__pantalla.ap_paterno.value,
-                      "ap_materno": self.__pantalla.ap_materno.value, "fecha_nacimiento": self.__pantalla.fecha_nacimiento.value, 
-                      "tipo_usuario": self.__pantalla.tipo_usuario.value.upper(), "identificador": self.__pantalla.matricula.value, "semestre": self.__pantalla.semestre.value,
-                      "grupo": self.__pantalla.grupo.value, "institucion": self.__pantalla.institucion.value, "licenciatura": self.__pantalla.licenciatura.value})
+        tipo = self.__pantalla.tipo_usuario.value.upper()
+
+        identificador = self.__pantalla.matricula.value
+
+        if tipo == "VISITANTE":
+            identificador = None
+
+        return dict({
+            "nombre": self.__pantalla.nombre.value,
+            "ap_paterno": self.__pantalla.ap_paterno.value,
+            "ap_materno": self.__pantalla.ap_materno.value,
+            "fecha_nacimiento": self.__pantalla.fecha_nacimiento.value,
+            "tipo_usuario": tipo,
+            "identificador": identificador,
+            "semestre": self.__pantalla.semestre.value,
+            "grupo": self.__pantalla.grupo.value,
+            "institucion": self.__pantalla.institucion.value,
+            "licenciatura": self.__pantalla.licenciatura.value
+        })
     
+
+    def obtener_siguiente_vis(self):
+        return self.__repo.obtener_siguiente_vis()
+
     def llenar_usuario(self, instancia:PostgresOperable):
             instancia = self.__pantalla.usuarios[self.__pantalla.tipo_usuario.value]
             instancia.set_columns(self.data_usuario())
