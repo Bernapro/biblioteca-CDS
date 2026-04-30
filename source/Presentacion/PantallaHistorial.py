@@ -1,5 +1,6 @@
 import flet as ft
 from datetime import datetime
+from Negocio.Controlador.ControladorHistorial import ControladorHistorial
 
 class PantallaHistorial(ft.Container):
     def __init__(self, page: ft.Page):
@@ -17,6 +18,8 @@ class PantallaHistorial(ft.Container):
         self.TEXTO_TITULO = "#111827"
         self.TEXTO_TABLA = "#000000" 
         self.BORDE = "#D1D5DB"
+        self.TEXTO_HEADER = "#111827"
+        self.FONDO_HEADER = "#F3F4F6"  
 
         # ===== CONTROLES DINÁMICOS =====
         self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXTO_TITULO)
@@ -25,6 +28,17 @@ class PantallaHistorial(ft.Container):
         self.fecha_inicio_picker = ft.DatePicker(on_change=self.seleccionar_inicio)
         self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
         self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
+
+        self.btn_limpiar = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.CLEAR, color="white", size=18),
+                ft.Text("Limpiar filtros", color="white", size=12, weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
+            bgcolor="#EF4444",  # rojo suave moderno
+            padding=ft.padding.symmetric(horizontal=12, vertical=6),
+            border_radius=10,
+            on_click=self.limpiar_filtros
+        )
 
         self.input_busqueda = ft.TextField(
             label="Buscar por identificador o nombre...",
@@ -54,9 +68,9 @@ class PantallaHistorial(ft.Container):
                 ft.dropdown.Option("Personal"),
                 ft.dropdown.Option("Visitante"),
             ],
-            value="Todos"
+            value="Todos",
+            on_select=self.filtrar
         )
-        self.combo_tipo.on_change = self.filtrar
 
         # DROPDOWN ESTADO
         self.combo_estado = ft.Dropdown(
@@ -72,9 +86,9 @@ class PantallaHistorial(ft.Container):
                 ft.dropdown.Option("Activos"),
                 ft.dropdown.Option("Finalizados"),
             ],
-            value="Todos"
+            value="Todos",
+            on_select=self.filtrar
         )
-        self.combo_estado.on_change = self.filtrar
 
 
         # BOTÓN EXPORTAR
@@ -90,6 +104,7 @@ class PantallaHistorial(ft.Container):
             expand=True,
         )
 
+        self.txt_hoy = ft.Text("0", size=18, weight="bold", color="black")
         # CARD HOY
         self.card_hoy = ft.Container(
             padding=ft.padding.symmetric(horizontal=15, vertical=5),
@@ -105,8 +120,8 @@ class PantallaHistorial(ft.Container):
                     border_radius=12
                 ),
                 ft.Column([
-                    ft.Text("Usuarios totales hoy", size=10, color="grey"),
-                    ft.Text("37", size=18, weight="bold", color="black"),
+                    ft.Text("Usuarios únicos hoy", size=10, color="grey"),
+                    self.txt_hoy,
                     ft.Text("Registrados hoy", size=9, color="grey")
                 ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
             ], spacing=10)
@@ -149,49 +164,101 @@ class PantallaHistorial(ft.Container):
             )
         )
 
+    def limpiar_filtros(self, e=None):
+        # Reset valores
+        self.input_busqueda.value = ""
+        self.txt_fecha_inicio.value = "Fecha inicio"
+        self.txt_fecha_fin.value = "Fecha fin"
+        self.combo_tipo.value = "Todos"
+        self.combo_estado.value = "Todos"
+
+        # Refrescar filtros
+        self.filtrar()
+
+        if self.page:
+            self.update()    
+
+
     def filtrar(self, e=None):
-        # Mantenemos tu lógica de filtrado...
         try:
-            from Negocio.Controlador.ControladorHistorial import ControladorHistorial
             control = ControladorHistorial()
-            datos = control.obtener_historial()
+            datos = control.obtener_historial(
+                texto=self.input_busqueda.value or "",
+                fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
+                fecha_fin=self.txt_fecha_fin.value if self.txt_fecha_fin.value != "Fecha fin" else None,
+                tipo=self.combo_tipo.value,
+                estado=self.combo_estado.value
+            )
+
+            try:
+                total_hoy = control.contar_hoy()
+                self.txt_hoy.value = str(total_hoy)
+            except:
+                self.txt_hoy.value = "0"
+
         except:
             datos = [] 
-        
-        texto = self.input_busqueda.value.lower() if self.input_busqueda.value else ""
+            self.txt_hoy.value = "0"
         filas = []
 
         for d in datos:
-            if texto and texto not in str(d.get("identificador","")).lower() and texto not in str(d.get("nombre","")).lower():
-                continue
             filas.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
+                        # El nombre ahora se adapta, no se impone
                         ft.DataCell(ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("salida","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.Icons.VISIBILITY_ROUNDED,
+                                icon_color=self.AZUL,
+                                icon_size=20,
+                                on_click=lambda _: print("Ver detalles")
+                            )
+                        ),
                     ]
                 )
             )
 
+        # La clave es 'expand=True' en la tabla y en la columna específica
         tabla = ft.DataTable(
-            expand=True,
-            horizontal_lines=ft.border.BorderSide(1, "#F3F4F6"),
+            expand=True, 
+            horizontal_lines=ft.border.BorderSide(1, "#E5E7EB"),
+            column_spacing=45, # Aumentamos espacio para que respiren las columnas fijas
+            heading_row_color=self.FONDO_HEADER,
+            heading_row_height=50,
             columns=[
-                ft.DataColumn(ft.Text("Identificador", weight="bold", color=self.TEXTO_TABLA)),
-                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO_TABLA)),
-                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_TABLA)),
-                ft.DataColumn(ft.Text("Hora entrada", weight="bold", color=self.TEXTO_TABLA)),
-                ft.DataColumn(ft.Text("Hora salida", weight="bold", color=self.TEXTO_TABLA)),
+                ft.DataColumn(ft.Text("ID", weight="bold", color=self.TEXTO_HEADER)),
+                # Esta columna es la que "empuja" a las demás a los bordes
+                ft.DataColumn(
+                    ft.Text("Nombre completo", weight="bold", color=self.TEXTO_HEADER),
+                    on_sort=lambda e: print("Sort"), # Opcional: ayuda a definir la columna
+                ),
+                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_HEADER)),
+                ft.DataColumn(ft.Text("Entrada", weight="bold", color=self.TEXTO_HEADER)),
+                ft.DataColumn(ft.Text("Salida", weight="bold", color=self.TEXTO_HEADER)),
+                ft.DataColumn(ft.Text("Acción", weight="bold", color=self.TEXTO_HEADER)),
             ],
             rows=filas,
         )
 
         self.tabla_container.controls.clear()
-        self.tabla_container.controls.append(ft.Row([tabla], scroll="auto", expand=True))
+        
+        # El contenedor DEBE tener expand=True para que la tabla sepa cuánto espacio hay
+        self.tabla_container.controls.append(
+            ft.Row(
+                controls=[tabla],
+                expand=True, # Obliga a la fila a usar todo el ancho del panel blanco
+            )
+        )
         if e: self.update()
+        
+    def actualizar(self):
+        self.filtrar()
+
 
     def build_ui(self):
         fila_superior = ft.Row([
@@ -207,28 +274,40 @@ class PantallaHistorial(ft.Container):
             self.card_hoy
         ], spacing=10)
 
+        # Panel de filtros con ancho completo
         filtros_panel = ft.Container(
             bgcolor="white",
             border_radius=20,
             padding=20,
+            width=float('inf'), # Forzamos ancho infinito (máximo permitido)
             shadow=ft.BoxShadow(blur_radius=15, color="black12"),
             content=ft.Column([fila_superior, fila_inferior], spacing=15)
         )
 
+        # Panel de tabla con ancho completo
         tabla_panel = ft.Container(
             expand=True,
             bgcolor="white",
             border_radius=20,
             padding=15,
+            width=float('inf'), # Forzamos ancho infinito para que coincida con el de arriba
             shadow=ft.BoxShadow(blur_radius=15, color="black12"),
             content=self.tabla_container
         )
 
         self.content = ft.Column([
-            ft.Column([
-                ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXTO_TITULO),
-                ft.Text("Sistema de control digital - Registro de asistencias", color="black", size=13),
-            ], spacing=2),
+            ft.Row(
+                [
+                    ft.Column([
+                        ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXTO_TITULO),
+                        ft.Text("Sistema de control digital - Registro de asistencias", color="black", size=13),
+                    ], spacing=2),
+                    
+                    self.btn_limpiar
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER
+            ),
             filtros_panel,
             tabla_panel
         ], spacing=15, expand=True)

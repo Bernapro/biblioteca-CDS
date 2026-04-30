@@ -79,21 +79,69 @@ class RepositorioImpl(Repositorio):
             conn.execute(query)
             
 #historial
-    def obtener_historial(self):
+    def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
         query = """
             SELECT 
                 u.identificador,
                 u.nombre,
                 u.ap_paterno,
                 u.ap_materno,
+                u.tipo_usuario,
                 r.fecha_entrada,
                 r.fecha_salida
             FROM registro r
-            INNER JOIN usuario u 
-                ON r.id_usuario = u.id_usuario
-            ORDER BY r.fecha_entrada DESC
+            INNER JOIN usuario u ON r.id_usuario = u.id_usuario
+            WHERE 1=1
+        """
+
+        params = []
+
+        # ===== TEXTO =====
+        if texto:
+            query += """
+            AND (
+                LOWER(u.identificador) LIKE LOWER(%s)
+                OR LOWER(CONCAT(u.nombre,' ',u.ap_paterno,' ',u.ap_materno)) LIKE LOWER(%s)
+            )
+            """
+            params.extend([f"%{texto}%", f"%{texto}%"])
+
+        # ===== FECHAS =====
+        if fecha_inicio:
+            query += " AND DATE(r.fecha_entrada) >= %s"
+            params.append(fecha_inicio)
+
+        if fecha_fin:
+            query += " AND DATE(r.fecha_entrada) <= %s"
+            params.append(fecha_fin)
+
+        # ===== TIPO =====
+        if tipo != "Todos":
+            MAP = {
+                "Alumno": "ALUMNO",
+                "Personal": "PERSONAL",
+                "Visitante": "VISITANTE"
+            }
+            query += " AND u.tipo_usuario = %s"
+            params.append(MAP[tipo])
+
+        # ===== ESTADO =====
+        if estado == "Activos":
+            query += " AND r.fecha_salida IS NULL"
+        elif estado == "Finalizados":
+            query += " AND r.fecha_salida IS NOT NULL"
+
+        query += " ORDER BY r.fecha_entrada DESC"
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query, tuple(params)).fetchall()
+        
+    def contar_usuarios_hoy(self):
+        query = """
+            SELECT COUNT(DISTINCT id_usuario) as total
+            FROM registro
+            WHERE DATE(fecha_entrada) = CURRENT_DATE
         """
 
         with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query).fetchall()
-        
+            return conn.execute(query).fetchone()["total"]
