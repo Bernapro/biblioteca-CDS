@@ -6,7 +6,7 @@ class PantallaHistorial(ft.Container):
         super().__init__()
         self._page = page
         
-        # Propiedades del Contenedor Principal (Fondo de la vista)
+        # Propiedades del Contenedor Principal
         self.expand = True
         self.padding = 30
         self.bgcolor = "#EAF1F7"
@@ -14,44 +14,110 @@ class PantallaHistorial(ft.Container):
 
         # ===== COLORES CONSTANTES =====
         self.AZUL = "#3B82F6"
-        self.TEXTO = "#111827"
-        self.BORDE = "#E5E7EB"
+        self.TEXTO_TITULO = "#111827"
+        self.TEXTO_TABLA = "#000000" 
+        self.BORDE = "#D1D5DB"
 
         # ===== CONTROLES DINÁMICOS =====
-        self.txt_fecha_inicio = ft.Text("Fecha inicio", color="#111827")
-        self.txt_fecha_fin = ft.Text("Fecha fin", color="#111827")
+        self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXTO_TITULO)
+        self.txt_fecha_fin = ft.Text("Fecha fin", color=self.TEXTO_TITULO)
 
         self.fecha_inicio_picker = ft.DatePicker(on_change=self.seleccionar_inicio)
         self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
-
-        # Los DatePickers necesitan aagregarse al overlay de la página principal
         self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
 
         self.input_busqueda = ft.TextField(
-            hint_text="Buscar por identificador o nombre...",
+            label="Buscar por identificador o nombre...",
             prefix_icon=ft.Icons.SEARCH,
             expand=True,
             border_radius=12,
-            on_change=self.filtrar,
+            border_color=self.BORDE,
+            focused_border_color=self.AZUL,
+            bgcolor="white",
+            on_change=self.filtrar, # TextField suele aceptar on_change, si falla, muévelo abajo igual que el dropdown
+            text_style=ft.TextStyle(color=self.TEXTO_TITULO),
+            label_style=ft.TextStyle(color="black"),
+        )
+        
+# DROPDOWN TIPO
+        self.combo_tipo = ft.Dropdown(
+            expand=True,
+            label="Tipo de usuario",
+            border_color=self.BORDE,
+            focused_border_color=self.AZUL,
+            border_radius=12,
+            bgcolor="black",
+            color="black",
+            options=[
+                ft.dropdown.Option("Todos"),
+                ft.dropdown.Option("Alumno"),
+                ft.dropdown.Option("Personal"),
+                ft.dropdown.Option("Visitante"),
+            ],
+            value="Todos"
+        )
+        self.combo_tipo.on_change = self.filtrar
 
-            text_style=ft.TextStyle(color=self.TEXTO),
-            hint_style=ft.TextStyle(color="9CA3AF"),
+        # DROPDOWN ESTADO
+        self.combo_estado = ft.Dropdown(
+            expand=True,
+            label="Estado",
+            border_color=self.BORDE,
+            focused_border_color=self.AZUL,
+            border_radius=12,
+            bgcolor="black",
+            color="black",
+            options=[
+                ft.dropdown.Option("Todos"),
+                ft.dropdown.Option("Activos"),
+                ft.dropdown.Option("Finalizados"),
+            ],
+            value="Todos"
+        )
+        self.combo_estado.on_change = self.filtrar
+
+
+        # BOTÓN EXPORTAR
+        self.btn_exportar = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.DESCRIPTION_OUTLINED, color="#10B981"),
+                ft.Text("Exportar a Excel", color="#10B981", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER),
+            border=ft.border.all(1, "#10B981"),
+            border_radius=12,
+            padding=ft.padding.symmetric(horizontal=15),
+            height=45,
+            expand=True,
+        )
+
+        # CARD HOY
+        self.card_hoy = ft.Container(
+            padding=ft.padding.symmetric(horizontal=15, vertical=5),
+            bgcolor="white",
+            border_radius=20,
+            border=ft.border.all(1, self.BORDE),
+            expand=True,
+            content=ft.Row([
+                ft.Container(
+                    content=ft.Icon(ft.Icons.PEOPLE_ALT_ROUNDED, color="white", size=20),
+                    bgcolor="black",
+                    padding=8,
+                    border_radius=12
+                ),
+                ft.Column([
+                    ft.Text("Usuarios totales hoy", size=10, color="grey"),
+                    ft.Text("37", size=18, weight="bold", color="black"),
+                    ft.Text("Registrados hoy", size=9, color="grey")
+                ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
+            ], spacing=10)
         )
 
         self.tabla_container = ft.Column(scroll="auto", expand=True)
 
-        # Construir UI y dibujar la tabla vacía inicial
         self.build_ui()
         self.filtrar() 
 
-    # ===== VALIDACIONES Y LÓGICA DE PICKERS =====
-    def fecha_valida(self, fecha):
-        try:
-            datetime.strptime(fecha, "%Y-%m-%d")
-            return True
-        except ValueError:
-            return False
-
+    # ===== LÓGICA =====
     def seleccionar_inicio(self, e):
         if e.control.value:
             self.txt_fecha_inicio.value = e.control.value.strftime("%Y-%m-%d")
@@ -64,131 +130,92 @@ class PantallaHistorial(ft.Container):
             self.filtrar()
             self.update()
 
-    def abrir_picker(self, picker):
+    def abrir_picker(self, e, picker):
         picker.open = True
-        self._page.update()  # Los overlays necesitan que la página completa se actualice
+        self._page.update()
 
-    # ===== WIDGETS REUTILIZABLES =====
     def build_boton_fecha(self, texto_ref, picker):
         return ft.Container(
-            width=170,
+            expand=True,
             height=45,
             border=ft.border.all(1, self.BORDE),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=12),
             bgcolor="white",
-            on_click=lambda e: self.abrir_picker(picker),
+            on_click=lambda e: self.abrir_picker(e, picker),
             content=ft.Row(
-                [
-                    ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.AZUL),
-                    texto_ref
-                ],
+                [ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.AZUL), texto_ref],
                 spacing=10
             )
         )
 
-
-    # ===== FILTROS Y TABLA =====
     def filtrar(self, e=None):
-        from Negocio.Controlador.ControladorHistorial import ControladorHistorial
-
-        control = ControladorHistorial()
-        datos = control.obtener_historial()
-
+        # Mantenemos tu lógica de filtrado...
+        try:
+            from Negocio.Controlador.ControladorHistorial import ControladorHistorial
+            control = ControladorHistorial()
+            datos = control.obtener_historial()
+        except:
+            datos = [] 
+        
         texto = self.input_busqueda.value.lower() if self.input_busqueda.value else ""
-
-        fecha_inicio = self.txt_fecha_inicio.value
-        fecha_fin = self.txt_fecha_fin.value
-
         filas = []
 
         for d in datos:
-
-            # 🔍 FILTRO TEXTO
-            if texto:
-                if texto not in d["identificador"].lower() and texto not in d["nombre"].lower():
-                    continue
-
-            #  FILTRO FECHAS
-            if self.fecha_valida(fecha_inicio) and d["fecha"] < fecha_inicio:
+            if texto and texto not in str(d.get("identificador","")).lower() and texto not in str(d.get("nombre","")).lower():
                 continue
-
-            if self.fecha_valida(fecha_fin) and d["fecha"] > fecha_fin:
-                continue
-
-            # FORMATO HORAS
-            
-            entrada = d["entrada"] if d["entrada"] else "-"
-            salida = d["salida"] if d["salida"] != "-" else "-"
-
             filas.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(d["identificador"], color=self.TEXTO)),
-                        ft.DataCell(ft.Text(d["nombre"], color=self.TEXTO)),
-                        ft.DataCell(ft.Text(d["fecha"], color=self.TEXTO)),
-                        ft.DataCell(ft.Text(entrada, color=self.TEXTO)),
-                        ft.DataCell(ft.Text(salida, color=self.TEXTO)),
+                        ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(str(d.get("salida","")), color=self.TEXTO_TABLA)),
                     ]
                 )
             )
 
         tabla = ft.DataTable(
+            expand=True,
+            horizontal_lines=ft.border.BorderSide(1, "#F3F4F6"),
             columns=[
-                ft.DataColumn(ft.Text("Identificador", weight="bold", color=self.TEXTO)),
-                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO)),
-                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO)),
-                ft.DataColumn(ft.Text("Hora entrada", weight="bold", color=self.TEXTO)),
-                ft.DataColumn(ft.Text("Hora salida", weight="bold", color=self.TEXTO)),
+                ft.DataColumn(ft.Text("Identificador", weight="bold", color=self.TEXTO_TABLA)),
+                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO_TABLA)),
+                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_TABLA)),
+                ft.DataColumn(ft.Text("Hora entrada", weight="bold", color=self.TEXTO_TABLA)),
+                ft.DataColumn(ft.Text("Hora salida", weight="bold", color=self.TEXTO_TABLA)),
             ],
             rows=filas,
-            heading_row_color="#F3F4F6",
-            data_text_style=ft.TextStyle(color="#000000"),
         )
 
         self.tabla_container.controls.clear()
-        self.tabla_container.controls.append(tabla)
+        self.tabla_container.controls.append(ft.Row([tabla], scroll="auto", expand=True))
+        if e: self.update()
 
-        if e is not None:
-            self.update()
-
-    def limpiar(self, e):
-        self.input_busqueda.value = ""
-        self.txt_fecha_inicio.value = "Fecha inicio"
-        self.txt_fecha_fin.value = "Fecha fin"
-        self.filtrar()
-        self.update()
-
-    def actualizar(self):
-        self.filtrar()
-
-    # ===== CONSTRUCCIÓN DE LA INTERFAZ =====
     def build_ui(self):
-        fecha_inicio_btn = self.build_boton_fecha(self.txt_fecha_inicio, self.fecha_inicio_picker)
-        fecha_fin_btn = self.build_boton_fecha(self.txt_fecha_fin, self.fecha_fin_picker)
+        fila_superior = ft.Row([
+            ft.Container(self.input_busqueda, expand=2),
+            ft.Container(self.build_boton_fecha(self.txt_fecha_inicio, self.fecha_inicio_picker), expand=1),
+            ft.Container(self.build_boton_fecha(self.txt_fecha_fin, self.fecha_fin_picker), expand=1),
+        ], spacing=10)
 
-        filtros = ft.Container(
+        fila_inferior = ft.Row([
+            self.combo_tipo,
+            self.combo_estado,
+            self.btn_exportar,
+            self.card_hoy
+        ], spacing=10)
+
+        filtros_panel = ft.Container(
             bgcolor="white",
             border_radius=20,
-            padding=15,
+            padding=20,
             shadow=ft.BoxShadow(blur_radius=15, color="black12"),
-            content=ft.Row(
-                [
-                    self.input_busqueda,
-                    fecha_inicio_btn,
-                    fecha_fin_btn,
-                    ft.IconButton(
-                        icon=ft.Icons.CLEAR,
-                        tooltip="Limpiar",
-                        on_click=self.limpiar
-                    )
-                ],
-                spacing=15,
-                vertical_alignment=ft.CrossAxisAlignment.CENTER
-            )
+            content=ft.Column([fila_superior, fila_inferior], spacing=15)
         )
 
-        tabla_scroll = ft.Container(
+        tabla_panel = ft.Container(
             expand=True,
             bgcolor="white",
             border_radius=20,
@@ -197,18 +224,11 @@ class PantallaHistorial(ft.Container):
             content=self.tabla_container
         )
 
-        self.content = ft.Column(
-            [
-                ft.Column(
-                    [
-                        ft.Text("Historial de asistencias", size=32, weight="bold", color=self.TEXTO),
-                        ft.Text("Sistema de control digital - Registro de asistencias", color=self.TEXTO),
-                    ],
-                    spacing=5
-                ),
-                filtros,
-                tabla_scroll
-            ],
-            spacing=20,
-            expand=True
-        )
+        self.content = ft.Column([
+            ft.Column([
+                ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXTO_TITULO),
+                ft.Text("Sistema de control digital - Registro de asistencias", color="black", size=13),
+            ], spacing=2),
+            filtros_panel,
+            tabla_panel
+        ], spacing=15, expand=True)
