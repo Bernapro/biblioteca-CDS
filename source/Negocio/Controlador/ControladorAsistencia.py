@@ -12,8 +12,9 @@ class ControladorAsistencia:
         self.__repo = RepositorioImpl(CRUDimp())
 
     def procesar_qr(self, e):
-        estado = ""
+        estado = "NO_ENCONTRADO"
         nombre_completo = ""
+        usuario = None
         if e.control.data == "btn_qr":
 
             usuario = None
@@ -24,16 +25,15 @@ class ControladorAsistencia:
 
             with db.get_connection() as conn:
                 usuario = self.__repo.buscar_usuario_por_identificador(qr, conn)
+                print(usuario)
+                if not usuario:
+                    return {"estado": estado, "nombre": nombre_completo}
 
-            if not usuario:
-                return {"estado": "NO_ENCONTRADO", "nombre": ""}
+                id_usuario = usuario["id_usuario"]
 
-            id_usuario = usuario["id_usuario"]
-
-            nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
+                nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
 
             # cerrar registros viejos primero
-            with db.get_connection() as conn:
                 self.__repo.cerrar_registros_abiertos(conn)
                 registro_abierto = self.__repo.obtener_registro_abierto(id_usuario, conn)
 
@@ -52,5 +52,5 @@ class ControladorAsistencia:
             return {
                 "estado": estado,
                 "nombre": nombre_completo,
-                "tipo": usuario.get("tipo_usuario")  
+                "tipo": usuario.get("tipo_usuario") if usuario else None  
             }
