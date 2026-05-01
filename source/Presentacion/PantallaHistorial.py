@@ -92,17 +92,53 @@ class PantallaHistorial(ft.Container):
 
 
         # BOTÓN EXPORTAR
+        self.exportando = False
+
         self.btn_exportar = ft.Container(
             content=ft.Row([
-                ft.Icon(ft.Icons.DESCRIPTION_OUTLINED, color="#10B981"),
-                ft.Text("Exportar a Excel", color="#10B981", weight="w500")
-            ], alignment=ft.MainAxisAlignment.CENTER),
-            border=ft.border.all(1, "#10B981"),
+                ft.Icon(ft.Icons.DOWNLOAD, color="white", size=18),
+                ft.Text("Exportar resultados", color="white", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+            bgcolor=self.AZUL,
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=15),
             height=38,
             expand=True,
+            on_click=self.toggle_exportar
         )
+
+        self.btn_excel = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.TABLE_CHART, color="#10B981"),
+                ft.Text("Excel", color="#10B981", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
+            border=ft.border.all(1, "#10B981"),
+            border_radius=10,
+            bgcolor="#ECFDF5",
+            height=38,
+            expand=True,
+            on_click=self.exportar_excel
+        )
+
+        self.btn_pdf = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.PICTURE_AS_PDF, color="#EF4444"),
+                ft.Text("PDF", color="#EF4444", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
+            border=ft.border.all(1, "#EF4444"),
+            bgcolor="#FEF2F2",
+            border_radius=10,
+            height=38,
+            expand=True,
+            on_click=self.exportar_pdf
+        )
+
+
+        self.export_container = ft.Row(expand=True)
+        self.actualizar_exportar()
+
+
+
 
         self.txt_hoy = ft.Text("0", size=18, weight="bold", color="black")
         # CARD HOY
@@ -130,7 +166,7 @@ class PantallaHistorial(ft.Container):
         self.tabla_container = ft.Column(
             scroll="auto",
             expand=True,
-            spacing=0   # 🔥 evita espacio muerto
+            spacing=0   # 🔥 
         )
         self.pagina_actual = 1
         self.registros_por_pagina = 10
@@ -175,6 +211,35 @@ class PantallaHistorial(ft.Container):
                 spacing=10
             )
         )
+
+    def toggle_exportar(self, e):
+        self.exportando = True
+        self.actualizar_exportar()
+        self.update()
+
+    def exportar_excel(self, e):
+        print("Exportar Excel")
+        self.exportando = False
+        self.actualizar_exportar()
+        self.update()
+
+    def exportar_pdf(self, e):
+        print("Exportar PDF")
+        self.exportando = False
+        self.actualizar_exportar()
+        self.update()
+
+    def actualizar_exportar(self):
+        if self.exportando:
+            self.export_container.controls = [
+                self.btn_excel,
+                self.btn_pdf
+            ]
+        else:
+            self.export_container.controls = [
+                self.btn_exportar
+            ]
+
 
     def limpiar_filtros(self, e=None):
         # Reset valores
@@ -391,7 +456,7 @@ class PantallaHistorial(ft.Container):
         fila_inferior = ft.Row([
             self.combo_tipo,
             self.combo_estado,
-            self.btn_exportar,
+            self.export_container, 
             self.card_hoy
         ], spacing=10)
 
