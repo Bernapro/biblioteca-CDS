@@ -1,6 +1,9 @@
 import flet as ft
-from datetime import datetime
 from Negocio.Controlador.ControladorHistorial import ControladorHistorial
+
+from tkinter import filedialog
+import tkinter as tk
+
 
 class PantallaHistorial(ft.Container):
     def __init__(self, page: ft.Page):
@@ -89,7 +92,6 @@ class PantallaHistorial(ft.Container):
             value="Todos",
             on_select=self.filtrar
         )
-
 
         # BOTÓN EXPORTAR
         self.exportando = False
@@ -217,11 +219,69 @@ class PantallaHistorial(ft.Container):
         self.actualizar_exportar()
         self.update()
 
+    def generar_nombre_excel(self):
+        partes = ["Historial"]
+        if self.input_busqueda.value:
+            texto = self.input_busqueda.value.strip().replace(" ", "")
+            partes.append(texto[:6])
+        if self.combo_tipo.value != "Todos":
+            partes.append(self.combo_tipo.value)
+        if self.combo_estado.value != "Todos":
+            partes.append(self.combo_estado.value)
+        if self.txt_fecha_inicio.value != "Fecha inicio":
+            partes.append(self.txt_fecha_inicio.value)
+        if self.txt_fecha_fin.value != "Fecha fin":
+            partes.append(self.txt_fecha_fin.value)
+        return "_".join(partes) + ".xlsx"
+    
+
     def exportar_excel(self, e):
-        print("Exportar Excel")
+        nombre = self.generar_nombre_excel()
+
+        # Crear ventana root oculta para el diálogo
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)  # Mantener en primer plano
+        root.lift()
+        root.focus()
+        
+        # Abrir diálogo de guardado
+        ruta = filedialog.asksaveasfilename(
+            title="Guardar Excel",
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+            initialfile=nombre
+        )
+        
+        root.destroy()
+
+        if ruta:
+            self.resultado_guardar_excel_path(ruta)
+
         self.exportando = False
         self.actualizar_exportar()
         self.update()
+
+    def resultado_guardar_excel_path(self, ruta):
+        if not ruta:
+            return
+
+        try:
+            control = ControladorHistorial()
+
+            control.exportar_excel(
+                ruta=ruta,
+                texto=self.input_busqueda.value or "",
+                fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
+                fecha_fin=self.txt_fecha_fin.value if self.txt_fecha_fin.value != "Fecha fin" else None,
+                tipo=self.combo_tipo.value,
+                estado=self.combo_estado.value
+            )
+
+            print("Archivo guardado en:", ruta)
+
+        except Exception as ex:
+            print("Error:", ex)
 
     def exportar_pdf(self, e):
         print("Exportar PDF")
