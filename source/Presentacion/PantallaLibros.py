@@ -1,8 +1,5 @@
-from urllib import response
-
 import flet as ft
 from Infraestructura.API.libros_api import crear_libro, obtener_libros
-from Persistencia.Postgres.Pool.DBPoolBiblioteca import db_biblioteca #Temporal
 
 class PantallaLibros(ft.Container):
 
@@ -20,6 +17,19 @@ class PantallaLibros(ft.Container):
         self.border_radius = 30
 
         self.autores_seleccionados = []
+        self.categorias_seleccionadas = []
+
+        self.chips_autores = ft.Row(
+            wrap=True,
+            spacing=8,
+            run_spacing=8
+        )
+
+        self.chips_categorias = ft.Row(
+            wrap=True,
+            spacing=8,
+            run_spacing=8
+        )
 
         self.input_busqueda = ft.TextField(
             width=250,
@@ -72,25 +82,6 @@ class PantallaLibros(ft.Container):
             expand=True
         )
     
-    def obtener_autores_bd(self):
-        query = "SELECT id, pseudonimo FROM autor ORDER BY pseudonimo"
-
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()
-        
-    def obtener_editoriales_bd(self):
-        query = "SELECT id, editorial FROM editorial ORDER BY editorial"
-
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()
-    
-    def obtener_categorias_bd(self):
-        query = "SELECT id, categoria FROM categoria ORDER BY categoria"
-
-        with db_biblioteca.get_connection() as conn:
-            return conn.execute(query).fetchall()
-
-
     # Card libro
     def build_card_libro(self, titulo, isbn, estado):
         return ft.Container(
@@ -200,155 +191,108 @@ class PantallaLibros(ft.Container):
 
         self.refrescar_grid(filtrados)
 
-    # Modal seleccionar autores
-    def abrir_modal_autores(self, e, texto_autores):
-        autores_bd = self.obtener_autores_bd()
-
-        checks = []
-
-        for autor in autores_bd:
-            checks.append(
-                ft.Checkbox(
-                    label=autor["pseudonimo"],
-                    data=autor["id"],
-                    value=autor["id"] in self.autores_seleccionados
-                )
-            )
-
-        dialog_autores = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("Seleccionar autores", color="black"),
-            content=ft.Container(
-                width=400,
-                height=400,
-                content=ft.Column(
-                    checks,
-                    scroll=ft.ScrollMode.AUTO
-                )
-            ),
-            actions=[
-                ft.TextButton(
-                    "Cancelar",
-                    on_click=lambda ev: self.cerrar_dialog(dialog_autores)
-                ),
-                ft.ElevatedButton(
-                    "Aceptar",
-                    on_click=lambda ev: self.confirmar_autores(
-                        dialog_autores,
-                        checks,
-                        texto_autores
-                    )
-                )
-            ]
-        )
-
-        self._page.overlay.append(dialog_autores)
-        dialog_autores.open = True
-        self._page.update()
-
-    # Confirmar autores
-    def confirmar_autores(self, dialog, checks, texto_autores):
-        self.autores_seleccionados = [
-            c.data for c in checks if c.value
-        ]
-
-        seleccionados_texto = [
-            c.label for c in checks if c.value
-        ]
-
-        texto_autores.value = (
-            ", ".join(seleccionados_texto)
-            if seleccionados_texto
-            else "Ningún autor seleccionado"
-        )
-
-        self._page.update()
-        dialog.open = False
-        self._page.update()
-
     # Cerrar dialog
     def cerrar_dialog(self, dialog):
         dialog.open = False
         self._page.update()
 
+    def agregar_autor_chip(self, autor_input):
+        nombre = autor_input.value.strip()
+
+        if not nombre:
+            return
+
+        if nombre in self.autores_seleccionados:
+            return
+
+        self.autores_seleccionados.append(nombre)
+
+        chip = ft.Chip(
+            label=ft.Text(nombre),
+            on_delete=lambda e, n=nombre: self.eliminar_autor_chip(n)
+        )
+
+        self.chips_autores.controls.append(chip)
+
+        autor_input.value = ""
+
+        self._page.update()
+
+    def eliminar_autor_chip(self, nombre):
+        self.autores_seleccionados.remove(nombre)
+
+        self.chips_autores.controls = [
+            chip for chip in self.chips_autores.controls
+            if chip.label.value != nombre
+        ]
+
+        self._page.update()
+
+    def agregar_categoria_chip(self, categoria_input):
+        nombre = categoria_input.value.strip()
+
+        if not nombre:
+            return
+
+        if nombre in self.categorias_seleccionadas:
+            return
+
+        self.categorias_seleccionadas.append(nombre)
+
+        chip = ft.Chip(
+            label=ft.Text(nombre),
+            on_delete=lambda e, n=nombre: self.eliminar_categoria_chip(n)
+        )
+
+        self.chips_categorias.controls.append(chip)
+
+        categoria_input.value = ""
+
+        self._page.update()
+
+    def eliminar_categoria_chip(self, nombre):
+        self.categorias_seleccionadas.remove(nombre)
+
+        self.chips_categorias.controls = [
+            chip for chip in self.chips_categorias.controls
+            if chip.label.value != nombre
+        ]
+
+        self._page.update()                
+
     # Modal agregar libro
     def abrir_modal_agregar(self, e):
 
         self.autores_seleccionados = []
+        self.categorias_seleccionadas = []
+
+        self.chips_autores.controls.clear()
+        self.chips_categorias.controls.clear()
 
         isbn = self.campo_negro("ISBN")
         titulo = self.campo_negro("Título")
 
-        texto_autores = ft.Text(
-            "Ningún autor seleccionado",
-            color="#374151",
-            size=12,
-            overflow=ft.TextOverflow.ELLIPSIS
+        # INPUT AUTORES
+        autor_input = self.campo_negro("Autor")
+
+        boton_agregar_autor = ft.IconButton(
+            icon=ft.Icons.ADD,
+            icon_color="white",
+            bgcolor="#6366F1",
+            on_click=lambda ev: self.agregar_autor_chip(autor_input)
         )
 
-        caja_autores = ft.Container(
-            bgcolor="white",
-            border=ft.border.all(1, "#D1D5DB"),
-            border_radius=10,
-            padding=12,
-            height=50,
-            expand=True,
-            content=ft.Row(
-                [texto_autores],
-                spacing=0
-            )
+        # INPUT CATEGORIAS
+        categoria_input = self.campo_negro("Categoría")
+
+        boton_agregar_categoria = ft.IconButton(
+            icon=ft.Icons.ADD,
+            icon_color="white",
+            bgcolor="#10B981",
+            on_click=lambda ev: self.agregar_categoria_chip(categoria_input)
         )
 
-        boton_autores = ft.ElevatedButton(
-            content=ft.Row(
-                [
-                    ft.Icon(ft.Icons.GROUP, size=18, color="white"),
-                    ft.Text("Seleccionar autores", color="white", size=13),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                spacing=8
-            ),
-            width=220,
-            height=50,
-            style=ft.ButtonStyle(
-                bgcolor="#6366F1",
-                shape=ft.RoundedRectangleBorder(radius=10)
-            ),
-            on_click=lambda ev: self.abrir_modal_autores(ev, texto_autores)
-        )
-
-        # Obtener datos desde BD
-        editoriales_bd = self.obtener_editoriales_bd()
-        categorias_bd = self.obtener_categorias_bd()
-
-        # Dropdown Editorial
-        editorial = ft.Dropdown(
-            label="Editorial",
-            options=[
-                ft.dropdown.Option(
-                    text=ed["editorial"],
-                    key=str(ed["id"])
-                ) for ed in editoriales_bd
-            ],
-            bgcolor="white",
-            color="black",
-            expand=True
-        )
-
-        # Dropdown Categoría
-        categoria = ft.Dropdown(
-            label="Categoría",
-            options=[
-                ft.dropdown.Option(
-                    text=cat["categoria"],
-                    key=str(cat["id"])
-                ) for cat in categorias_bd
-            ],
-            bgcolor="white",
-            color="black",
-            expand=True
-        )
-
+        editorial = self.campo_negro("Editorial")
         edicion = self.campo_negro("Edición")
         fecha = self.campo_negro("Fecha impresión", "YYYY-MM-DD")
         ejemplares = self.campo_negro("Cantidad de ejemplares")
@@ -375,13 +319,32 @@ class PantallaLibros(ft.Container):
 
                         ft.Row(
                             [
-                                boton_autores,
-                                caja_autores
+                                autor_input,
+                                boton_agregar_autor
                             ],
-                            spacing=15
+                            spacing=10
                         ),
 
-                        ft.Row([editorial, categoria], spacing=15),
+                        self.chips_autores,
+
+                        ft.Text(
+                            "Categorías",
+                            size=13,
+                            weight="bold",
+                            color="#374151"
+                        ),
+
+                        ft.Row(
+                            [
+                                categoria_input,
+                                boton_agregar_categoria
+                            ],
+                            spacing=10
+                        ),
+
+                        self.chips_categorias,
+
+                        ft.Row([editorial], spacing=15),
                         ft.Row([edicion, fecha], spacing=15),
                         ft.Row([ejemplares], spacing=15),
                         ft.Row([dewey, cdu, lcc], spacing=15),
@@ -399,7 +362,12 @@ class PantallaLibros(ft.Container):
                     "Guardar",
                     bgcolor=self.AZUL,
                     color="white",
-                    on_click=lambda ev: self.guardar_libro(dialog, isbn, titulo, editorial, categoria)
+                    on_click=lambda ev: self.guardar_libro(
+                        dialog,
+                        isbn,
+                        titulo,
+                        editorial
+                    )
                 )
             ]
         )
@@ -409,7 +377,7 @@ class PantallaLibros(ft.Container):
         self._page.update()
 
     # Guardar libro
-    def guardar_libro(self, dialog, isbn, titulo, editorial, categoria):
+    def guardar_libro(self, dialog, isbn, titulo, editorial):
 
         if not isbn.value or not titulo.value:
             self._page.snack_bar = ft.SnackBar(
@@ -419,9 +387,9 @@ class PantallaLibros(ft.Container):
             self._page.update()
             return
 
-        if not editorial.value or not categoria.value:
+        if not editorial.value:
             self._page.snack_bar = ft.SnackBar(
-                ft.Text("Debes seleccionar editorial y categoría")
+                ft.Text("Debes ingresar una editorial")
             )
             self._page.snack_bar.open = True
             self._page.update()
@@ -429,7 +397,15 @@ class PantallaLibros(ft.Container):
 
         if not self.autores_seleccionados:
             self._page.snack_bar = ft.SnackBar(
-                ft.Text("Debes seleccionar al menos un autor")
+                ft.Text("Debes agregar al menos un autor")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
+        
+        if not self.categorias_seleccionadas:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Debes agregar al menos una categoría")
             )
             self._page.snack_bar.open = True
             self._page.update()
@@ -437,19 +413,18 @@ class PantallaLibros(ft.Container):
 
         try:
             data = {
-                "isbn": isbn.value,
-                "titulo": titulo.value,
-
-                "editorialId": int(editorial.value),
-
+                "isbn": isbn.value.strip(),
+                "titulo": titulo.value.strip(),
+                "editorial": editorial.value.strip(),
                 "edicion": "",
                 "fechaPublicacion": None,
                 "dewey": "",
                 "clasificacionDelCongreso": "",
                 "clasificacionDecimalUniversal": "",
 
-                "autoresIds": self.autores_seleccionados,
-                "categoriasIds": [int(categoria.value)]
+                # NUEVO FORMATO PARA API ACTUALIZADA
+                "autores": self.autores_seleccionados,
+                "categorias": self.categorias_seleccionadas
             }
 
             print("DATA ENVIADA:", data)
@@ -467,7 +442,6 @@ class PantallaLibros(ft.Container):
                 self._page.snack_bar = ft.SnackBar(
                     ft.Text("Libro añadido correctamente")
                 )
-
             else:
                 self._page.snack_bar = ft.SnackBar(
                     ft.Text(f"Error API: {response.text}")
