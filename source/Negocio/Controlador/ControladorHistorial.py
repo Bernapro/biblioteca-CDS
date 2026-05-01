@@ -27,6 +27,7 @@ class ControladorHistorial:
             resultado.append({
                 "identificador": d["identificador"],
                 "nombre": nombre,
+                "tipo": d["tipo_usuario"],
                 "fecha": d["fecha_entrada"].strftime("%Y-%m-%d"),
                 "entrada": d["fecha_entrada"].strftime("%H:%M:%S"),
                 "salida": d["fecha_salida"].strftime("%H:%M:%S") if d["fecha_salida"] else "-"

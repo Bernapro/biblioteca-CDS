@@ -357,16 +357,18 @@ class PantallaHistorial(ft.Container):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Row([self.obtener_icono_tipo(d.get("tipo")),ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA),],spacing=6,alignment=ft.MainAxisAlignment.START)),
                         ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("salida","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(
-                            ft.IconButton(
-                                icon=ft.Icons.VISIBILITY_ROUNDED,
-                                icon_color=self.AZUL,
-                                icon_size=20,
-                                on_click=lambda _: print("Ver detalles")
+                            ft.Container(
+                                content=ft.Icon(ft.Icons.VISIBILITY_ROUNDED, size=20, color=self.AZUL),
+                                tooltip="Ver detalles",
+                                padding=6,
+                                border_radius=8,
+                                on_click=lambda e, d=d: self.ver_detalles(d),
+                                ink=True
                             )
                         ),
                     ]
@@ -413,7 +415,28 @@ class PantallaHistorial(ft.Container):
         if e:
             self.update()
         
-
+    def obtener_icono_tipo(self, tipo):
+        if tipo == "ALUMNO":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.SCHOOL, color="#3B82F6", size=16),
+                tooltip="Alumno"
+            )
+        elif tipo == "PERSONAL":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.BADGE, color="#10B981", size=16),
+                tooltip="Personal"
+            )
+        elif tipo == "VISITANTE":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.PERSON, color="#F59E0B", size=16),
+                tooltip="Visitante"
+            )
+        else:
+            return ft.Container(
+                content=ft.Icon(ft.Icons.HELP_OUTLINE, size=16),
+                tooltip="Desconocido"
+            )
+        
     def _input_focus(self, e):
         e.control.value = ""
         e.control.color = "black"

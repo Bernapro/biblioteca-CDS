@@ -21,11 +21,10 @@ class PantallaAsistencia(ft.Container):
         self.TEXT = "#111827"
         self.TEXT_SECONDARY = "#6B7280"
 
-        self.mensaje_final = ft.Text(
-            "",
-            size=16,
-            weight="bold",
-            color=self.TEXT
+        self.mensaje_final = ft.Column(
+            [],
+            spacing=5,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
         self.input_qr = ft.TextField(
@@ -46,26 +45,77 @@ class PantallaAsistencia(ft.Container):
     # =========================
     # MENSAJE DINÁMICO
     # =========================
-    def mostrar_resultado(self, tipo, nombre):
+    def mostrar_resultado(self, estado, nombre, tipo_usuario):
 
-        if tipo == "ENTRADA":
-            self.mensaje_final.value = f"✅ Entrada registrada correctamente\n{nombre}"
-            self.mensaje_final.color = "#16A34A"  # verde elegante
+        # ===== COLORES POR TIPO =====
+        colores = {
+            "ALUMNO": "#3B82F6",
+            "PERSONAL": "#10B981",
+            "VISITANTE": "#F59E0B"
+        }
 
-        elif tipo == "SALIDA":
-            self.mensaje_final.value = f"👋 Salida registrada correctamente\n{nombre}"
-            self.mensaje_final.color = "#2563EB"  # azul elegante
+        color_tipo = colores.get(tipo_usuario, "#6B7280")
 
-        elif tipo == "NO_ENCONTRADO":
-            self.mensaje_final.value = "❌ Usuario no encontrado"
-            self.mensaje_final.color = "#DC2626"
+        # ===== TEXTO TIPO =====
+        texto_tipo = tipo_usuario.capitalize() if tipo_usuario else ""
 
-        elif tipo == "INVALIDO":
-            self.mensaje_final.value = "⚠️ Ingresa un código válido"
-            self.mensaje_final.color = "#D97706"
+        badge = ft.Container(
+            content=ft.Text(
+                f"[ {texto_tipo} ]",
+                color=color_tipo,
+                weight="bold",
+                size=14
+            ),
+            padding=ft.padding.symmetric(horizontal=8, vertical=2),
+            border_radius=8,
+            border=ft.border.all(1, color_tipo),
+            bgcolor={
+                "ALUMNO": "#DBEAFE",
+                "PERSONAL": "#D1FAE5",
+                "VISITANTE": "#FEF3C7"
+            }.get(tipo_usuario, "#F3F4F6")
+        )
+
+        # ===== MENSAJE PRINCIPAL =====
+        if estado == "ENTRADA":
+            mensaje = ft.Text(
+                "✅ Entrada registrada correctamente",
+                color="#16A34A",
+                weight="bold"
+            )
+
+        elif estado == "SALIDA":
+            mensaje = ft.Text(
+                "👋 Salida registrada correctamente",
+                color="#2563EB",
+                weight="bold"
+            )
+
+        elif estado == "NO_ENCONTRADO":
+            self.mensaje_final.controls = [
+                ft.Text("❌ Usuario no encontrado", color="#DC2626", weight="bold")
+            ]
+            self.update()
+            return
+
+        elif estado == "INVALIDO":
+            self.mensaje_final.controls = [
+                ft.Text("⚠️ Ingresa un código válido", color="#D97706", weight="bold")
+            ]
+            self.update()
+            return
 
         else:
-            self.mensaje_final.value = ""
+            self.mensaje_final.controls = []
+            self.update()
+            return
+
+        # ===== RESULTADO FINAL =====
+        self.mensaje_final.controls = [
+            mensaje,
+            ft.Text(nombre, size=16, weight="bold", color="#000000"),
+            badge
+        ]
 
         self.update()
 
@@ -85,8 +135,9 @@ class PantallaAsistencia(ft.Container):
 
         estado = respuesta.get("estado")
         nombre = respuesta.get("nombre")
+        tipo_usuario = respuesta.get("tipo")
 
-        self.mostrar_resultado(estado, nombre)
+        self.mostrar_resultado(estado, nombre, tipo_usuario)
 
     def ir_a_registro(self, e):
         self.content = PantallaRegistroUsuario(self._page, vista_anterior=self)
