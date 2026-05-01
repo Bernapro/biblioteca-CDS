@@ -6,18 +6,20 @@ from Persistencia.Postgres.Pool.DBPool import db
 class ControladorHistorial:
 
     def __init__(self):
-        self.__repo = RepositorioImpl(CRUDimp(db))
+        self.__repo = RepositorioImpl(CRUDimp())
 
     def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
-        self.__repo.cerrar_registros_abiertos()
+        with db.get_connection() as conn:
+            self.__repo.cerrar_registros_abiertos(conn)
 
-        datos = self.__repo.obtener_historial(
-            texto,
-            fecha_inicio,
-            fecha_fin,
-            tipo,
-            estado
-        )
+            datos = self.__repo.obtener_historial(
+                texto,
+                fecha_inicio,
+                fecha_fin,
+                tipo,
+                estado,
+                conn
+            )
 
         resultado = []
 
@@ -35,4 +37,5 @@ class ControladorHistorial:
         return resultado
     
     def contar_hoy(self):
-        return self.__repo.contar_usuarios_hoy()
+        with db.get_connection() as conn:
+            return self.__repo.contar_usuarios_hoy(conn)

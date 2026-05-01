@@ -17,10 +17,10 @@ class RepositorioImpl(Repositorio):
             {f"id_{nombre_tabla}": id}
         )
 
-    def guardar(self, objeto):
+    def guardar(self, objeto, conn):
         if self.__crud:
             valores = tuple(objeto.get_columns().values())
-            return self.__crud.create(objeto.get_table_name(), objeto.get_columns().keys(), valores)
+            return self.__crud.create(objeto.get_table_name(), objeto.get_columns().keys(), valores, conn)
         return None
         
     def eliminar(self, nombre_tabla: str, id):
@@ -29,21 +29,20 @@ class RepositorioImpl(Repositorio):
             {f"id_{nombre_tabla}": id}
         )
     
-    def obtener_siguiente_vis(self):
+    def obtener_siguiente_vis(self, conn):
         query = "SELECT last_value + 1 AS siguiente FROM seq_visitante"
-
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            result = conn.execute(query).fetchone()
-            return f"VIS-{result['siguiente']}"
+        result = conn.execute(query).fetchone()
+        return f"VIS-{result['siguiente']}"
 
     #asistencia
-    def buscar_usuario_por_identificador(self, identificador):
+    def buscar_usuario_por_identificador(self, identificador, conn):
         return self.__crud.read_one(
             "usuario",
-            {"identificador": identificador}
+            {"identificador": identificador},
+            conn
         )
 
-    def obtener_registro_abierto(self, id_usuario):
+    def obtener_registro_abierto(self, id_usuario, conn):
         query = """
             SELECT *
             FROM registro
@@ -52,11 +51,9 @@ class RepositorioImpl(Repositorio):
             ORDER BY fecha_entrada DESC
             LIMIT 1
         """
+        return conn.execute(query, (id_usuario,)).fetchone()
 
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query, (id_usuario,)).fetchone()
-
-    def registrar_salida(self, id_registro):
+    def registrar_salida(self, id_registro, conn):
         query = """
             UPDATE registro
             SET fecha_salida = CURRENT_TIMESTAMP
@@ -64,22 +61,19 @@ class RepositorioImpl(Repositorio):
             RETURNING *
         """
 
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query, (id_registro,)).fetchone()
+        return conn.execute(query, (id_registro,)).fetchone()
         
-    def cerrar_registros_abiertos(self):
+    def cerrar_registros_abiertos(self, conn):
         query = """
             UPDATE registro
             SET fecha_salida = DATE_TRUNC('day', fecha_entrada) + INTERVAL '23:59:59'
             WHERE fecha_salida IS NULL
             AND fecha_entrada < CURRENT_DATE
         """
-
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            conn.execute(query)
+        conn.execute(query)
             
 #historial
-    def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
+    def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos", conn= None):
         query = """
             SELECT 
                 u.identificador,
@@ -133,15 +127,15 @@ class RepositorioImpl(Repositorio):
 
         query += " ORDER BY r.fecha_entrada DESC"
 
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query, tuple(params)).fetchall()
+
+        return conn.execute(query, tuple(params)).fetchall()
         
-    def contar_usuarios_hoy(self):
+    def contar_usuarios_hoy(self, conn):
         query = """
             SELECT COUNT(DISTINCT id_usuario) as total
             FROM registro
             WHERE DATE(fecha_entrada) = CURRENT_DATE
         """
 
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query).fetchone()["total"]
+
+        return conn.execute(query).fetchone()["total"]

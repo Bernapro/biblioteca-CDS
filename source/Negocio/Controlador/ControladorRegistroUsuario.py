@@ -9,7 +9,7 @@ class ControladorPantallaRegistroUsuario():
 
     def __init__(self, pantalla):
         self.__pantalla = pantalla
-        self.__repo = RepositorioImpl(CRUDimp(db))
+        self.__repo = RepositorioImpl(CRUDimp())
 
 
     def guardar_usuario(self, e):
@@ -21,19 +21,19 @@ class ControladorPantallaRegistroUsuario():
 
             usr = instancia.getPadre()
 
-            usrPersistente = self.__repo.guardar(usr)
+            with db.get_connection() as conn:
+                usrPersistente = self.__repo.guardar(usr, conn)
 
-            if usrPersistente:
-                instancia.setId_usuario(usrPersistente["id_usuario"])
+                if usrPersistente:
+                    instancia.setId_usuario(usrPersistente["id_usuario"])
 
-                objPersistente = self.__repo.guardar(instancia)
+                    objPersistente = self.__repo.guardar(instancia, conn)
 
-                # 🔥 NUEVO: regresar identificador
-                return {
-                    "id_usuario": usrPersistente["id_usuario"],
-                    "identificador": usrPersistente["identificador"]
-                }
-
+                    #regresar identificador
+                    return {
+                        "id_usuario": usrPersistente["id_usuario"],
+                        "identificador": usrPersistente["identificador"]
+                    }
         return None
 
     def data_usuario(self):
@@ -59,7 +59,10 @@ class ControladorPantallaRegistroUsuario():
     
 
     def obtener_siguiente_vis(self):
-        return self.__repo.obtener_siguiente_vis()
+        sig = "";
+        with db.get_connection() as conn:
+            sig = self.__repo.obtener_siguiente_vis(conn)
+        return sig
 
     def llenar_usuario(self, instancia:PostgresOperable):
             instancia = self.__pantalla.usuarios[self.__pantalla.tipo_usuario.value]
