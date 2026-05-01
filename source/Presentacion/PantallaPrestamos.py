@@ -173,8 +173,8 @@ class PantallaPrestamos(ft.Container):
        
         tabla = ft.DataTable(
             expand=True,
-            column_spacing=80,    # <-- Aumentado para rellenar a la derecha
-            horizontal_margin=30, # <-- Margen interno para que no quede pegado a los bordes
+            column_spacing=20,    # <-- Reducido para adaptarse a laptops y pantallas pequeñas
+            horizontal_margin=15, # <-- Reducido para aprovechar mejor el espacio
             heading_row_color="#F9FAFB",
             heading_row_height=60,
             data_row_min_height=75, # <-- Filas más altas para la letra grande
@@ -207,7 +207,7 @@ class PantallaPrestamos(ft.Container):
             border_radius=15,
             border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column([
-                ft.Row([tabla], scroll=ft.ScrollMode.AUTO, expand=True)
+                ft.Row([tabla], scroll=ft.ScrollMode.ADAPTIVE, expand=True)
             ])
         )
 

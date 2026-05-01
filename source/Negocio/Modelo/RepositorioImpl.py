@@ -82,9 +82,22 @@ class RepositorioImpl(Repositorio):
                 u.ap_materno,
                 u.tipo_usuario,
                 r.fecha_entrada,
-                r.fecha_salida
+                r.fecha_salida,
+                al.matricula,
+                p.n_plaza,
+                g.grupo,
+                c.nombre_carrera,
+                s.semestre,
+                i.nombre_institucion
             FROM registro r
             INNER JOIN usuario u ON r.id_usuario = u.id_usuario
+            LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
+            LEFT JOIN personal p ON u.id_usuario = p.id_usuario
+            LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
+            LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
+            LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
+            LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
+            LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
             WHERE 1=1
         """
 

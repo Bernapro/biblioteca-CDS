@@ -51,12 +51,12 @@ class PantallaHistorial(ft.Container):
             border_color=self.BORDE,
             focused_border_color=self.AZUL,
             bgcolor="white",
-            on_change=self.filtrar, # TextField suele aceptar on_change, si falla, muévelo abajo igual que el dropdown
+            on_change=self.filtrar, 
             text_style=ft.TextStyle(color=self.TEXTO_TITULO),
             label_style=ft.TextStyle(color="black"),
         )
         
-# DROPDOWN TIPO
+        # DROPDOWN TIPO
         self.combo_tipo = ft.Dropdown(
             expand=True,
             label="Tipo de usuario",
@@ -135,14 +135,11 @@ class PantallaHistorial(ft.Container):
             on_click=self.exportar_pdf
         )
 
-
         self.export_container = ft.Row(expand=True)
         self.actualizar_exportar()
 
-
-
-
         self.txt_hoy = ft.Text("0", size=18, weight="bold", color="black")
+        
         # CARD HOY
         self.card_hoy = ft.Container(
             padding=ft.padding.symmetric(horizontal=15, vertical=5),
@@ -168,7 +165,7 @@ class PantallaHistorial(ft.Container):
         self.tabla_container = ft.Column(
             scroll="auto",
             expand=True,
-            spacing=0   # 🔥 
+            spacing=0   
         )
         self.pagina_actual = 1
         self.registros_por_pagina = 10
@@ -234,7 +231,6 @@ class PantallaHistorial(ft.Container):
             partes.append(self.txt_fecha_fin.value)
         return "_".join(partes) + ".xlsx"
     
-
     def exportar_excel(self, e):
         nombre = self.generar_nombre_excel()
 
@@ -300,7 +296,6 @@ class PantallaHistorial(ft.Container):
                 self.btn_exportar
             ]
 
-
     def limpiar_filtros(self, e=None):
         # Reset valores
         self.input_busqueda.value = ""
@@ -314,7 +309,6 @@ class PantallaHistorial(ft.Container):
 
         if self.page:
             self.update()    
-
 
     def filtrar(self, e=None):
         try:
@@ -470,7 +464,6 @@ class PantallaHistorial(ft.Container):
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
-
             on_submit=lambda e: cambiar_pagina(
                 int(e.control.value) if e.control.value.isdigit() else self.pagina_actual
             )
@@ -488,7 +481,6 @@ class PantallaHistorial(ft.Container):
             paginas = list(range(1, total_paginas + 1))
         else:
             paginas = [1]
-
             if self.pagina_actual > 3:
                 paginas.append("...")
 
@@ -527,7 +519,6 @@ class PantallaHistorial(ft.Container):
     
     def actualizar(self):
         self.filtrar()
-
 
     def build_ui(self):
         fila_superior = ft.Row([
@@ -584,8 +575,202 @@ class PantallaHistorial(ft.Container):
             ),
 
             filtros_panel,
-
             tabla_panel,
-
             footer_panel  
         ], spacing=15, expand=True)
+
+    # =======================================================
+    # 🔥 NUEVO: LÓGICA DE LA CREDENCIAL DE DETALLES
+    # =======================================================
+    
+    def crear_badge_icono(self, icono, color_icono, color_fondo, titulo, valor):
+        return ft.Row([
+            ft.Container(
+                content=ft.Icon(icono, color=color_icono, size=18),
+                bgcolor=color_fondo,
+                padding=8,
+                border_radius=8
+            ),
+            ft.Container(
+                width=160, # <-- Limitamos el ancho para evitar que rompa el diseño
+                content=ft.Column([
+                    ft.Text(titulo, size=11, color="#6B7280", weight="w500"),
+                    ft.Text(
+                        valor, size=13, weight="bold", color="black"
+                    ),
+                ], spacing=2)
+            )
+        ], spacing=10)
+
+    def ver_detalles(self, d):
+        # 1. Extraer los datos de la fila seleccionada
+        nombre = str(d.get("nombre", "Desconocido"))
+        identificador = str(d.get("identificador", "N/A"))
+        tipo = str(d.get("tipo", "ALUMNO")).upper()
+        fecha = str(d.get("fecha", "-"))
+        entrada = str(d.get("entrada", "-"))
+        
+        # Validación segura para datos nulos de la base de datos
+        salida_raw = d.get("salida")
+        salida = str(salida_raw) if salida_raw else ""
+
+        # --- EXTRACCIÓN Y FALLBACK DE DATOS ACADÉMICOS ---
+        semestre = str(d.get("semestre") or "N/A")
+        grupo = str(d.get("grupo") or "N/A")
+        carrera = str(d.get("nombre_carrera") or d.get("carrera") or "N/A")
+        n_plaza = str(d.get("n_plaza") or "N/A")
+        institucion = str(d.get("nombre_institucion") or d.get("institucion") or "N/A")
+
+        # Si el Controlador descartó las llaves al llenar la tabla, forzamos la obtención DIRECTA desde la BD
+        if semestre == "N/A" or carrera == "N/A" or n_plaza == "N/A" or institucion == "N/A":
+            try:
+                from Persistencia.Postgres.Pool.DBPool import db
+                
+                query = """
+                    SELECT 
+                        g.grupo, c.nombre_carrera, s.semestre, 
+                        p.n_plaza, i.nombre_institucion
+                    FROM usuario u
+                    LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
+                    LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
+                    LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
+                    LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
+                    LEFT JOIN personal p ON u.id_usuario = p.id_usuario
+                    LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
+                    LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
+                    WHERE u.identificador = %s
+                """
+                with db.get_connection() as conn:
+                    row = conn.execute(query, (identificador,)).fetchone()
+                    if row:
+                        semestre = str(row.get("semestre") or "N/A")
+                        grupo = str(row.get("grupo") or "N/A")
+                        carrera = str(row.get("nombre_carrera") or "N/A")
+                        n_plaza = str(row.get("n_plaza") or "N/A")
+                        institucion = str(row.get("nombre_institucion") or "N/A")
+            except Exception as e:
+                print(f"Error al obtener datos directamente de la BD: {e}")
+
+        # === DATOS DINÁMICOS DESDE LA BASE DE DATOS SEGÚN EL ROL ===
+        badges_dinamicos = []
+        
+        if tipo == "ALUMNO":
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.HEXAGON_OUTLINED, "#8B5CF6", "#EDE9FE", "Semestre:", semestre))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.PEOPLE_ALT_OUTLINED, "#10B981", "#D1FAE5", "Grupo:", grupo))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.SCHOOL_OUTLINED, "#3B82F6", "#DBEAFE", "Carrera:", carrera))
+        elif tipo == "PERSONAL":
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.BADGE_OUTLINED, "#10B981", "#D1FAE5", "No. Plaza:", n_plaza))
+        elif tipo == "VISITANTE":
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.ACCOUNT_BALANCE_OUTLINED, "#F59E0B", "#FEF3C7", "Institución:", institucion))
+
+        # 2. Lógica para saber si sigue en la biblioteca o ya salió
+        en_curso = (salida == "" or salida == "-" or salida == "None")
+
+        # Colores y textos dinámicos según el estado
+        color_estado = "#F59E0B" if en_curso else "#10B981" # Amarillo o Verde
+        bg_estado = "#FFFBEB" if en_curso else "#ECFDF5"
+        borde_estado = "#FEF08A" if en_curso else "#A7F3D0"
+        texto_estado_h1 = "EN CURSO" if en_curso else "FINALIZADO"
+        texto_estado_h2 = "El usuario aún no ha registrado su salida en la biblioteca." if en_curso else "El usuario registró su salida correctamente."
+        icono_estado = ft.Icons.ACCESS_TIME if en_curso else ft.Icons.CHECK_CIRCLE
+
+        # ===== SECCIÓN 1: PERFIL =====
+        seccion_perfil = ft.Container(
+            bgcolor="#F8FAFC", border_radius=15, padding=20,
+            content=ft.Row([
+                ft.Row([
+                    ft.Container(
+                        content=ft.Icon(ft.Icons.PERSON, size=50, color="white"),
+                        bgcolor="#3B82F6", width=80, height=80, border_radius=40, alignment=ft.Alignment(0, 0)
+                    ),
+                    ft.Column([
+                        ft.Text(nombre, size=20, weight="bold", color="black"),
+                        ft.Text(f"ID: {identificador}", size=13, color="#6B7280"),
+                        ft.Container(
+                            content=ft.Row([ft.Icon(ft.Icons.SCHOOL if tipo == "ALUMNO" else ft.Icons.BADGE, size=14, color="#2563EB"), ft.Text(tipo, size=12, weight="bold", color="#2563EB")], spacing=5),
+                            bgcolor="#DBEAFE", padding=ft.padding.symmetric(horizontal=10, vertical=5), border_radius=15
+                        )
+                    ], spacing=5, expand=True)
+                ], expand=True),
+                ft.Container(width=1, height=80, bgcolor="#E5E7EB"),
+                ft.Column(badges_dinamicos, spacing=10, expand=True)
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        )
+
+        # ===== SECCIÓN 2: TIEMPOS =====
+        # Contenedor dinámico para la salida
+        if en_curso:
+            ui_salida = ft.Container(
+                width=160,
+                content=ft.Column([
+                    ft.Row([
+                        ft.Container(content=ft.Icon(ft.Icons.LOGOUT, color="#EF4444", size=18), bgcolor="#FEE2E2", padding=8, border_radius=8),
+                        ft.Text("Hora de Salida\n-", size=12, color="#6B7280")
+                    ]),
+                    ft.Container(content=ft.Text("Sin salida registrada", color="#EF4444", size=11, weight="bold"), bgcolor="#FEE2E2", padding=ft.padding.symmetric(horizontal=8, vertical=4), border_radius=10)
+                ])
+            )
+        else:
+            ui_salida = self.crear_badge_icono(ft.Icons.LOGOUT, "#EF4444", "#FEE2E2", "Hora de Salida", salida)
+
+        seccion_tiempos = ft.Container(
+            border=ft.border.all(1, "#E5E7EB"), border_radius=15, padding=20,
+            content=ft.Row([
+                self.crear_badge_icono(ft.Icons.CALENDAR_TODAY, "#3B82F6", "#DBEAFE", "Fecha", fecha),
+                ft.Container(width=1, height=40, bgcolor="#E5E7EB"),
+                self.crear_badge_icono(ft.Icons.LOGIN, "#10B981", "#D1FAE5", "Hora de Entrada", entrada),
+                ft.Container(width=1, height=40, bgcolor="#E5E7EB"),
+                ui_salida
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        )
+
+        # ===== SECCIÓN 3: ESTADO =====
+        seccion_estado = ft.Container(
+            bgcolor=bg_estado, border=ft.border.all(1, borde_estado), border_radius=15, padding=20,
+            content=ft.Row([
+                ft.Row([
+                    ft.Icon(icono_estado, color=color_estado, size=30),
+                    ft.Column([
+                        ft.Text("Estado actual", size=12, color="#6B7280"),
+                        ft.Text(texto_estado_h1, size=18, weight="bold", color=color_estado)
+                    ], spacing=0)
+                ], expand=1),
+                ft.Container(width=1, height=40, bgcolor=borde_estado),
+                ft.Container(
+                    content=ft.Text(texto_estado_h2, size=13, color="#4B5563"),
+                    expand=2, padding=ft.padding.only(left=20)
+                )
+            ])
+        )
+
+        def cerrar_dialogo(e):
+            dialogo.open = False
+            self._page.update()
+
+        # ===== ENSAMBLAJE DEL DIÁLOGO =====
+        dialogo = ft.AlertDialog(
+            shape=ft.RoundedRectangleBorder(radius=20),
+            title=ft.Row([
+                ft.Text("Detalles de Asistencia", weight="bold", size=22, color="black"),
+                ft.IconButton(ft.Icons.CLOSE, on_click=cerrar_dialogo)
+            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+            content=ft.Container(
+                width=720, # <-- Le damos un poquito más de aire al modal para que quepan todos los detalles perfectos
+                content=ft.Column([seccion_perfil, seccion_tiempos, seccion_estado], tight=True, spacing=20)
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "Cerrar", icon=ft.Icons.CHECK,
+                    bgcolor="#2563EB", color="white",
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10), padding=20),
+                    on_click=cerrar_dialogo
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            actions_padding=ft.padding.only(right=20, bottom=20)
+        )
+
+        # Abrir el diálogo en la pantalla actual (Compatibilidad con versiones de Flet)
+        self._page.overlay.append(dialogo)
+        dialogo.open = True
+        self._page.update()
