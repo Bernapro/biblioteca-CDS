@@ -100,7 +100,7 @@ class PantallaHistorial(ft.Container):
             border=ft.border.all(1, "#10B981"),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=15),
-            height=45,
+            height=38,
             expand=True,
         )
 
@@ -120,14 +120,26 @@ class PantallaHistorial(ft.Container):
                     border_radius=12
                 ),
                 ft.Column([
-                    ft.Text("Usuarios únicos hoy", size=10, color="grey"),
+                    ft.Text("Usuarios únicos hoy", size=12, color="black"),
                     self.txt_hoy,
-                    ft.Text("Registrados hoy", size=9, color="grey")
+                    ft.Text("Asistieron hoy a la biblioteca", size=12, color="black")
                 ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
             ], spacing=10)
         )
 
-        self.tabla_container = ft.Column(scroll="auto", expand=True)
+        self.tabla_container = ft.Column(
+            scroll="auto",
+            expand=True,
+            spacing=0   # 🔥 evita espacio muerto
+        )
+        self.pagina_actual = 1
+        self.registros_por_pagina = 10
+        self.total_registros = 0
+
+        self.footer_tabla = ft.Row(
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER  
+        )
 
         self.build_ui()
         self.filtrar() 
@@ -152,7 +164,7 @@ class PantallaHistorial(ft.Container):
     def build_boton_fecha(self, texto_ref, picker):
         return ft.Container(
             expand=True,
-            height=45,
+            height=38,
             border=ft.border.all(1, self.BORDE),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=12),
@@ -182,6 +194,7 @@ class PantallaHistorial(ft.Container):
     def filtrar(self, e=None):
         try:
             control = ControladorHistorial()
+
             datos = control.obtener_historial(
                 texto=self.input_busqueda.value or "",
                 fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
@@ -197,16 +210,28 @@ class PantallaHistorial(ft.Container):
                 self.txt_hoy.value = "0"
 
         except:
-            datos = [] 
+            datos = []
             self.txt_hoy.value = "0"
+
+        # RESET PAGINA SI VIENE DE EVENTO
+        if e:
+            self.pagina_actual = 1
+
+        # ===== PAGINACIÓN =====
+        self.total_registros = len(datos)
+
+        inicio = (self.pagina_actual - 1) * self.registros_por_pagina
+        fin = inicio + self.registros_por_pagina
+
+        datos_paginados = datos[inicio:fin]
+
         filas = []
 
-        for d in datos:
+        for d in datos_paginados:
             filas.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
-                        # El nombre ahora se adapta, no se impone
                         ft.DataCell(ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
@@ -223,20 +248,15 @@ class PantallaHistorial(ft.Container):
                 )
             )
 
-        # La clave es 'expand=True' en la tabla y en la columna específica
         tabla = ft.DataTable(
-            expand=True, 
+            expand=True,
             horizontal_lines=ft.border.BorderSide(1, "#E5E7EB"),
-            column_spacing=45, # Aumentamos espacio para que respiren las columnas fijas
+            column_spacing=45,
             heading_row_color=self.FONDO_HEADER,
-            heading_row_height=50,
+            heading_row_height=55,
             columns=[
                 ft.DataColumn(ft.Text("ID", weight="bold", color=self.TEXTO_HEADER)),
-                # Esta columna es la que "empuja" a las demás a los bordes
-                ft.DataColumn(
-                    ft.Text("Nombre completo", weight="bold", color=self.TEXTO_HEADER),
-                    on_sort=lambda e: print("Sort"), # Opcional: ayuda a definir la columna
-                ),
+                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Entrada", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Salida", weight="bold", color=self.TEXTO_HEADER)),
@@ -245,17 +265,118 @@ class PantallaHistorial(ft.Container):
             rows=filas,
         )
 
+        # ===== TEXTO RESULTADOS =====
+        texto_resultados = ft.Text(
+            f"Mostrando {len(datos_paginados)} de {self.total_registros} registros",
+            size=14,
+            color="grey"
+        )
         self.tabla_container.controls.clear()
-        
-        # El contenedor DEBE tener expand=True para que la tabla sepa cuánto espacio hay
+
         self.tabla_container.controls.append(
             ft.Row(
                 controls=[tabla],
-                expand=True, # Obliga a la fila a usar todo el ancho del panel blanco
+                expand=True
             )
         )
-        if e: self.update()
+
+        self.footer_tabla.controls = [
+            texto_resultados,
+            self.construir_paginacion()
+        ]
+
+        if e:
+            self.update()
         
+
+    def _input_focus(self, e):
+        e.control.value = ""
+        e.control.color = "black"
+        self.update()
+
+    def _input_blur(self, e):
+        if not e.control.value:
+            e.control.value = str(self.pagina_actual)
+            e.control.color = "grey"
+        self.update()
+
+    def construir_paginacion(self):
+        total_paginas = max(
+            1,
+            (self.total_registros // self.registros_por_pagina) +
+            (1 if self.total_registros % self.registros_por_pagina else 0)
+        )
+
+        def cambiar_pagina(nueva):
+            if 1 <= nueva <= total_paginas:
+                self.pagina_actual = nueva
+                self.filtrar()
+
+        input_pagina = ft.TextField(
+            width=60,
+            height=35,
+            text_align=ft.TextAlign.CENTER,
+            value=str(self.pagina_actual),
+            border_radius=8,
+            color="grey",
+            content_padding=5, 
+            on_focus=lambda e: self._input_focus(e),
+            on_blur=lambda e: self._input_blur(e),
+
+            on_submit=lambda e: cambiar_pagina(
+                int(e.control.value) if e.control.value.isdigit() else self.pagina_actual
+            )
+        )
+
+        botones = []
+
+        botones.append(ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(1)))
+        botones.append(ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1)))
+
+        rango = 2
+        paginas = []
+
+        if total_paginas <= 7:
+            paginas = list(range(1, total_paginas + 1))
+        else:
+            paginas = [1]
+
+            if self.pagina_actual > 3:
+                paginas.append("...")
+
+            inicio = max(2, self.pagina_actual - rango)
+            fin = min(total_paginas - 1, self.pagina_actual + rango)
+
+            for i in range(inicio, fin + 1):
+                paginas.append(i)
+
+            if self.pagina_actual < total_paginas - 2:
+                paginas.append("...")
+
+            paginas.append(total_paginas)
+
+        for p in paginas:
+            if p == "...":
+                botones.append(ft.Text("..."))
+            else:
+                botones.append(
+                    ft.TextButton(
+                        content=ft.Text(str(p)),
+                        on_click=lambda e, p=p: cambiar_pagina(p),
+                        style=ft.ButtonStyle(
+                            bgcolor=self.AZUL if p == self.pagina_actual else None,
+                            color="white" if p == self.pagina_actual else "black"
+                        )
+                    )
+                )
+
+        botones.append(ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)))
+        botones.append(ft.IconButton(ft.Icons.LAST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(total_paginas)))
+
+        botones.append(input_pagina)
+
+        return ft.Row(botones, spacing=5)
+    
     def actualizar(self):
         self.filtrar()
 
@@ -278,21 +399,27 @@ class PantallaHistorial(ft.Container):
         filtros_panel = ft.Container(
             bgcolor="white",
             border_radius=20,
-            padding=20,
-            width=float('inf'), # Forzamos ancho infinito (máximo permitido)
+            padding=10,
+            width=float('inf'),
             shadow=ft.BoxShadow(blur_radius=15, color="black12"),
-            content=ft.Column([fila_superior, fila_inferior], spacing=15)
+            content=ft.Column([fila_superior, fila_inferior], spacing=5)
         )
 
         # Panel de tabla con ancho completo
         tabla_panel = ft.Container(
             expand=True,
+            height=520,
             bgcolor="white",
             border_radius=20,
             padding=15,
-            width=float('inf'), # Forzamos ancho infinito para que coincida con el de arriba
+            width=float('inf'),
             shadow=ft.BoxShadow(blur_radius=15, color="black12"),
             content=self.tabla_container
+        )
+
+        footer_panel = ft.Container(
+            padding=ft.padding.symmetric(horizontal=5),
+            content=self.footer_tabla
         )
 
         self.content = ft.Column([
@@ -302,12 +429,15 @@ class PantallaHistorial(ft.Container):
                         ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXTO_TITULO),
                         ft.Text("Sistema de control digital - Registro de asistencias", color="black", size=13),
                     ], spacing=2),
-                    
                     self.btn_limpiar
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER
             ),
+
             filtros_panel,
-            tabla_panel
+
+            tabla_panel,
+
+            footer_panel  
         ], spacing=15, expand=True)
