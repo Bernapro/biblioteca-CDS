@@ -1,6 +1,9 @@
 import flet as ft
-from datetime import datetime
 from Negocio.Controlador.ControladorHistorial import ControladorHistorial
+
+from tkinter import filedialog
+import tkinter as tk
+
 
 class PantallaHistorial(ft.Container):
     def __init__(self, page: ft.Page):
@@ -90,19 +93,54 @@ class PantallaHistorial(ft.Container):
             on_select=self.filtrar
         )
 
-
         # BOTÓN EXPORTAR
+        self.exportando = False
+
         self.btn_exportar = ft.Container(
             content=ft.Row([
-                ft.Icon(ft.Icons.DESCRIPTION_OUTLINED, color="#10B981"),
-                ft.Text("Exportar a Excel", color="#10B981", weight="w500")
-            ], alignment=ft.MainAxisAlignment.CENTER),
-            border=ft.border.all(1, "#10B981"),
+                ft.Icon(ft.Icons.DOWNLOAD, color="white", size=18),
+                ft.Text("Exportar resultados", color="white", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
+            bgcolor=self.AZUL,
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=15),
             height=38,
             expand=True,
+            on_click=self.toggle_exportar
         )
+
+        self.btn_excel = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.TABLE_CHART, color="#10B981"),
+                ft.Text("Excel", color="#10B981", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
+            border=ft.border.all(1, "#10B981"),
+            border_radius=10,
+            bgcolor="#ECFDF5",
+            height=38,
+            expand=True,
+            on_click=self.exportar_excel
+        )
+
+        self.btn_pdf = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.PICTURE_AS_PDF, color="#EF4444"),
+                ft.Text("PDF", color="#EF4444", weight="w500")
+            ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
+            border=ft.border.all(1, "#EF4444"),
+            bgcolor="#FEF2F2",
+            border_radius=10,
+            height=38,
+            expand=True,
+            on_click=self.exportar_pdf
+        )
+
+
+        self.export_container = ft.Row(expand=True)
+        self.actualizar_exportar()
+
+
+
 
         self.txt_hoy = ft.Text("0", size=18, weight="bold", color="black")
         # CARD HOY
@@ -130,7 +168,7 @@ class PantallaHistorial(ft.Container):
         self.tabla_container = ft.Column(
             scroll="auto",
             expand=True,
-            spacing=0   # 🔥 evita espacio muerto
+            spacing=0   # 🔥 
         )
         self.pagina_actual = 1
         self.registros_por_pagina = 10
@@ -175,6 +213,93 @@ class PantallaHistorial(ft.Container):
                 spacing=10
             )
         )
+
+    def toggle_exportar(self, e):
+        self.exportando = True
+        self.actualizar_exportar()
+        self.update()
+
+    def generar_nombre_excel(self):
+        partes = ["Historial"]
+        if self.input_busqueda.value:
+            texto = self.input_busqueda.value.strip().replace(" ", "")
+            partes.append(texto[:6])
+        if self.combo_tipo.value != "Todos":
+            partes.append(self.combo_tipo.value)
+        if self.combo_estado.value != "Todos":
+            partes.append(self.combo_estado.value)
+        if self.txt_fecha_inicio.value != "Fecha inicio":
+            partes.append(self.txt_fecha_inicio.value)
+        if self.txt_fecha_fin.value != "Fecha fin":
+            partes.append(self.txt_fecha_fin.value)
+        return "_".join(partes) + ".xlsx"
+    
+
+    def exportar_excel(self, e):
+        nombre = self.generar_nombre_excel()
+
+        # Crear ventana root oculta para el diálogo
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes('-topmost', True)  # Mantener en primer plano
+        root.lift()
+        root.focus()
+        
+        # Abrir diálogo de guardado
+        ruta = filedialog.asksaveasfilename(
+            title="Guardar Excel",
+            defaultextension=".xlsx",
+            filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+            initialfile=nombre
+        )
+        
+        root.destroy()
+
+        if ruta:
+            self.resultado_guardar_excel_path(ruta)
+
+        self.exportando = False
+        self.actualizar_exportar()
+        self.update()
+
+    def resultado_guardar_excel_path(self, ruta):
+        if not ruta:
+            return
+
+        try:
+            control = ControladorHistorial()
+
+            control.exportar_excel(
+                ruta=ruta,
+                texto=self.input_busqueda.value or "",
+                fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
+                fecha_fin=self.txt_fecha_fin.value if self.txt_fecha_fin.value != "Fecha fin" else None,
+                tipo=self.combo_tipo.value,
+                estado=self.combo_estado.value
+            )
+
+            print("Archivo guardado en:", ruta)
+
+        except Exception as ex:
+            print("Error:", ex)
+
+    def exportar_pdf(self, e):
+        print("Exportar PDF")
+        self.exportando = False
+        self.actualizar_exportar()
+        self.update()
+
+    def actualizar_exportar(self):
+        if self.exportando:
+            self.export_container.controls = [
+                self.btn_excel,
+                self.btn_pdf
+            ]
+        else:
+            self.export_container.controls = [
+                self.btn_exportar
+            ]
+
 
     def limpiar_filtros(self, e=None):
         # Reset valores
@@ -232,16 +357,18 @@ class PantallaHistorial(ft.Container):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Row([self.obtener_icono_tipo(d.get("tipo")),ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA),],spacing=6,alignment=ft.MainAxisAlignment.START)),
                         ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Text(str(d.get("salida","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(
-                            ft.IconButton(
-                                icon=ft.Icons.VISIBILITY_ROUNDED,
-                                icon_color=self.AZUL,
-                                icon_size=20,
-                                on_click=lambda _: print("Ver detalles")
+                            ft.Container(
+                                content=ft.Icon(ft.Icons.VISIBILITY_ROUNDED, size=20, color=self.AZUL),
+                                tooltip="Ver detalles",
+                                padding=6,
+                                border_radius=8,
+                                on_click=lambda e, d=d: self.ver_detalles(d),
+                                ink=True
                             )
                         ),
                     ]
@@ -288,7 +415,28 @@ class PantallaHistorial(ft.Container):
         if e:
             self.update()
         
-
+    def obtener_icono_tipo(self, tipo):
+        if tipo == "ALUMNO":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.SCHOOL, color="#3B82F6", size=16),
+                tooltip="Alumno"
+            )
+        elif tipo == "PERSONAL":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.BADGE, color="#10B981", size=16),
+                tooltip="Personal"
+            )
+        elif tipo == "VISITANTE":
+            return ft.Container(
+                content=ft.Icon(ft.Icons.PERSON, color="#F59E0B", size=16),
+                tooltip="Visitante"
+            )
+        else:
+            return ft.Container(
+                content=ft.Icon(ft.Icons.HELP_OUTLINE, size=16),
+                tooltip="Desconocido"
+            )
+        
     def _input_focus(self, e):
         e.control.value = ""
         e.control.color = "black"
@@ -391,7 +539,7 @@ class PantallaHistorial(ft.Container):
         fila_inferior = ft.Row([
             self.combo_tipo,
             self.combo_estado,
-            self.btn_exportar,
+            self.export_container, 
             self.card_hoy
         ], spacing=10)
 

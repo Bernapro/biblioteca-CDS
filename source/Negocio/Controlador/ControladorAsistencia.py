@@ -51,5 +51,6 @@ class ControladorAsistencia:
 
             return {
                 "estado": estado,
-                "nombre": nombre_completo
+                "nombre": nombre_completo,
+                "tipo": usuario.get("tipo_usuario")  
             }

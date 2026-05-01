@@ -137,5 +137,95 @@ class RepositorioImpl(Repositorio):
             WHERE DATE(fecha_entrada) = CURRENT_DATE
         """
 
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query).fetchone()["total"]
 
-        return conn.execute(query).fetchone()["total"]
+
+    def obtener_historial_completo(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
+        query = """
+            SELECT
+                r.id_registro,
+
+                u.identificador,
+                u.nombre,
+                u.ap_paterno,
+                u.ap_materno,
+                u.tipo_usuario,
+
+                r.fecha_entrada,
+                r.fecha_salida,
+
+                -- Alumno
+                al.matricula,
+
+                -- Personal
+                p.n_plaza,
+
+                -- Grupo
+                g.grupo,
+
+                -- Carrera
+                c.nombre_carrera,
+
+                -- Facultad
+                f.nombre_facultad,
+
+                -- Semestre
+                s.semestre,
+
+                -- Visitante
+                i.nombre_institucion
+
+            FROM registro r
+            INNER JOIN usuario u ON r.id_usuario = u.id_usuario
+
+            LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
+            LEFT JOIN personal p ON u.id_usuario = p.id_usuario
+            LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
+
+            LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
+            LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
+            LEFT JOIN facultad f ON c.id_facultad = f.id_facultad
+            LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
+
+            LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
+
+            WHERE 1=1
+        """
+
+        params = []
+        if texto:
+            query += """
+            AND (
+                LOWER(u.identificador) LIKE LOWER(%s)
+                OR LOWER(CONCAT(u.nombre,' ',u.ap_paterno,' ',u.ap_materno)) LIKE LOWER(%s)
+            )
+            """
+            params.extend([f"%{texto}%", f"%{texto}%"])
+
+        if fecha_inicio:
+            query += " AND DATE(r.fecha_entrada) >= %s"
+            params.append(fecha_inicio)
+
+        if fecha_fin:
+            query += " AND DATE(r.fecha_entrada) <= %s"
+            params.append(fecha_fin)
+
+        if tipo != "Todos":
+            MAP = {
+                "Alumno": "ALUMNO",
+                "Personal": "PERSONAL",
+                "Visitante": "VISITANTE"
+            }
+            query += " AND u.tipo_usuario = %s"
+            params.append(MAP[tipo])
+
+        if estado == "Activos":
+            query += " AND r.fecha_salida IS NULL"
+        elif estado == "Finalizados":
+            query += " AND r.fecha_salida IS NOT NULL"
+
+        query += " ORDER BY r.fecha_entrada DESC"
+
+        with self._RepositorioImpl__crud.pool.get_connection() as conn:
+            return conn.execute(query, tuple(params)).fetchall()
