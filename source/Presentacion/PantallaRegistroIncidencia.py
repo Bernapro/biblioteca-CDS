@@ -9,12 +9,12 @@ class PantallaRegistroIncidencia(ft.Container):
         self.expand = True
         self.alignment = ft.alignment.Alignment(0, 0)
 
-        # Colores consistentes con tu diseño
+        # ===== COLORES ADAPTABLES AL MODO OSCURO =====
         self.AZUL = "#3B82F6"
-        self.GRIS_BORDE = "#D1D5DB"
-        self.GRIS_TEXTO = "#6B7280"
-        self.TEXT = "#111827"
-        self.CARD = "white"
+        self.GRIS_BORDE = "outline"          # 🔥 MODIFICADO
+        self.GRIS_TEXTO = "onSurfaceVariant" # 🔥 MODIFICADO
+        self.TEXT = "onSurface"              # 🔥 MODIFICADO
+        self.CARD = "surface"                # 🔥 MODIFICADO
 
         # === CONTROLES DEL FORMULARIO ===
         self.txt_nombre = self._crear_input("Nombre del estudiante", width=350)
@@ -43,7 +43,7 @@ class PantallaRegistroIncidencia(ft.Container):
             label="Categoría",
             width=165, border_radius=12, border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            value="Libros", # 🔥 NUEVO: Valor inicial por defecto
+            value="Libros", 
             options=[
                 ft.dropdown.Option("Ruido"),
                 ft.dropdown.Option("Equipo"),
@@ -53,13 +53,15 @@ class PantallaRegistroIncidencia(ft.Container):
             on_select=self.actualizar_vista_previa
         )
 
-        # Elementos de Vista Previa (Iniciados con los valores de "Libros")
+        # Elementos de Vista Previa 
         self.icono_previa = ft.Icon(ft.Icons.WARNING, color=self.AZUL, size=30)
-        self.txt_previa = ft.Text("Libros", size=13, weight="bold")
+        self.txt_previa = ft.Text("Libros", size=13, weight="bold", color=self.TEXT) # 🔥 MODIFICADO: Color de texto adaptable
         
         self.container_previa = ft.Container(
             content=ft.Row([self.icono_previa, self.txt_previa], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
-            width=165, height=60, bgcolor="#F3F4F6", border_radius=12,
+            width=165, height=60, 
+            bgcolor="surfaceVariant", # 🔥 MODIFICADO: Gris adaptable en vez de fijo
+            border_radius=12,
             padding=10, 
             alignment=ft.Alignment(0, 0) 
         )
@@ -101,7 +103,6 @@ class PantallaRegistroIncidencia(ft.Container):
         self.calendario.open = True
         self._page.update()
 
-    # 🔥 CORRECCIÓN: Lógica mejorada para la vista previa
     def actualizar_vista_previa(self, e):
         cat = self.drop_cat.value
         if cat:
@@ -179,6 +180,7 @@ class PantallaRegistroIncidencia(ft.Container):
             [
                 ft.Container(
                     width=660, border_radius=40, padding=30,
+                    # 🔥 AQUÍ REGRESAMOS TU GRADIENTE AZUL INTACTO
                     gradient=ft.LinearGradient(
                         colors=["#cfe8ff", "#9ec9ff"],
                         begin=ft.Alignment(-1, -1),

@@ -16,11 +16,11 @@ class PantallaIncidencias(ft.Container):
         self.ROJO = "#EF4444"      # Botón Nueva / Estado Pendiente
         self.NARANJA = "#F59E0B"   # Icono Usuario / Texto Parcial
         self.TURQUESA = "#0F766E" 
-        self.FONDO = "#EAF1F7"
+        self.FONDO = "transparent" # 🔥 MODIFICADO PARA MODO OSCURO
         
         # Nuevos colores específicos para el modal
-        self.GRIS_TEXTO = "#4B5563"
-        self.GRIS_BORDE = "#E5E7EB"
+        self.GRIS_TEXTO = "onSurfaceVariant" # 🔥 MODIFICADO PARA MODO OSCURO
+        self.GRIS_BORDE = "outline"          # 🔥 MODIFICADO PARA MODO OSCURO
 
         # Propiedades del Contenedor Principal
         self.expand = True
@@ -39,7 +39,7 @@ class PantallaIncidencias(ft.Container):
             expand=True,
             hint_text="Buscar estudiante...",
             prefix_icon=ft.Icons.SEARCH,
-            color="black",
+            color="onSurface", # 🔥 MODIFICADO PARA MODO OSCURO
             border=ft.InputBorder.NONE,
             content_padding=ft.padding.symmetric(horizontal=15, vertical=15),
             text_style=ft.TextStyle(size=15)
@@ -54,7 +54,7 @@ class PantallaIncidencias(ft.Container):
             ],
             value="Todos",
             border=ft.InputBorder.NONE,
-            color="black",
+            color="onSurface", # 🔥 MODIFICADO PARA MODO OSCURO
             content_padding=ft.padding.symmetric(horizontal=10, vertical=15),
             text_style=ft.TextStyle(size=15, weight="w500")
         )
@@ -63,7 +63,7 @@ class PantallaIncidencias(ft.Container):
         
         # 1. Controles referenciables dentro del modal (para actualizar su contenido)
         self.modal_avatar_icon = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=80, color=self.NARANJA)
-        self.modal_nombre = ft.Text("", size=18, weight="bold", color="black")
+        self.modal_nombre = ft.Text("", size=18, weight="bold", color="onSurface") # 🔥 MODIFICADO
         self.modal_matricula = ft.Text("", color=self.GRIS_TEXTO, size=13)
         self.modal_carrera = ft.Text("", color=self.GRIS_TEXTO, size=13)
         self.modal_semestre = ft.Text("", color=self.GRIS_TEXTO, size=13, weight="bold")
@@ -73,9 +73,9 @@ class PantallaIncidencias(ft.Container):
 
         self.modal_tipo = ft.Text("", color=self.NARANJA, weight="bold")
         self.modal_desc_icon = ft.Icon(ft.Icons.VOLUME_UP, size=18, color=self.GRIS_TEXTO)
-        self.modal_descripcion = ft.Text("", color="black")
-        self.modal_lugar = ft.Text("", color="black")
-        self.modal_fecha = ft.Text("", color="black")
+        self.modal_descripcion = ft.Text("", color="onSurface") # 🔥 MODIFICADO
+        self.modal_lugar = ft.Text("", color="onSurface") # 🔥 MODIFICADO
+        self.modal_fecha = ft.Text("", color="onSurface") # 🔥 MODIFICADO
         
         self.modal_estado_icono = ft.Icon(ft.Icons.CIRCLE, size=12, color=self.VERDE)
         self.modal_estado_texto = ft.Text("", color=self.VERDE, weight="w500")
@@ -87,19 +87,19 @@ class PantallaIncidencias(ft.Container):
             hint_text="Escribe un comentario sobre el seguimiento...",
             border_color=self.GRIS_BORDE,
             border_radius=10,
-            text_style=ft.TextStyle(color="black", size=13)
+            text_style=ft.TextStyle(color="onSurface", size=13) # 🔥 MODIFICADO
         )
 
         # Definición del AlertDialog rediseñado
         self.dialogo_detalles = ft.AlertDialog(
             modal=True,
-            bgcolor="white", 
+            bgcolor="surface", # 🔥 MODIFICADO PARA MODO OSCURO
             shape=ft.RoundedRectangleBorder(radius=15),
             
             # TÍTULO: Fila con Texto y Botón Cerrar
             title=ft.Row([
-                ft.Text("Credencial del Estudiante", size=18, weight="bold", color="black"),
-                ft.IconButton(ft.Icons.CLOSE, icon_color="black", on_click=self.cerrar_dialogo)
+                ft.Text("Credencial del Estudiante", size=18, weight="bold", color="onSurface"), # 🔥 MODIFICADO
+                ft.IconButton(ft.Icons.CLOSE, icon_color="onSurface", on_click=self.cerrar_dialogo) # 🔥 MODIFICADO
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             
             # CONTENIDO PRINCIPAL
@@ -144,7 +144,7 @@ class PantallaIncidencias(ft.Container):
                             ft.Container(content=ft.Text("Resuelto", color="white", size=12, weight="bold"), bgcolor=self.VERDE, padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5, width=90, alignment=ft.Alignment(0, 0)),
                             ft.Icon(ft.Icons.SWAP_HORIZ, color=self.GRIS_TEXTO),
                             # Botón Pendiente (Gris inactivo)
-                            ft.Container(content=ft.Text("Pendiente", color="black", size=12), border=ft.border.all(1, self.GRIS_BORDE), padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5, width=90, alignment=ft.Alignment(0, 0)),
+                            ft.Container(content=ft.Text("Pendiente", color="onSurface", size=12), border=ft.border.all(1, self.GRIS_BORDE), padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5, width=90, alignment=ft.Alignment(0, 0)), # 🔥 MODIFICADO
                         ], spacing=10)
                     ]),
                     ft.Text("Cambia el estado de la incidencia", color=self.GRIS_TEXTO, size=11, italic=True),
@@ -152,7 +152,7 @@ class PantallaIncidencias(ft.Container):
                     ft.Divider(height=15, color="transparent"),
                     
                     # SECCIÓN 4: Comentario
-                    ft.Text("Comentario:", weight="bold", color="black"),
+                    ft.Text("Comentario:", weight="bold", color="onSurface"), # 🔥 MODIFICADO
                     self.modal_comentario,
                     
                 ], tight=True, spacing=8)
@@ -246,7 +246,7 @@ class PantallaIncidencias(ft.Container):
         elif "equipo" in razon: icono_razon = ft.Icons.COMPUTER_ROUNDED
         
         return ft.Container(
-            bgcolor="white", border_radius=20, shadow=ft.BoxShadow(blur_radius=25, color="black12"), 
+            bgcolor="surface", border_radius=20, shadow=ft.BoxShadow(blur_radius=25, color="black12"), # 🔥 MODIFICADO PARA MODO OSCURO
             content=ft.Row(
                 controls=[
                     ft.Container(width=8, bgcolor=color_borde, border_radius=ft.border_radius.only(top_left=20, bottom_left=20)),
@@ -256,11 +256,11 @@ class PantallaIncidencias(ft.Container):
                             ft.Row([
                                 ft.Icon(ft.Icons.PERSON, size=45, color=color_borde), 
                                 ft.Column([
-                                    ft.Text(nombre, weight="bold", size=16, color="black"),
+                                    ft.Text(nombre, weight="bold", size=16, color="onSurface"), # 🔥 MODIFICADO
                                     ft.Text(f"Matrícula: {matricula}", size=13, color=self.GRIS_TEXTO),
                                     ft.Text(f"Tipo: {tipo}", size=11, weight="bold", color=color_borde),
-                                    ft.Row([ft.Icon(icono_razon, size=15, color="#6B7280"), ft.Text(razon, size=13, color="black")], spacing=5),
-                                    ft.Text(f"Lugar: {lugar} | Fecha: {fecha}", size=12, color="#6B7280"),
+                                    ft.Row([ft.Icon(icono_razon, size=15, color=self.GRIS_TEXTO), ft.Text(razon, size=13, color="onSurface")], spacing=5), # 🔥 MODIFICADO
+                                    ft.Text(f"Lugar: {lugar} | Fecha: {fecha}", size=12, color=self.GRIS_TEXTO),
                                 ], spacing=4)
                             ], spacing=15, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                             ft.Row([
@@ -295,14 +295,14 @@ class PantallaIncidencias(ft.Container):
 
         encabezado = ft.Row([
             ft.Column([
-                ft.Text("Gestión de Incidencias", size=32, weight="bold", color="black"),
+                ft.Text("Gestión de Incidencias", size=32, weight="bold", color="onSurface"), # 🔥 MODIFICADO
                 ft.Text("Busca y gestiona el catálogo de incidencias registradas en el sistema.", color=self.GRIS_TEXTO)
             ]),
             btn_nueva_incidencia
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
         filtros = ft.Container(
-            bgcolor="white", border_radius=35, padding=ft.padding.only(left=10, right=10, top=5, bottom=5),
+            bgcolor="surface", border_radius=35, padding=ft.padding.only(left=10, right=10, top=5, bottom=5), # 🔥 MODIFICADO
             shadow=ft.BoxShadow(blur_radius=20, spread_radius=2, color="black12", offset=ft.Offset(0, 4)),
             content=ft.Row([
                 self.input_busqueda,
@@ -340,7 +340,7 @@ class PantallaIncidencias(ft.Container):
         texto_resultados = ft.Text(
             f"Mostrando {len(datos_paginados)} de {self.total_registros} incidencias",
             size=14,
-            color="grey"
+            color="onSurfaceVariant" # 🔥 MODIFICADO PARA MODO OSCURO
         )
         
         self.footer_tabla.controls = [
@@ -352,13 +352,13 @@ class PantallaIncidencias(ft.Container):
 
     def _input_focus(self, e):
         e.control.value = ""
-        e.control.color = "black"
+        e.control.color = "onSurface" # 🔥 MODIFICADO
         self.update()
 
     def _input_blur(self, e):
         if not e.control.value:
             e.control.value = str(self.pagina_actual)
-            e.control.color = "grey"
+            e.control.color = "onSurfaceVariant" # 🔥 MODIFICADO
         self.update()
 
     def construir_paginacion(self):
@@ -371,7 +371,7 @@ class PantallaIncidencias(ft.Container):
 
         input_pagina = ft.TextField(
             width=60, height=35, text_align=ft.TextAlign.CENTER,
-            value=str(self.pagina_actual), border_radius=8, color="grey",
+            value=str(self.pagina_actual), border_radius=8, color="onSurfaceVariant", # 🔥 MODIFICADO
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
@@ -379,8 +379,8 @@ class PantallaIncidencias(ft.Container):
         )
 
         botones = [
-            ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(1)),
-            ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1))
+            ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="onSurface", on_click=lambda e: cambiar_pagina(1)), # 🔥 MODIFICADO
+            ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="onSurface", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1)) # 🔥 MODIFICADO
         ]
 
         rango = 2
@@ -397,16 +397,16 @@ class PantallaIncidencias(ft.Container):
 
         for p in paginas:
             if p == "...":
-                botones.append(ft.Text("...", color="black"))
+                botones.append(ft.Text("...", color="onSurface")) # 🔥 MODIFICADO
             else:
                 botones.append(ft.TextButton(
                     content=ft.Text(str(p)), on_click=lambda e, p=p: cambiar_pagina(p),
-                    style=ft.ButtonStyle(bgcolor=self.AZUL if p == self.pagina_actual else None, color="white" if p == self.pagina_actual else "black")
+                    style=ft.ButtonStyle(bgcolor=self.AZUL if p == self.pagina_actual else None, color="white" if p == self.pagina_actual else "onSurface") # 🔥 MODIFICADO
                 ))
 
         botones.extend([
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)),
-            ft.IconButton(ft.Icons.LAST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(total_paginas)),
+            ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="onSurface", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)), # 🔥 MODIFICADO
+            ft.IconButton(ft.Icons.LAST_PAGE, icon_color="onSurface", on_click=lambda e: cambiar_pagina(total_paginas)), # 🔥 MODIFICADO
             input_pagina
         ])
 
