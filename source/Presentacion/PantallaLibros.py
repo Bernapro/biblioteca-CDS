@@ -366,7 +366,8 @@ class PantallaLibros(ft.Container):
                         dialog,
                         isbn,
                         titulo,
-                        editorial
+                        editorial,
+                        ejemplares
                     )
                 )
             ]
@@ -377,7 +378,7 @@ class PantallaLibros(ft.Container):
         self._page.update()
 
     # Guardar libro
-    def guardar_libro(self, dialog, isbn, titulo, editorial):
+    def guardar_libro(self, dialog, isbn, titulo, editorial, ejemplares):
 
         if not isbn.value or not titulo.value:
             self._page.snack_bar = ft.SnackBar(
@@ -395,6 +396,22 @@ class PantallaLibros(ft.Container):
             self._page.update()
             return
 
+        if not ejemplares.value.strip():
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Debes ingresar la cantidad de ejemplares")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
+
+        if not ejemplares.value.isdigit() or int(ejemplares.value) <= 0:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("La cantidad de ejemplares debe ser un número mayor a 0")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
+
         if not self.autores_seleccionados:
             self._page.snack_bar = ft.SnackBar(
                 ft.Text("Debes agregar al menos un autor")
@@ -402,7 +419,7 @@ class PantallaLibros(ft.Container):
             self._page.snack_bar.open = True
             self._page.update()
             return
-        
+
         if not self.categorias_seleccionadas:
             self._page.snack_bar = ft.SnackBar(
                 ft.Text("Debes agregar al menos una categoría")
@@ -421,10 +438,9 @@ class PantallaLibros(ft.Container):
                 "dewey": "",
                 "clasificacionDelCongreso": "",
                 "clasificacionDecimalUniversal": "",
-
-                # NUEVO FORMATO PARA API ACTUALIZADA
                 "autores": self.autores_seleccionados,
-                "categorias": self.categorias_seleccionadas
+                "categorias": self.categorias_seleccionadas,
+                "nEjemplares": int(ejemplares.value)
             }
 
             print("DATA ENVIADA:", data)
