@@ -66,8 +66,8 @@ class PantallaHistorial(ft.Container):
             border_color=self.BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="black",
-            color="black",
+            bgcolor="surface",
+            color="onSurface",
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Alumno"),
@@ -85,8 +85,8 @@ class PantallaHistorial(ft.Container):
             border_color=self.BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="black",
-            color="black",
+            bgcolor="surface",
+            color="onSurface",
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Activos"),
