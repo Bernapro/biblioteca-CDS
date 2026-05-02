@@ -21,19 +21,20 @@ class ControladorPantallaRegistroUsuario():
 
             usr = instancia.getPadre()
 
-            with db.get_connection() as conn:
-                usrPersistente = self.__repo.guardar(usr, conn)
+            # Guardar usuario base
+            usrPersistente = self.__repo.guardar(usr)
 
-                if usrPersistente:
-                    instancia.setId_usuario(usrPersistente["id_usuario"])
+            if usrPersistente:
+                instancia.setId_usuario(usrPersistente["id_usuario"])
 
-                    objPersistente = self.__repo.guardar(instancia, conn)
+                # Guardar subtipo (Alumno, Personal o Visitante)
+                objPersistente = self.__repo.guardar(instancia)
 
-                    #regresar identificador
-                    return {
-                        "id_usuario": usrPersistente["id_usuario"],
-                        "identificador": usrPersistente["identificador"]
-                    }
+                # Regresar identificador
+                return {
+                    "id_usuario": usrPersistente["id_usuario"],
+                    "identificador": usrPersistente["identificador"]
+                }
         return None
 
     def data_usuario(self):
@@ -59,10 +60,7 @@ class ControladorPantallaRegistroUsuario():
     
 
     def obtener_siguiente_vis(self):
-        sig = "";
-        with db.get_connection() as conn:
-            sig = self.__repo.obtener_siguiente_vis(conn)
-        return sig
+        return self.__repo.obtener_siguiente_vis()
 
     def llenar_usuario(self, instancia:PostgresOperable):
             instancia = self.__pantalla.usuarios[self.__pantalla.tipo_usuario.value]

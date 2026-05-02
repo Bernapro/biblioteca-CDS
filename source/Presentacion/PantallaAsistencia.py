@@ -15,7 +15,7 @@ class PantallaAsistencia(ft.Container):
         self.padding = 30
         self.bgcolor = "#EAF1F7"
         self.border_radius = 30
-        
+        self.alignment = ft.alignment.Alignment(0, 0)
         self.AZUL = "#3B82F6"
         self.CARD = "white"
         self.TEXT = "#111827"
@@ -246,5 +246,6 @@ class PantallaAsistencia(ft.Container):
         self.content = ft.Column(
             [card],
             alignment=ft.MainAxisAlignment.CENTER,
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True
         )

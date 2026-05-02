@@ -23,28 +23,29 @@ class ControladorAsistencia:
             if not qr:
                 return {"estado": "INVALIDO", "nombre": ""}
 
-            with db.get_connection() as conn:
-                usuario = self.__repo.buscar_usuario_por_identificador(qr, conn)
-                print(usuario)
-                if not usuario:
-                    return {"estado": estado, "nombre": nombre_completo}
+            usuario = self.__repo.buscar_usuario_por_identificador(qr)
+            print(usuario)
+            if not usuario:
+                return {"estado": estado, "nombre": nombre_completo}
 
-                id_usuario = usuario["id_usuario"]
+            id_usuario = usuario["id_usuario"]
 
-                nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
+            nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
 
-            # cerrar registros viejos primero
-                self.__repo.cerrar_registros_abiertos(conn)
-                registro_abierto = self.__repo.obtener_registro_abierto(id_usuario, conn)
+            # Cerrar registros viejos primero (procedimiento)
+            self.__repo.ejecutar_procedimiento("cerrar_registros_pendientes")
+            
+            # Procesar asistencia
+            registro_abierto = self.__repo.obtener_registro_abierto(id_usuario)
 
-                if not registro_abierto:
-                    nuevo = Registro(id_usuario=id_usuario)
-                    self.__repo.guardar(nuevo, conn)
-                    estado = "ENTRADA"
+            if not registro_abierto:
+                nuevo = Registro(id_usuario=id_usuario)
+                self.__repo.guardar(nuevo)
+                estado = "ENTRADA"
 
-                else:
-                    self.__repo.registrar_salida(registro_abierto["id_registro"], conn)
-                    estado = "SALIDA"
+            else:
+                self.__repo.registrar_salida(registro_abierto["id_registro"])
+                estado = "SALIDA"
 
             self.__pantalla.input_qr.value = ""
             self.__pantalla.update()

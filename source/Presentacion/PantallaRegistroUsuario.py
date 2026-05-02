@@ -17,8 +17,8 @@ class PantallaRegistroUsuario(ft.Container):
         self._page = page
         self.vista_anterior = vista_anterior
         self.expand = True
-
-
+        self.alignment = ft.alignment.Alignment(0, 0)
+        
         self.mensaje = ft.Container(
             visible=False,
             padding=10,
@@ -428,5 +428,6 @@ class PantallaRegistroUsuario(ft.Container):
             [card],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
+            expand=True
         )

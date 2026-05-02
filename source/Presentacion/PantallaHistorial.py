@@ -10,6 +10,9 @@ class PantallaHistorial(ft.Container):
         super().__init__()
         self._page = page
         
+        # Controlador
+        self.controlador_historial = ControladorHistorial()
+        
         # Propiedades del Contenedor Principal
         self.expand = True
         self.padding = 30
@@ -263,9 +266,7 @@ class PantallaHistorial(ft.Container):
             return
 
         try:
-            control = ControladorHistorial()
-
-            control.exportar_excel(
+            self.controlador_historial.exportar_excel(
                 ruta=ruta,
                 texto=self.input_busqueda.value or "",
                 fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
@@ -312,9 +313,7 @@ class PantallaHistorial(ft.Container):
 
     def filtrar(self, e=None):
         try:
-            control = ControladorHistorial()
-
-            datos = control.obtener_historial(
+            datos = self.controlador_historial.obtener_historial_completo(
                 texto=self.input_busqueda.value or "",
                 fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
                 fecha_fin=self.txt_fecha_fin.value if self.txt_fecha_fin.value != "Fecha fin" else None,
@@ -323,7 +322,7 @@ class PantallaHistorial(ft.Container):
             )
 
             try:
-                total_hoy = control.contar_hoy()
+                total_hoy = self.controlador_historial.contar_usuarios_hoy()
                 self.txt_hoy.value = str(total_hoy)
             except:
                 self.txt_hoy.value = "0"
@@ -352,9 +351,9 @@ class PantallaHistorial(ft.Container):
                     cells=[
                         ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
                         ft.DataCell(ft.Row([self.obtener_icono_tipo(d.get("tipo")),ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA),],spacing=6,alignment=ft.MainAxisAlignment.START)),
-                        ft.DataCell(ft.Text(str(d.get("fecha","")), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(str(d.get("entrada","")), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(str(d.get("salida","")), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(d["entrada"].strftime("%Y-%m-%d"), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(d["entrada"].strftime("%H:%M:%S"), color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(d["salida"].strftime("%H:%M:%S") if d["salida"] else "-", color=self.TEXTO_TABLA)),
                         ft.DataCell(
                             ft.Container(
                                 content=ft.Icon(ft.Icons.VISIBILITY_ROUNDED, size=20, color=self.AZUL),
@@ -607,49 +606,19 @@ class PantallaHistorial(ft.Container):
         nombre = str(d.get("nombre", "Desconocido"))
         identificador = str(d.get("identificador", "N/A"))
         tipo = str(d.get("tipo", "ALUMNO")).upper()
-        fecha = str(d.get("fecha", "-"))
-        entrada = str(d.get("entrada", "-"))
+        fecha = d["entrada"].strftime("%Y-%m-%d")
+        entrada = d["entrada"].strftime("%H:%M:%S")
         
         # Validación segura para datos nulos de la base de datos
         salida_raw = d.get("salida")
-        salida = str(salida_raw) if salida_raw else ""
+        salida = d["salida"].strftime("%H:%M:%S") if d["salida"] else ""
 
-        # --- EXTRACCIÓN Y FALLBACK DE DATOS ACADÉMICOS ---
+        # --- DATOS ACADÉMICOS ---
         semestre = str(d.get("semestre") or "N/A")
         grupo = str(d.get("grupo") or "N/A")
-        carrera = str(d.get("nombre_carrera") or d.get("carrera") or "N/A")
+        carrera = str(d.get("carrera") or "N/A")
         n_plaza = str(d.get("n_plaza") or "N/A")
-        institucion = str(d.get("nombre_institucion") or d.get("institucion") or "N/A")
-
-        # Si el Controlador descartó las llaves al llenar la tabla, forzamos la obtención DIRECTA desde la BD
-        if semestre == "N/A" or carrera == "N/A" or n_plaza == "N/A" or institucion == "N/A":
-            try:
-                from Persistencia.Postgres.Pool.DBPool import db
-                
-                query = """
-                    SELECT 
-                        g.grupo, c.nombre_carrera, s.semestre, 
-                        p.n_plaza, i.nombre_institucion
-                    FROM usuario u
-                    LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
-                    LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
-                    LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
-                    LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
-                    LEFT JOIN personal p ON u.id_usuario = p.id_usuario
-                    LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
-                    LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
-                    WHERE u.identificador = %s
-                """
-                with db.get_connection() as conn:
-                    row = conn.execute(query, (identificador,)).fetchone()
-                    if row:
-                        semestre = str(row.get("semestre") or "N/A")
-                        grupo = str(row.get("grupo") or "N/A")
-                        carrera = str(row.get("nombre_carrera") or "N/A")
-                        n_plaza = str(row.get("n_plaza") or "N/A")
-                        institucion = str(row.get("nombre_institucion") or "N/A")
-            except Exception as e:
-                print(f"Error al obtener datos directamente de la BD: {e}")
+        institucion = str(d.get("institucion") or "N/A")
 
         # === DATOS DINÁMICOS DESDE LA BASE DE DATOS SEGÚN EL ROL ===
         badges_dinamicos = []

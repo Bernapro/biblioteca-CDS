@@ -7,7 +7,8 @@ class PantallaRegistroIncidencia(ft.Container):
         self._page = page
         self.vista_anterior = vista_anterior
         self.expand = True
-        
+        self.alignment = ft.alignment.Alignment(0, 0)
+
         # Colores consistentes con tu diseño
         self.AZUL = "#3B82F6"
         self.GRIS_BORDE = "#D1D5DB"
@@ -188,5 +189,6 @@ class PantallaRegistroIncidencia(ft.Container):
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
+            expand=True
         )

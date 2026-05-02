@@ -1,244 +1,99 @@
 from Negocio.Modelo.Interfaces.Repositorio import Repositorio
 from Persistencia.CRUD.CRUDimpl import CRUDimp
+from Persistencia.Postgres.Pool.DBPool import db
+
 
 class RepositorioImpl(Repositorio):
 
     def __init__(self, crud: CRUDimp):
         self.__crud = crud
 
+    # =============================
+    # INTERFAZ (SE RESPETA TAL CUAL)
+    # =============================
 
-#registro
     def obtener_todos(self, nombre_tabla: str):
-        return self.__crud.read_all(nombre_tabla)
+        with db.get_connection() as conn:
+            return self.__crud.read_all(conn, nombre_tabla)
 
     def obtener_por_id(self, nombre_tabla: str, id):
-        return self.__crud.read_one(
-            nombre_tabla,
-            {f"id_{nombre_tabla}": id}
-        )
+        with db.get_connection() as conn:
+            return self.__crud.read_one(
+                nombre_tabla,
+                {f"id_{nombre_tabla}": id},
+                conn
+            )
 
-    def guardar(self, objeto, conn):
-        if self.__crud:
+    def guardar(self, objeto):
+        with db.get_connection() as conn:
             valores = tuple(objeto.get_columns().values())
-            return self.__crud.create(objeto.get_table_name(), objeto.get_columns().keys(), valores, conn)
-        return None
-        
+            return self.__crud.create(
+                objeto.get_table_name(),
+                objeto.get_columns().keys(),
+                valores,
+                conn
+            )
+
     def eliminar(self, nombre_tabla: str, id):
-        return self.__crud.delete(
-            nombre_tabla,
-            {f"id_{nombre_tabla}": id}
-        )
-    
-    def obtener_siguiente_vis(self, conn):
-        query = "SELECT last_value + 1 AS siguiente FROM seq_visitante"
-        result = conn.execute(query).fetchone()
-        return f"VIS-{result['siguiente']}"
-
-    #asistencia
-    def buscar_usuario_por_identificador(self, identificador, conn):
-        return self.__crud.read_one(
-            "usuario",
-            {"identificador": identificador},
-            conn
-        )
-
-    def obtener_registro_abierto(self, id_usuario, conn):
-        query = """
-            SELECT *
-            FROM registro
-            WHERE id_usuario = %s
-            AND fecha_salida IS NULL
-            ORDER BY fecha_entrada DESC
-            LIMIT 1
-        """
-        return conn.execute(query, (id_usuario,)).fetchone()
-
-    def registrar_salida(self, id_registro, conn):
-        query = """
-            UPDATE registro
-            SET fecha_salida = CURRENT_TIMESTAMP
-            WHERE id_registro = %s
-            RETURNING *
-        """
-
-        return conn.execute(query, (id_registro,)).fetchone()
-        
-    def cerrar_registros_abiertos(self, conn):
-        query = """
-            UPDATE registro
-            SET fecha_salida = DATE_TRUNC('day', fecha_entrada) + INTERVAL '23:59:59'
-            WHERE fecha_salida IS NULL
-            AND fecha_entrada < CURRENT_DATE
-        """
-        conn.execute(query)
-            
-#historial
-    def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos", conn= None):
-        query = """
-            SELECT 
-                u.identificador,
-                u.nombre,
-                u.ap_paterno,
-                u.ap_materno,
-                u.tipo_usuario,
-                r.fecha_entrada,
-                r.fecha_salida,
-                al.matricula,
-                p.n_plaza,
-                g.grupo,
-                c.nombre_carrera,
-                s.semestre,
-                i.nombre_institucion
-            FROM registro r
-            INNER JOIN usuario u ON r.id_usuario = u.id_usuario
-            LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
-            LEFT JOIN personal p ON u.id_usuario = p.id_usuario
-            LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
-            LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
-            LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
-            LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
-            LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
-            WHERE 1=1
-        """
-
-        params = []
-
-        # ===== TEXTO =====
-        if texto:
-            query += """
-            AND (
-                LOWER(u.identificador) LIKE LOWER(%s)
-                OR LOWER(CONCAT(u.nombre,' ',u.ap_paterno,' ',u.ap_materno)) LIKE LOWER(%s)
+        with db.get_connection() as conn:
+            return self.__crud.delete(
+                nombre_tabla,
+                {f"id_{nombre_tabla}": id},
+                conn
             )
-            """
-            params.extend([f"%{texto}%", f"%{texto}%"])
 
-        # ===== FECHAS =====
-        if fecha_inicio:
-            query += " AND DATE(r.fecha_entrada) >= %s"
-            params.append(fecha_inicio)
+    def obtener_paginado(self, nombre_tabla: str, limit: int = 10, offset: int = 0):
+        with db.get_connection() as conn:
+            return self.__crud.get_paginated(conn, nombre_tabla, limit, offset)
 
-        if fecha_fin:
-            query += " AND DATE(r.fecha_entrada) <= %s"
-            params.append(fecha_fin)
-
-        # ===== TIPO =====
-        if tipo != "Todos":
-            MAP = {
-                "Alumno": "ALUMNO",
-                "Personal": "PERSONAL",
-                "Visitante": "VISITANTE"
-            }
-            query += " AND u.tipo_usuario = %s"
-            params.append(MAP[tipo])
-
-        # ===== ESTADO =====
-        if estado == "Activos":
-            query += " AND r.fecha_salida IS NULL"
-        elif estado == "Finalizados":
-            query += " AND r.fecha_salida IS NOT NULL"
-
-        query += " ORDER BY r.fecha_entrada DESC"
-
-
-        return conn.execute(query, tuple(params)).fetchall()
-        
-    def contar_usuarios_hoy(self, conn):
-        query = """
-            SELECT COUNT(DISTINCT id_usuario) as total
-            FROM registro
-            WHERE DATE(fecha_entrada) = CURRENT_DATE
-        """
-
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query).fetchone()["total"]
-
-
-    def obtener_historial_completo(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
-        query = """
-            SELECT
-                r.id_registro,
-
-                u.identificador,
-                u.nombre,
-                u.ap_paterno,
-                u.ap_materno,
-                u.tipo_usuario,
-
-                r.fecha_entrada,
-                r.fecha_salida,
-
-                -- Alumno
-                al.matricula,
-
-                -- Personal
-                p.n_plaza,
-
-                -- Grupo
-                g.grupo,
-
-                -- Carrera
-                c.nombre_carrera,
-
-                -- Facultad
-                f.nombre_facultad,
-
-                -- Semestre
-                s.semestre,
-
-                -- Visitante
-                i.nombre_institucion
-
-            FROM registro r
-            INNER JOIN usuario u ON r.id_usuario = u.id_usuario
-
-            LEFT JOIN alumno al ON u.id_usuario = al.id_usuario
-            LEFT JOIN personal p ON u.id_usuario = p.id_usuario
-            LEFT JOIN visitante v ON u.id_usuario = v.id_usuario
-
-            LEFT JOIN grupo g ON al.id_grupo = g.id_grupo
-            LEFT JOIN carrera c ON g.id_carrera = c.id_carrera
-            LEFT JOIN facultad f ON c.id_facultad = f.id_facultad
-            LEFT JOIN semestre s ON g.id_semestre = s.id_semestre
-
-            LEFT JOIN institucion i ON v.id_institucion = i.id_institucion
-
-            WHERE 1=1
-        """
-
-        params = []
-        if texto:
-            query += """
-            AND (
-                LOWER(u.identificador) LIKE LOWER(%s)
-                OR LOWER(CONCAT(u.nombre,' ',u.ap_paterno,' ',u.ap_materno)) LIKE LOWER(%s)
+    def buscar_usuario_por_identificador(self, identificador):
+        with db.get_connection() as conn:
+            return self.__crud.read_one(
+                "usuario",
+                {"identificador": identificador},
+                conn
             )
+
+    def ejecutar_procedimiento(self, nombre_procedimiento: str):
+        """Ejecuta un procedimiento SQL (ej: cerrar_registros_pendientes)"""
+        with db.get_connection() as conn:
+            self.__crud.execute_procedure(nombre_procedimiento, conn)
+
+    # =============================
+    # ASISTENCIA (OPERACIONES ESPECÍFICAS)
+    # =============================
+
+    def obtener_registro_abierto(self, id_usuario):
+        """Obtiene registro sin salida para un usuario (para asistencia)"""
+        with db.get_connection() as conn:
+            query = """
+                SELECT *
+                FROM registro
+                WHERE id_usuario = %s
+                AND fecha_salida IS NULL
+                LIMIT 1
             """
-            params.extend([f"%{texto}%", f"%{texto}%"])
+            return conn.execute(query, (id_usuario,)).fetchone()
 
-        if fecha_inicio:
-            query += " AND DATE(r.fecha_entrada) >= %s"
-            params.append(fecha_inicio)
+    def registrar_salida(self, id_registro):
+        """Registra hora de salida (para asistencia)"""
+        with db.get_connection() as conn:
+            query = """
+                UPDATE registro
+                SET fecha_salida = CURRENT_TIMESTAMP
+                WHERE id_registro = %s
+                RETURNING *
+            """
+            return conn.execute(query, (id_registro,)).fetchone()
 
-        if fecha_fin:
-            query += " AND DATE(r.fecha_entrada) <= %s"
-            params.append(fecha_fin)
+    # =============================
+    # REGISTRO DE USUARIOS
+    # =============================
 
-        if tipo != "Todos":
-            MAP = {
-                "Alumno": "ALUMNO",
-                "Personal": "PERSONAL",
-                "Visitante": "VISITANTE"
-            }
-            query += " AND u.tipo_usuario = %s"
-            params.append(MAP[tipo])
-
-        if estado == "Activos":
-            query += " AND r.fecha_salida IS NULL"
-        elif estado == "Finalizados":
-            query += " AND r.fecha_salida IS NOT NULL"
-
-        query += " ORDER BY r.fecha_entrada DESC"
-
-        with self._RepositorioImpl__crud.pool.get_connection() as conn:
-            return conn.execute(query, tuple(params)).fetchall()
+    def obtener_siguiente_vis(self):
+        """Obtiene el siguiente número de secuencia para Visitante"""
+        with db.get_connection() as conn:
+            query = "SELECT nextval('seq_visitante') as numero"
+            result = conn.execute(query).fetchone()
+            return f"VIS-{result['numero']}"
+        
