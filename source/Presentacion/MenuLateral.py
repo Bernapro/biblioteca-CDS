@@ -11,7 +11,7 @@ class MenuLateral(ft.Container):
         self.margin = ft.margin.only(left=20, top=20, bottom=20)
         self.padding = 20
         self.border_radius = 20
-        self.bgcolor = "white"
+        self.bgcolor = "surface" # 🔥 Texto directo
         self.shadow = ft.BoxShadow(blur_radius=25, color="black12", offset=ft.Offset(0, 10))
 
         # Opciones del menú
@@ -28,7 +28,7 @@ class MenuLateral(ft.Container):
         # Menú dinámico
         self.menu_items = ft.Column(spacing=10)
         self.content = ft.Column([
-            ft.Text("UNACH", size=22, weight="bold", color="#111827"),
+            ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # 🔥 Texto directo
             ft.Divider(height=20, color="transparent"),
             self.menu_items
         ])
@@ -40,35 +40,27 @@ class MenuLateral(ft.Container):
         self.menu_items.controls.clear()
         
         for index, (icon, texto) in enumerate(self.opciones):
-            # Comprobamos si este botón es el que está seleccionado actualmente
             activo = (self.active_index == index)
             
             item = ft.Container(
                 content=ft.Row([
-                    # Barrita lateral azul
-                    ft.Container(width=5, height=40, bgcolor="#3B82F6" if activo else "transparent", border_radius=5),
-                    # Icono
-                    ft.Icon(icon, size=22, color="#3B82F6" if activo else "#6B7280"),
-                    # Texto
-                    ft.Text(texto, size=15, weight="bold" if activo else "normal", color="#111827" if activo else "#374151"),
+                    ft.Container(width=5, height=40, bgcolor="primary" if activo else "transparent", border_radius=5),
+                    
+                    # 🔥 Textos directos en vez de ft.Colors
+                    ft.Icon(icon, size=22, color="primary" if activo else "onSurfaceVariant"),
+                    ft.Text(texto, size=15, weight="bold" if activo else "normal", color="primary" if activo else "onSurfaceVariant"),
                 ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=12,
                 border_radius=12,
-                bgcolor="#EFF6FF" if activo else "transparent",
-                # Al hacer clic, ejecuta cambiar_seleccion pasando el índice de este botón
+                
+                # 🔥 Texto directo
+                bgcolor="primaryContainer" if activo else "transparent",
                 on_click=lambda e, idx=index: self.cambiar_seleccion(idx)
             )
             self.menu_items.controls.append(item)
 
     def cambiar_seleccion(self, index):
-        # 1. Actualizamos el índice de la pestaña seleccionada
         self.active_index = index
-        
-        # 2. Volvemos a construir los botones para que apliquen los colores al nuevo índice
         self.build_menu()
-        
-        # 3. Actualizamos solo la interfaz del Sidebar
         self.update()
-        
-        # 4. Le avisamos a la aplicación principal que cambie la vista
         self.on_menu_click(index)

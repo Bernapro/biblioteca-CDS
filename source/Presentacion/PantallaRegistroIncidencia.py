@@ -37,30 +37,30 @@ class PantallaRegistroIncidencia(ft.Container):
             hint_text="Describe lo sucedido..."
         )
 
-        # Categoría y Vista Previa
+        # Categoría
         self.drop_cat = ft.Dropdown(
             label="Categoría",
             width=165, border_radius=12, border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
+            value="Libros", # 🔥 NUEVO: Valor inicial por defecto
             options=[
                 ft.dropdown.Option("Ruido"),
                 ft.dropdown.Option("Equipo"),
                 ft.dropdown.Option("Comportamiento"),
                 ft.dropdown.Option("Libros")
             ],
-            on_select=self.actualizar_vista_previa # Sintaxis para Flet 0.84.0
+            on_select=self.actualizar_vista_previa
         )
 
-        # Elementos de Vista Previa
-        self.icono_previa = ft.Icon(ft.Icons.REPORT_PROBLEM, color=self.AZUL, size=30)
-        self.txt_previa = ft.Text("Vista Previa", size=12, weight="bold")
+        # Elementos de Vista Previa (Iniciados con los valores de "Libros")
+        self.icono_previa = ft.Icon(ft.Icons.WARNING, color=self.AZUL, size=30)
+        self.txt_previa = ft.Text("Libros", size=13, weight="bold")
         
-        # CORRECCIÓN DE ALINEACIÓN PARA VERSIÓN 0.84.0
         self.container_previa = ft.Container(
             content=ft.Row([self.icono_previa, self.txt_previa], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
             width=165, height=60, bgcolor="#F3F4F6", border_radius=12,
             padding=10, 
-            alignment=ft.Alignment(0, 0) # <--- SOLUCIÓN: Usar coordenadas en lugar de .center
+            alignment=ft.Alignment(0, 0) 
         )
 
         self.row_cat_previa = ft.Row([self.drop_cat, self.container_previa], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
@@ -93,7 +93,6 @@ class PantallaRegistroIncidencia(ft.Container):
 
     def seleccionar_fecha(self, e):
         if self.calendario.value:
-            # Formateamos la fecha (puedes cambiarlo a "%d/%m/%Y" si prefieres ese formato visual)
             self.txt_fecha.value = self.calendario.value.strftime("%Y-%m-%d")
             self.txt_fecha.update()
 
@@ -101,14 +100,21 @@ class PantallaRegistroIncidencia(ft.Container):
         self.calendario.open = True
         self._page.update()
 
+    # 🔥 CORRECCIÓN: Lógica mejorada para la vista previa
     def actualizar_vista_previa(self, e):
         cat = self.drop_cat.value
         if cat:
             self.txt_previa.value = cat
-            if cat == "Ruido": self.icono_previa.name = ft.Icons.VOLUME_UP
-            elif cat == "Equipo": self.icono_previa.name = ft.Icons.COMPUTER
-            elif cat == "Comportamiento": self.icono_previa.name = ft.Icons.PERSON_OFF
-            elif cat == "Libros": self.icono_previa.name = ft.Icons.MENU_BOOK
+            if cat == "Ruido": 
+                self.icono_previa.name = ft.Icons.VOLUME_UP_ROUNDED
+            elif cat == "Equipo": 
+                self.icono_previa.name = ft.Icons.COMPUTER_ROUNDED
+            elif cat == "Comportamiento": 
+                self.icono_previa.name = ft.Icons.PERSON_OFF_ROUNDED
+            elif cat == "Libros": 
+                self.icono_previa.name = ft.Icons.WARNING
+            
+            # Actualizamos la pantalla para reflejar el cambio
             self.update()
 
     def _crear_input(self, label, width):
@@ -121,9 +127,7 @@ class PantallaRegistroIncidencia(ft.Container):
 
     def cancelar(self, e):
         if self.vista_anterior:
-            # Reconstruimos la UI de la vista anterior (la lista de incidencias)
             self.vista_anterior.build_ui()
-            # Actualizamos la vista anterior para que se vuelva a dibujar
             self.vista_anterior.update()
 
     def build_ui(self):
@@ -170,7 +174,6 @@ class PantallaRegistroIncidencia(ft.Container):
             )
         )
         
-        # Fondo degradado como el de usuarios
         self.content = ft.Column(
             [
                 ft.Container(

@@ -2,11 +2,13 @@ import flet as ft
 
 # IMPORTACIÓN DE LA NUEVA CLASE (Se mantiene igual)
 from Presentacion.PantallaRegistroIncidencia import PantallaRegistroIncidencia
+from Negocio.Controlador.ControladorIncidencia import ControladorIncidencia
 
 class PantallaIncidencias(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
+        self.controlador = ControladorIncidencia(self) # Instanciamos el controlador
         
         # ===== COLORES CONSTANTES (Actualizados y nuevos) =====
         self.AZUL = "#3B82F6"      # Botones principales
@@ -25,6 +27,12 @@ class PantallaIncidencias(ft.Container):
         self.padding = 30
         self.bgcolor = self.FONDO
         self.border_radius = 30
+        
+        # ===== VARIABLES DE PAGINACIÓN =====
+        self.pagina_actual = 1
+        self.registros_por_pagina = 10
+        self.total_registros = 0
+        self.footer_tabla = ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
         # ===== CONTROLES DINÁMICOS DE BÚSQUEDA =====
         self.input_busqueda = ft.TextField(
@@ -51,9 +59,7 @@ class PantallaIncidencias(ft.Container):
             text_style=ft.TextStyle(size=15, weight="w500")
         )
 
-        # =====================================================================
-        # ===== NUEVA ESTRUCTURA DEL DIÁLOGO (Credencial del Estudiante) =====
-        # =====================================================================
+    
         
         # 1. Controles referenciables dentro del modal (para actualizar su contenido)
         self.modal_avatar_icon = ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=80, color=self.NARANJA)
@@ -62,7 +68,7 @@ class PantallaIncidencias(ft.Container):
         self.modal_carrera = ft.Text("", color=self.GRIS_TEXTO, size=13)
         self.modal_semestre = ft.Text("", color=self.GRIS_TEXTO, size=13, weight="bold")
         
-        # QR Placeholder (Como pediste, no hay problema si no está, dejamos el espacio)
+        # espacio para QR 
         self.modal_qr_placeholder = ft.Container(width=80, height=80, bgcolor=self.GRIS_BORDE, border_radius=5)
 
         self.modal_tipo = ft.Text("", color=self.NARANJA, weight="bold")
@@ -87,7 +93,7 @@ class PantallaIncidencias(ft.Container):
         # Definición del AlertDialog rediseñado
         self.dialogo_detalles = ft.AlertDialog(
             modal=True,
-            bgcolor="white", # Fondo blanco puro como la imagen 1
+            bgcolor="white", 
             shape=ft.RoundedRectangleBorder(radius=15),
             
             # TÍTULO: Fila con Texto y Botón Cerrar
@@ -135,10 +141,10 @@ class PantallaIncidencias(ft.Container):
                         ft.Text("Cambiar Estado:", width=130, color=self.GRIS_TEXTO, weight="bold"),
                         ft.Row([
                             # Botón Resuelto (Verde activo)
-                            ft.Container(content=ft.Text("Resuelto", color="white", size=12, weight="bold"), bgcolor=self.VERDE, padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5),
+                            ft.Container(content=ft.Text("Resuelto", color="white", size=12, weight="bold"), bgcolor=self.VERDE, padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5, width=90, alignment=ft.Alignment(0, 0)),
                             ft.Icon(ft.Icons.SWAP_HORIZ, color=self.GRIS_TEXTO),
                             # Botón Pendiente (Gris inactivo)
-                            ft.Container(content=ft.Text("Pendiente", color="black", size=12), border=ft.border.all(1, self.GRIS_BORDE), padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5),
+                            ft.Container(content=ft.Text("Pendiente", color="black", size=12), border=ft.border.all(1, self.GRIS_BORDE), padding=ft.padding.symmetric(horizontal=12, vertical=8), border_radius=5, width=90, alignment=ft.Alignment(0, 0)),
                         ], spacing=10)
                     ]),
                     ft.Text("Cambia el estado de la incidencia", color=self.GRIS_TEXTO, size=11, italic=True),
@@ -159,7 +165,7 @@ class PantallaIncidencias(ft.Container):
                     bgcolor=self.AZUL, 
                     color="white", 
                     style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-                    on_click=self.guardar_dialogo
+                    on_click=self.controlador.guardar_dialogo # Delegado al controlador
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.END,
@@ -210,22 +216,16 @@ class PantallaIncidencias(ft.Container):
         self.dialogo_detalles.open = False
         self._page.update()
 
-    def guardar_dialogo(self, e):
-        # Aquí obtienes el nuevo comentario y lógica para cambiar estado
-        print(f"Guardando cambios para: {self.modal_nombre.value}")
-        print(f"Nuevo Comentario: {self.modal_comentario.value}")
-        self.cerrar_dialogo(e)
-
     # ===== BOTONES REUTILIZABLES =====
     def build_btn_resuelto(self):
         return ft.ElevatedButton(
-            "Resuelto", height=40, 
+            "Resuelto", height=40, width=120,
             style=ft.ButtonStyle(bgcolor=self.VERDE, color="white", shape=ft.RoundedRectangleBorder(radius=8))
         )
 
     def build_btn_pendiente(self):
         return ft.ElevatedButton(
-            "Pendiente", height=40, 
+            "Pendiente", height=40, width=120,
             style=ft.ButtonStyle(bgcolor=self.ROJO, color="white", shape=ft.RoundedRectangleBorder(radius=8))
         )
 
@@ -312,27 +312,103 @@ class PantallaIncidencias(ft.Container):
             ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         )
 
-        # MODIFICADO: Agregamos datos de Carrera y Semestre a los ejemplos de la lista
-        lista = ft.Column([
-            self.build_card("Carlos Daniel", "100025787", "Ingeniería en Sistemas", "4° Semestre", "Ruido excesivo", "Cubículo 1", "24/Marzo/2026 - 10:30 AM", "PARCIAL", "Pendiente"),
-            self.build_card("Cruz Castillo", "100025788", "Lic. en Derecho", "6° Semestre", "Uso indebido del equipo", "Cubículo 2", "25/Marzo/2026 - 11:00 AM", "DEFINITIVA", "Resuelto"),
-            self.build_card("Jose Angel", "ABCDEFGA", "Medicina", "2° Semestre", "Comportamiento inapropiado", "Cubículo 3", "26/Marzo/2026 - 09:15 AM", "PARCIAL", "Pendiente"),
-            self.build_card("Figueroa Sales", "ABCDEFGA", "Contaduría", "8° Semestre", "Páginas arrancadas", "Área de lectura", "27/Marzo/2026 - 16:00 PM", "DEFINITIVA", "Resuelto"),
-        ], spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
+        # Contenedor dinámico para la lista
+        self.lista_incidencias = ft.Column(spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
+        self.cargar_datos() # Se llama para popular la lista
 
-        paginacion = ft.Row([
-            ft.Text("1-10 de 100 incidencias", color="black"),
-            ft.Row([ft.OutlinedButton("Anterior"), ft.OutlinedButton("Siguiente")], spacing=10)
-        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+        self.content = ft.Column([encabezado, filtros, self.lista_incidencias, self.footer_tabla], spacing=20, expand=True)
 
-        self.content = ft.Column([encabezado, filtros, lista, paginacion], spacing=20, expand=True)
+    # Función detectada automáticamente por PantallaPrincipal para refrescar al entrar a la vista
+    def actualizar(self):
+        self.cargar_datos()
 
-# Código para probar la clase sola
-if __name__ == "__main__":
-    def main(page: ft.Page):
-        page.title = "Prueba UNACH - Incidencias"
-        page.bgcolor = "#D0DCE7" # Un fondo gris para que resalte el contenedor azul claro
-        p = PantallaIncidencias(page)
-        page.add(p)
+    def cargar_datos(self, e=None):
+        self.lista_incidencias.controls.clear()
+        datos = self.controlador.obtener_incidencias()
+        
+        # ===== LÓGICA DE PAGINACIÓN =====
+        self.total_registros = len(datos)
+        inicio = (self.pagina_actual - 1) * self.registros_por_pagina
+        fin = inicio + self.registros_por_pagina
+        datos_paginados = datos[inicio:fin]
+        
+        for d in datos_paginados:
+            self.lista_incidencias.controls.append(
+                self.build_card(d["nombre"], d["matricula"], d["carrera"], d["semestre"], d["razon"], d["lugar"], d["fecha"], d["tipo"], d["estado"])
+            )
+            
+        texto_resultados = ft.Text(
+            f"Mostrando {len(datos_paginados)} de {self.total_registros} incidencias",
+            size=14,
+            color="grey"
+        )
+        
+        self.footer_tabla.controls = [
+            texto_resultados,
+            self.construir_paginacion()
+        ]
+        if e:
+            self.update()
 
-    ft.app(target=main)
+    def _input_focus(self, e):
+        e.control.value = ""
+        e.control.color = "black"
+        self.update()
+
+    def _input_blur(self, e):
+        if not e.control.value:
+            e.control.value = str(self.pagina_actual)
+            e.control.color = "grey"
+        self.update()
+
+    def construir_paginacion(self):
+        total_paginas = max(1, (self.total_registros // self.registros_por_pagina) + (1 if self.total_registros % self.registros_por_pagina else 0))
+
+        def cambiar_pagina(nueva):
+            if 1 <= nueva <= total_paginas:
+                self.pagina_actual = nueva
+                self.cargar_datos(e=True) # Pasamos 'e' para forzar la actualización visual
+
+        input_pagina = ft.TextField(
+            width=60, height=35, text_align=ft.TextAlign.CENTER,
+            value=str(self.pagina_actual), border_radius=8, color="grey",
+            content_padding=5, 
+            on_focus=lambda e: self._input_focus(e),
+            on_blur=lambda e: self._input_blur(e),
+            on_submit=lambda e: cambiar_pagina(int(e.control.value) if e.control.value.isdigit() else self.pagina_actual)
+        )
+
+        botones = [
+            ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(1)),
+            ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1))
+        ]
+
+        rango = 2
+        paginas = []
+        if total_paginas <= 7:
+            paginas = list(range(1, total_paginas + 1))
+        else:
+            paginas = [1]
+            if self.pagina_actual > 3: paginas.append("...")
+            for i in range(max(2, self.pagina_actual - rango), min(total_paginas - 1, self.pagina_actual + rango) + 1):
+                paginas.append(i)
+            if self.pagina_actual < total_paginas - 2: paginas.append("...")
+            paginas.append(total_paginas)
+
+        for p in paginas:
+            if p == "...":
+                botones.append(ft.Text("...", color="black"))
+            else:
+                botones.append(ft.TextButton(
+                    content=ft.Text(str(p)), on_click=lambda e, p=p: cambiar_pagina(p),
+                    style=ft.ButtonStyle(bgcolor=self.AZUL if p == self.pagina_actual else None, color="white" if p == self.pagina_actual else "black")
+                ))
+
+        botones.extend([
+            ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)),
+            ft.IconButton(ft.Icons.LAST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(total_paginas)),
+            input_pagina
+        ])
+
+        return ft.Row(botones, spacing=5)
+

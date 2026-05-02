@@ -5,12 +5,12 @@ class PantallaDashboard(ft.Container):
         super().__init__()
         self._page = page
         
-        # ===== COLORES =====
-        self.BG = "#EEF3F8"
-        self.CARD = "white"
-        self.TEXT_SECONDARY = "#6B7280"
-        self.PRIMARY = "#3B82F6"
-        self.TEXT_MAIN = "#111827"
+        # ===== COLORES INFALIBLES COMO TEXTO =====
+        self.BG = "transparent" 
+        self.CARD = "surface"               # Blanco de día / Gris oscuro de noche
+        self.TEXT_SECONDARY = "onSurfaceVariant" # Gris intermedio adaptable
+        self.PRIMARY = "#3B82F6"            # Tu azul institucional
+        self.TEXT_MAIN = "onSurface"        # Negro de día / Blanco de noche
         
         # Propiedades del Contenedor Principal
         self.expand = True
@@ -62,7 +62,7 @@ class PantallaDashboard(ft.Container):
                                     stroke_width=20,
                                     width=160,
                                     height=160,
-                                    color="#E5E7EB",
+                                    color="surfaceVariant", # 🔥 Texto directo
                                 ),
                                 ft.ProgressRing(
                                     value=0.75,
@@ -142,28 +142,6 @@ class PantallaDashboard(ft.Container):
                                 ft.Text("Panel de Control", size=36, weight="bold", color=self.TEXT_MAIN),
                                 ft.Text("Bienvenido José, hora de hacer tarea", size=15, color=self.TEXT_MAIN),
                             ]
-                        ),
-                        ft.Row(
-                            [
-                                ft.Icon(ft.Icons.WB_SUNNY_OUTLINED, color=self.PRIMARY, size=22),
-
-                                # BARRA 
-                                ft.Container(
-                                    width=300, height=30,
-                                    bgcolor="#D1D5DB",
-                                    border_radius=20,
-                                    padding=4,
-                                    content=ft.Container(
-                                        width=50,
-                                        bgcolor=self.PRIMARY,
-                                        border_radius=20,
-                                        alignment=ft.Alignment(-1, 0)
-                                    )
-                                ),
-
-                                ft.Icon(ft.Icons.NIGHTLIGHT_ROUND, size=22, color=self.TEXT_SECONDARY),
-                            ],
-                            spacing=15
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN
