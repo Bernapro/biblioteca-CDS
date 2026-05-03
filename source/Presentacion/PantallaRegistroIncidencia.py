@@ -1,5 +1,6 @@
 import flet as ft
 import datetime
+from Negocio.Controlador.ControladorRegistroIncidencia import ControladorRegistroIncidencia
 
 class PantallaRegistroIncidencia(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
@@ -9,18 +10,24 @@ class PantallaRegistroIncidencia(ft.Container):
         self.expand = True
         self.alignment = ft.alignment.Alignment(0, 0)
 
-        # ===== COLORES ADAPTABLES AL MODO OSCURO =====
+        # Colores consistentes con tu diseño
         self.AZUL = "#3B82F6"
-        self.GRIS_BORDE = "outline"          # 🔥 MODIFICADO
-        self.GRIS_TEXTO = "onSurfaceVariant" # 🔥 MODIFICADO
-        self.TEXT = "onSurface"              # 🔥 MODIFICADO
-        self.CARD = "surface"                # 🔥 MODIFICADO
+        self.GRIS_BORDE = "outline"          
+        self.GRIS_TEXTO = "onSurfaceVariant" 
+        self.TEXT = "onSurface"             
+        self.CARD = "surface"  
+
+        self.controlador = ControladorRegistroIncidencia(self)
 
         # === CONTROLES DEL FORMULARIO ===
-        self.txt_nombre = self._crear_input("Nombre del estudiante", width=350)
-        self.txt_matricula = self._crear_input("Matrícula", width=350)
-        
+        self.txt_nombre = self._crear_input("Nombre del usuario", 350)
+        self.txt_nombre.read_only = True
+
+        self.text_identificador = self._crear_input("Identificador (Matrícula / Plaza / Visitante)", 350)
+        self.text_identificador.on_change = self.controlador.buscar_usuario
+
         self.drop_tipo = ft.Dropdown(
+            value="PARCIAL",
             label="Tipo de incidencia",
             width=350, border_radius=12, border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
@@ -53,15 +60,13 @@ class PantallaRegistroIncidencia(ft.Container):
             on_select=self.actualizar_vista_previa
         )
 
-        # Elementos de Vista Previa 
+        # Elementos de Vista Previa (Iniciados con los valores de "Libros")
         self.icono_previa = ft.Icon(ft.Icons.WARNING, color=self.AZUL, size=30)
-        self.txt_previa = ft.Text("Libros", size=13, weight="bold", color=self.TEXT) # 🔥 MODIFICADO: Color de texto adaptable
+        self.txt_previa = ft.Text("Libros", size=13, weight="bold")
         
         self.container_previa = ft.Container(
             content=ft.Row([self.icono_previa, self.txt_previa], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
-            width=165, height=60, 
-            bgcolor="surfaceVariant", # 🔥 MODIFICADO: Gris adaptable en vez de fijo
-            border_radius=12,
+            width=165, height=60, bgcolor="surfaceVariant", border_radius=12,
             padding=10, 
             alignment=ft.Alignment(0, 0) 
         )
@@ -71,11 +76,7 @@ class PantallaRegistroIncidencia(ft.Container):
         self.txt_lugar = self._crear_input("Lugar (Ej. Cubículo 1)", width=165)
         
         # --- CALENDARIO ---
-        self.calendario = ft.DatePicker(
-            on_change=self.seleccionar_fecha,
-            first_date=datetime.datetime(2000, 1, 1),
-            last_date=datetime.datetime.now(), 
-        )
+        self.calendario = ft.DatePicker(on_change=self.seleccionar_fecha)
         self._page.overlay.append(self.calendario)
 
         self.txt_fecha = ft.TextField(
@@ -84,20 +85,30 @@ class PantallaRegistroIncidencia(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
             read_only=True,
             suffix_icon=ft.Icons.CALENDAR_MONTH,
             on_click=self.abrir_calendario
         )
-        
-        self.row_lugar_fecha = ft.Row([self.txt_lugar, self.txt_fecha], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
+
+        self.row_lugar_fecha = ft.Row(
+            [self.txt_lugar, self.txt_fecha],
+            spacing=20,
+            alignment=ft.MainAxisAlignment.CENTER
+        )
+
+        self.txt_mensaje = ft.Text(
+            "",
+            size=13,
+            weight="w500",
+            color="green"
+        )
 
         self.build_ui()
 
     def seleccionar_fecha(self, e):
         if self.calendario.value:
             self.txt_fecha.value = self.calendario.value.strftime("%Y-%m-%d")
-            self.txt_fecha.update()
+            self.update()
 
     def abrir_calendario(self, e):
         self.calendario.open = True
@@ -105,24 +116,25 @@ class PantallaRegistroIncidencia(ft.Container):
 
     def actualizar_vista_previa(self, e):
         cat = self.drop_cat.value
-        if cat:
-            self.txt_previa.value = cat
-            if cat == "Ruido": 
-                self.icono_previa.name = ft.Icons.VOLUME_UP_ROUNDED
-            elif cat == "Equipo": 
-                self.icono_previa.name = ft.Icons.COMPUTER_ROUNDED
-            elif cat == "Comportamiento": 
-                self.icono_previa.name = ft.Icons.PERSON_OFF_ROUNDED
-            elif cat == "Libros": 
-                self.icono_previa.name = ft.Icons.WARNING
-            
-            # Actualizamos la pantalla para reflejar el cambio
-            self.update()
+        self.txt_previa.value = cat
+
+        if cat == "Ruido":
+            self.icono_previa.name = ft.Icons.VOLUME_UP_ROUNDED
+        elif cat == "Equipo":
+            self.icono_previa.name = ft.Icons.COMPUTER_ROUNDED
+        elif cat == "Comportamiento":
+            self.icono_previa.name = ft.Icons.PERSON_OFF_ROUNDED
+        else:
+            self.icono_previa.name = ft.Icons.WARNING
+
+        self.update()
 
     def _crear_input(self, label, width):
         return ft.TextField(
-            label=label, width=width,
-            border_color=self.GRIS_BORDE, border_radius=12,
+            label=label,
+            width=width,
+            border_color=self.GRIS_BORDE,
+            border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT)
         )
@@ -136,7 +148,7 @@ class PantallaRegistroIncidencia(ft.Container):
         formulario = ft.Column(
             [
                 self.txt_nombre,
-                self.txt_matricula,
+                self.text_identificador,
                 self.drop_tipo,
                 self.txt_desc,
                 self.row_cat_previa,
@@ -165,12 +177,13 @@ class PantallaRegistroIncidencia(ft.Container):
                             ft.ElevatedButton(
                                 "Guardar Reporte",
                                 bgcolor=self.AZUL, color="white", width=180,
-                                on_click=lambda _: print("Guardado")
+                                on_click=self.controlador.guardar
                             )
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=20
-                    )
+                    ),
+                    self.txt_mensaje
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )
@@ -180,7 +193,6 @@ class PantallaRegistroIncidencia(ft.Container):
             [
                 ft.Container(
                     width=660, border_radius=40, padding=30,
-                    # 🔥 AQUÍ REGRESAMOS TU GRADIENTE AZUL INTACTO
                     gradient=ft.LinearGradient(
                         colors=["#cfe8ff", "#9ec9ff"],
                         begin=ft.Alignment(-1, -1),
