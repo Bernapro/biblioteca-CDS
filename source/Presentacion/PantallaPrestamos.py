@@ -12,12 +12,14 @@ class PantallaPrestamos(ft.Container):
         
         # ===== COLORES =====
         self.AZUL = "#3B82F6"
-        self.VERDE = "#10B981" # Un verde más apegado al diseño
+        self.VERDE = "#10B981" 
         self.ROJO = "#EF4444"
         self.NARANJA = "#F59E0B"
-        self.FONDO = "#F4F7FC" # Gris/azulado claro del fondo general
-        self.GRIS_TEXTO = "#6B7280"
-        self.GRIS_BORDE = "#E5E7EB"
+        self.FONDO = "transparent" 
+        self.GRIS_TEXTO = "onSurfaceVariant"
+        self.GRIS_BORDE = "outline"
+        self.TEXT = "onSurface"
+        self.CARD = "surface"
 
         self.expand = True
         self.padding = 30
@@ -31,7 +33,7 @@ class PantallaPrestamos(ft.Container):
         color_fondo = color.replace("#", "#20")
         return ft.Container(
             expand=True,
-            bgcolor="white",
+            bgcolor=self.CARD,
             padding=20,
             border_radius=15,
             border=ft.border.all(1, self.GRIS_BORDE),
@@ -47,7 +49,7 @@ class PantallaPrestamos(ft.Container):
                 # Textos
                 ft.Column([
                     ft.Text(titulo, size=13, color=self.GRIS_TEXTO, weight="w500"),
-                    ft.Text(valor, size=26, weight="bold", color="black"),
+                    ft.Text(valor, size=26, weight="bold", color=self.TEXT),
                     ft.Text(sub_valor, size=11, color=self.GRIS_TEXTO),
                 ], spacing=2)
             ], spacing=15, alignment=ft.MainAxisAlignment.START)
@@ -56,7 +58,7 @@ class PantallaPrestamos(ft.Container):
     
     # ===== BADGE DE ESTADO =====
     def build_estado(self, estado):
-        # Definimos los colores del texto/icono
+        #  colores del texto
         color_texto = self.VERDE if estado == "A tiempo" else self.ROJO
         icono = ft.Icons.CHECK_CIRCLE if estado == "A tiempo" else ft.Icons.CANCEL
         
@@ -96,13 +98,13 @@ class PantallaPrestamos(ft.Container):
                 ft.DataCell(
                     ft.Row([
                         ft.Icon(ft.Icons.PERSON, size=20, color=self.AZUL),
-                        ft.Text(data["nombre"], color="black", size=15)
+                        ft.Text(data["nombre"], color=self.TEXT, size=15)
                     ], spacing=10)
                 ),
                 ft.DataCell(
                     ft.Row([
                         ft.Icon(ft.Icons.MENU_BOOK, size=20, color=self.AZUL if data["estado"] == "A tiempo" else self.ROJO),
-                        ft.Text(data["libro"], color="black", size=15)
+                        ft.Text(data["libro"], color=self.TEXT, size=15)
                     ], spacing=10)
                 ),
                 ft.DataCell(self.build_estado(data["estado"])),
@@ -150,7 +152,7 @@ class PantallaPrestamos(ft.Container):
         # 1. Encabezado y botón nuevo préstamo
         encabezado = ft.Row([
             ft.Column([
-                ft.Text("Préstamos de libros", size=28, weight="bold", color="black"),
+                ft.Text("Préstamos de libros", size=28, weight="bold", color=self.TEXT),
                 ft.Text("Busca y gestiona los préstamos de libros registrados en el sistema.", size=14, color=self.GRIS_TEXTO)
             ], spacing=5),
             ft.ElevatedButton(
@@ -173,7 +175,7 @@ class PantallaPrestamos(ft.Container):
                     hint_text="Buscar por matrícula, nombre o libro...",
                     prefix_icon=ft.Icons.SEARCH, border=ft.InputBorder.NONE, content_padding=15
                 ),
-                bgcolor="white", border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
+                bgcolor=self.CARD, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
             ),
             ft.Container(
                 width=200,
@@ -185,7 +187,7 @@ class PantallaPrestamos(ft.Container):
                     ],
                     border=ft.InputBorder.NONE, content_padding=15, hint_text="Estado: Todos"
                 ),
-                bgcolor="white", border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
+                bgcolor=self.CARD, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
             ),
             ft.ElevatedButton(
                 "Buscar", icon=ft.Icons.SEARCH,
@@ -203,19 +205,19 @@ class PantallaPrestamos(ft.Container):
             expand=True,
             column_spacing=20,    # <-- Reducido para adaptarse a laptops y pantallas pequeñas
             horizontal_margin=15, # <-- Reducido para aprovechar mejor el espacio
-            heading_row_color="#F9FAFB",
+            heading_row_color="surfaceVariant",
             heading_row_height=60,
             data_row_min_height=75, # <-- Filas más altas para la letra grande
             data_row_max_height=75,
             divider_thickness=1,
             columns=[
-                ft.DataColumn(ft.Text("Matrícula", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Nombre", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Libro", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Estado", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Fecha préstamo", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Fecha límite", weight="bold", color="black", size=15)),
-                ft.DataColumn(ft.Text("Acciones", weight="bold", color="black", size=15)),
+                ft.DataColumn(ft.Text("Matrícula", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Nombre", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Libro", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Estado", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Fecha préstamo", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Fecha límite", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Acciones", weight="bold", color=self.TEXT, size=15)),
             ],
             rows=[]
         )
@@ -224,7 +226,7 @@ class PantallaPrestamos(ft.Container):
 
         contenedor_tabla = ft.Container(
             expand=True,
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=15,
             border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column([

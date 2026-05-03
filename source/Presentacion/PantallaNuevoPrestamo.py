@@ -1,5 +1,6 @@
 import flet as ft
 import datetime
+from Negocio.Controlador.ControladorNuevoPrestamo import ControladorNuevoPrestamo
 
 class PantallaNuevoPrestamo(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
@@ -8,6 +9,9 @@ class PantallaNuevoPrestamo(ft.Container):
         self.vista_anterior = vista_anterior
         self.expand = True
         self.alignment = ft.alignment.Alignment(0, 0)
+
+        # Instanciamos el controlador
+        self.controlador = ControladorNuevoPrestamo(self)
 
         # ===== COLORES ADAPTABLES AL MODO OSCURO (Flet 0.84.0) =====
         self.AZUL = "#3B82F6"
@@ -27,7 +31,7 @@ class PantallaNuevoPrestamo(ft.Container):
             text_style=ft.TextStyle(color=self.TEXT),
             expand=True, height=50, content_padding=10
         )
-        self.btn_buscar_alumno = ft.OutlinedButton("Buscar", icon=ft.Icons.SEARCH, style=ft.ButtonStyle(color=self.AZUL, shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.buscar_alumno)
+        self.btn_buscar_alumno = ft.OutlinedButton("Buscar", icon=ft.Icons.SEARCH, style=ft.ButtonStyle(color=self.AZUL, shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.controlador.buscar_alumno)
         
         # Tarjeta de resultado del alumno
         self.card_alumno = ft.Container(
@@ -89,43 +93,6 @@ class PantallaNuevoPrestamo(ft.Container):
         self.cargar_libros_prueba()
         self.build_ui()
 
-    def buscar_alumno(self, e):
-        matricula_buscar = self.txt_matricula.value
-        
-        # =========================================================
-        # AQUÍ TU AMIGO CONECTARÁ LA API O LA BASE DE DATOS
-        # respuesta = api.buscar_alumno(matricula_buscar)
-        # =========================================================
-        
-        # Simulamos que la API devuelve un resultado exitoso:
-        if matricula_buscar:
-            nombre = "Carlos Daniel" # Reemplazar con: respuesta["nombre"]
-            carrera_semestre = "Ingeniería en Sistemas | 2°A" # Reemplazar con: respuesta["carrera"] + " | " + respuesta["semestre"]
-            
-            # Actualizamos la tarjeta dinámicamente con los datos reales
-            self.card_alumno.bgcolor = "surfaceVariant"
-            self.card_alumno.border_radius = 12
-            self.card_alumno.padding = 15
-            self.card_alumno.content = ft.Row([
-                ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=self.AZUL),
-                ft.Column([
-                    ft.Text(nombre, weight="bold", size=16, color=self.TEXT),
-                    ft.Text(carrera_semestre, size=13, color=self.GRIS_TEXTO)
-                ], expand=True, spacing=2),
-                ft.Container(
-                    content=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=self.VERDE), ft.Text("Alumno encontrado", size=12, color=self.VERDE, weight="bold")], spacing=4),
-                    bgcolor="#D1FAE5", 
-                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                    border_radius=15
-                )
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-            
-        else:
-            # Lógica en caso de que no se encuentre el alumno o el campo esté vacío
-            self.card_alumno.content = ft.Text("Por favor, ingresa una matrícula válida.", color="red")
-            
-        self.update()
-
     def seleccionar_fecha_prestamo(self, e):
         if self.picker_fecha_prestamo.value:
             self.txt_fecha_prestamo.value = self.picker_fecha_prestamo.value.strftime("%d/%b/%Y")
@@ -145,14 +112,8 @@ class PantallaNuevoPrestamo(ft.Container):
         self._page.update()
 
     def cargar_libros_prueba(self):
-        # Datos simulados basados en tu diseño
-        libros = [
-            ("El principito", "Antoine de Saint-Exupéry", "ADQ-001245"),
-            ("1984", "George Orwell", "ADQ-001246"),
-            ("Cien años de soledad", "Gabriel García Márquez", "ADQ-001247"),
-            ("El alquimista", "Paulo Coelho", "ADQ-001248"),
-            ("Rayuela", "Julio Cortázar", "ADQ-001249")
-        ]
+        # Solicitamos los datos simulados al controlador
+        libros = self.controlador.obtener_libros_prueba()
         colores = ["#3B82F6", "#EF4444", "#F59E0B", "#10B981", "#8B5CF6"]
 
         for i, (titulo, autor, adq) in enumerate(libros):
@@ -185,14 +146,14 @@ class PantallaNuevoPrestamo(ft.Container):
         formulario = ft.Column(
             [
                 # SECCIÓN 1
-                ft.Text("1. Matrícula del alumno", weight="bold", color=self.TEXT),
+                ft.Text("Matrícula del alumno", weight="bold", color=self.TEXT),
                 ft.Row([self.txt_matricula, self.btn_buscar_alumno], spacing=10),
                 self.card_alumno,
                 
                 ft.Divider(height=15, color="transparent"),
                 
                 # SECCIÓN 2
-                ft.Text("2. Número de adquisición del ejemplar", weight="bold", color=self.TEXT),
+                ft.Text("Número de adquisición del ejemplar", weight="bold", color=self.TEXT),
                 ft.Row([self.txt_adquisicion, self.btn_buscar_libro], spacing=10),
                 ft.Text("Selecciona el libro (Ejemplares disponibles):", size=12, color=self.GRIS_TEXTO),
                 self.contenedor_resultados,
@@ -227,7 +188,7 @@ class PantallaNuevoPrestamo(ft.Container):
                             ft.ElevatedButton(
                                 "Registrar préstamo",
                                 bgcolor=self.AZUL, color="white", width=200,
-                                on_click=lambda _: print("Préstamo registrado")
+                                on_click=self.controlador.registrar_prestamo
                             )
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
@@ -243,7 +204,11 @@ class PantallaNuevoPrestamo(ft.Container):
                 # Contenedor exterior idéntico al de Incidencias
                 ft.Container(
                     width=700, border_radius=40, padding=30,
-                    bgcolor="transparent", # Hereda el modo oscuro de la pantalla principal
+                    gradient=ft.LinearGradient(
+                        colors=["#cfe8ff", "#9ec9ff"],
+                        begin=ft.Alignment(-1, -1),
+                        end=ft.Alignment(1, 1)
+                    ),
                     content=inner_card
                 )
             ],
