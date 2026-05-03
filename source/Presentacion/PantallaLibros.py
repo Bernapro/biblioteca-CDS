@@ -2,9 +2,9 @@ import flet as ft
 from Presentacion.PantallaRegistrarLibro import PantallaRegistrarLibro
 from Infraestructura.API.libros_api import obtener_libros
 
+
 class PantallaLibros(ft.Container):
 
-    # Constructor
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
@@ -17,16 +17,33 @@ class PantallaLibros(ft.Container):
         self.bgcolor = self.FONDO
         self.border_radius = 30
 
+        # PAGINACIÓN
+        self.pagina_actual = 0
+        self.tamano_pagina = 10
+        self.total_paginas = 1
+        self.total_elementos = 0
+
+        # COMPONENTES PAGINACIÓN
+        self.info_paginacion = ft.Text(
+            "",
+            color="black",
+            size=14
+        )
+
+        self.paginacion = ft.Row(
+            spacing=8,
+            wrap=True,
+            scroll=ft.ScrollMode.AUTO,
+            alignment=ft.MainAxisAlignment.END
+        )
+
+        # FILTROS
         self.input_busqueda = ft.TextField(
             width=250,
             hint_text="Buscar por título o ISBN...",
             prefix_icon=ft.Icons.SEARCH,
             color="black",
-            bgcolor="white",
-            cursor_color="black",
-            text_style=ft.TextStyle(color="black"),
-            hint_style=ft.TextStyle(color="#6B7280"),
-            label_style=ft.TextStyle(color="black"),
+            bgcolor="white"
         )
 
         self.dropdown_disponibilidad = ft.Dropdown(
@@ -34,8 +51,6 @@ class PantallaLibros(ft.Container):
             label="Disponibilidad",
             color="black",
             bgcolor="white",
-            text_style=ft.TextStyle(color="black"),
-            label_style=ft.TextStyle(color="black"),
             options=[
                 ft.dropdown.Option(text="Todos"),
                 ft.dropdown.Option(text="Disponible"),
@@ -43,6 +58,7 @@ class PantallaLibros(ft.Container):
             ]
         )
 
+        # GRID
         self.grid_libros = ft.GridView(
             expand=True,
             runs_count=4,
@@ -53,8 +69,10 @@ class PantallaLibros(ft.Container):
 
         self.build_ui()
         self.refrescar_grid()
-    
-    # Card libro
+
+    # ===============================
+    # CARD LIBRO
+    # ===============================
     def build_card_libro(self, titulo, isbn, ejemplares):
         return ft.Container(
             width=200,
@@ -98,28 +116,32 @@ class PantallaLibros(ft.Container):
             )
         )
 
-    # Refrescar grid
-    def refrescar_grid(self, libros_filtrados=None):
+    # ===============================
+    # CARGAR LIBROS PAGINADOS
+    # ===============================
+    def refrescar_grid(self):
+        print("ENTRO A refrescar_grid()", flush=True)
         try:
-            if libros_filtrados is not None:
-                datos = libros_filtrados
-            else:
-                response = obtener_libros()
+            response = obtener_libros(
+                n_page=self.pagina_actual,
+                length=self.tamano_pagina
+            )
 
-                if response.status_code != 200:
-                    self._page.snack_bar = ft.SnackBar(
-                        ft.Text("Error al cargar libros")
-                    )
-                    self._page.snack_bar.open = True
-                    self.grid_libros.update()
-                    return
+            if response.status_code != 200:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("Error al cargar libros")
+                )
+                self._page.snack_bar.open = True
+                self._page.update()
+                return
 
-                datos = response.json()["contenido"]
+            datos = response.json()
+            print("RESPUESTA API:", datos, flush=True)
 
-                # TEMPORAL:
-                # Mostrar estructura real que devuelve la API
-                # para verificar si ya viene cantidad de ejemplares
-                print("LIBROS API:", datos)
+            libros = datos["contenido"]
+
+            self.total_paginas = datos["totalPaginas"]
+            self.total_elementos = datos["totalElementos"]
 
             self.grid_libros.controls = [
                 self.build_card_libro(
@@ -127,8 +149,21 @@ class PantallaLibros(ft.Container):
                     libro["isbn"],
                     libro["Ejemplares"]
                 )
-                for libro in datos
+                for libro in libros
             ]
+
+            inicio = (self.pagina_actual * self.tamano_pagina) + 1
+            fin = min(
+                inicio + len(libros) - 1,
+                self.total_elementos
+            )
+
+            self.info_paginacion.value = (
+                f"Mostrando {inicio}-{fin} de "
+                f"{self.total_elementos} libros"
+            )
+
+            self.actualizar_paginacion()
 
             self._page.update()
 
@@ -139,35 +174,79 @@ class PantallaLibros(ft.Container):
             self._page.snack_bar.open = True
             self._page.update()
 
-    # Buscar libros
+    # ===============================
+    # CAMBIAR PÁGINA
+    # ===============================
+    def cambiar_pagina(self, nueva_pagina):
+        self.pagina_actual = nueva_pagina
+        self.refrescar_grid()
+
+    # ===============================
+    # GENERAR BOTONES PAGINACIÓN
+    # ===============================
+    def actualizar_paginacion(self):
+        print("ENTRO A actualizar_paginacion()", flush=True)
+
+        try:
+            self.paginacion.controls.clear()
+
+            inicio = max(0, self.pagina_actual - 2)
+            fin = min(self.total_paginas, inicio + 5)
+
+            if fin - inicio < 5:
+                inicio = max(0, fin - 5)
+
+            print(f"inicio={inicio}, fin={fin}", flush=True)
+
+            self.paginacion.controls.append(
+                ft.IconButton(
+                    icon=ft.Icons.CHEVRON_LEFT,
+                    disabled=self.pagina_actual == 0,
+                    on_click=lambda e: self.cambiar_pagina(self.pagina_actual - 1)
+                )
+            )
+
+            for i in range(inicio, fin):
+                print(f"Creando botón página {i+1}", flush=True)
+
+                self.paginacion.controls.append(
+                    ft.ElevatedButton(
+                        str(i + 1),
+                        width=45,
+                        style=ft.ButtonStyle(
+                            bgcolor="blue" if i == self.pagina_actual else "white",
+                            color="white" if i == self.pagina_actual else "black"
+                        ),
+                        on_click=lambda e, pagina=i: self.cambiar_pagina(pagina)
+                    )
+                )
+
+            self.paginacion.controls.append(
+                ft.IconButton(
+                    icon=ft.Icons.CHEVRON_RIGHT,
+                    disabled=self.pagina_actual >= self.total_paginas - 1,
+                    on_click=lambda e: self.cambiar_pagina(self.pagina_actual + 1)
+                )
+            )
+
+            print("BOTONES FINALES:", len(self.paginacion.controls), flush=True)
+
+        except Exception as ex:
+            print("ERROR EN PAGINACION:", ex, flush=True)
+
+    # ===============================
+    # BUSCAR (TEMPORAL)
+    # ===============================
     def buscar_libros(self, e):
-        texto = (self.input_busqueda.value or "").lower()
-        estado = self.dropdown_disponibilidad.value or "Todos"
+        self._page.snack_bar = ft.SnackBar(
+            ft.Text("La búsqueda paginada se implementará después")
+        )
+        self._page.snack_bar.open = True
+        self._page.update()
 
-        response = obtener_libros()
-
-        if response.status_code != 200:
-            return
-
-        libros_bd = response.json()["contenido"]
-
-        filtrados = []
-
-        for libro in libros_bd:
-            coincide_texto = (
-                texto in libro["titulo"].lower()
-                or texto in libro["isbn"].lower()
-            )
-
-            coincide_estado = (
-                estado == "Todos" or estado == "Disponible"
-            )
-
-            if coincide_texto and coincide_estado:
-                filtrados.append(libro)
-
-        self.refrescar_grid(filtrados)
-
+    # ===============================
+    # IR A REGISTRO
+    # ===============================
     def ir_a_registro_libro(self, e):
         self.content = PantallaRegistrarLibro(
             self._page,
@@ -175,7 +254,9 @@ class PantallaLibros(ft.Container):
         )
         self.update()
 
-    # UI principal
+    # ===============================
+    # UI
+    # ===============================
     def build_ui(self):
 
         filtros = ft.Container(
@@ -227,7 +308,25 @@ class PantallaLibros(ft.Container):
 
                 filtros,
 
-                self.grid_libros
+                ft.Container(
+                    expand=True,
+                    content=self.grid_libros
+                ),
+
+                ft.Container(
+                    padding=ft.padding.only(top=10),
+                    content=ft.Row(
+                        [
+                            self.info_paginacion,
+
+                            ft.Container(
+                                expand=True,
+                                alignment=ft.Alignment(1, 0),
+                                content=self.paginacion
+                            )
+                        ]
+                    )
+                )
             ],
             spacing=20,
             expand=True
