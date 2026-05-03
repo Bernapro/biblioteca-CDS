@@ -1,7 +1,7 @@
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Negocio.Modelo.Incidencia import Incidencia
-
+from datetime import datetime
 
 class ControladorRegistroIncidencia:
 
@@ -14,10 +14,13 @@ class ControladorRegistroIncidencia:
     # =========================
     def buscar_usuario(self, e):
         identificador = self.__pantalla.text_identificador.value.strip()
-
+        
         if not identificador:
             self.__pantalla.txt_nombre.value = ""
             self.__pantalla.id_usuario = None
+
+            self.__pantalla.txt_mensaje.value = ""
+
             self.__pantalla.update()
             return
 
@@ -83,9 +86,7 @@ class ControladorRegistroIncidencia:
             return
 
         try:
-            # =========================
-            # 🔥 NORMALIZAR ENUMS
-            # =========================
+            # NORMALIZAR ENUMS
             tipo = self.__pantalla.drop_tipo.value.upper().strip()
 
             data = {
@@ -105,10 +106,18 @@ class ControladorRegistroIncidencia:
                 nombre = self.__pantalla.txt_nombre.value
                 identificador = self.__pantalla.text_identificador.value
 
-                self.__pantalla.txt_mensaje.value = f"✅ Incidencia registrada para {nombre} ({identificador})"
+                fecha = resultado["fecha"]
+
+                fecha_formateada = fecha.strftime("%d/%m/%Y %H:%M")
+
+                self.__pantalla.txt_mensaje.value = (
+                    f"✅ Incidencia registrada para {nombre} ({identificador})\n"
+                    f"🕒 {fecha_formateada}"
+                )
                 self.__pantalla.txt_mensaje.color = "green"
 
                 self.limpiar_form()
+
             else:
                 self.__pantalla.txt_mensaje.value = "❌ No se pudo guardar la incidencia"
                 self.__pantalla.txt_mensaje.color = "red"
@@ -120,9 +129,7 @@ class ControladorRegistroIncidencia:
 
         self.__pantalla.update()
 
-    # =========================
     # 🧹 LIMPIAR FORMULARIO
-    # =========================
     def limpiar_form(self):
         self.__pantalla.txt_nombre.value = ""
         self.__pantalla.txt_nombre.disabled = False

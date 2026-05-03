@@ -295,32 +295,36 @@ class PantallaIncidencias(ft.Container):
 
     def cambiar_estado_ui(self, nuevo_estado):
         id_actual = self.controlador._ControladorIncidencia__id_actual
-
         self.controlador.cambiar_estado(id_actual, nuevo_estado)
-
-        # actualizar estado local
         self.estado_actual_modal = nuevo_estado
-
+        color = self.VERDE if nuevo_estado == "RESUELTA" else self.ROJO
+        self.modal_estado_texto.value = nuevo_estado
+        self.modal_estado_texto.color = color
+        self.modal_estado_icono.color = color
+        self.modal_estado_icono.icon = ft.Icons.CIRCLE
         self.actualizar_botones_estado()
         self.actualizar()
+        self._page.update()
 
     def actualizar_botones_estado(self):
         estado = self.estado_actual_modal
 
         self.btn_resuelto.style = ft.ButtonStyle(
-            bgcolor=self.VERDE if estado == "RESUELTA" else "transparent",
+            bgcolor=self.VERDE if estado == "RESUELTA" else None,  
             color="white" if estado == "RESUELTA" else self.VERDE,
             side=ft.BorderSide(1, self.VERDE),
             shape=ft.RoundedRectangleBorder(radius=8)
         )
 
         self.btn_pendiente.style = ft.ButtonStyle(
-            bgcolor=self.ROJO if estado == "PENDIENTE" else "transparent",
+            bgcolor=self.ROJO if estado == "PENDIENTE" else None,  
             color="white" if estado == "PENDIENTE" else self.ROJO,
             side=ft.BorderSide(1, self.ROJO),
             shape=ft.RoundedRectangleBorder(radius=8)
         )
+
         self.update()
+
     # ===== BOTONES REUTILIZABLES =====
     def build_btn_resuelto(self, id_incidencia):
         return ft.ElevatedButton(

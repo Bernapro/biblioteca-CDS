@@ -20,8 +20,16 @@ class PantallaRegistroIncidencia(ft.Container):
         self.controlador = ControladorRegistroIncidencia(self)
 
         # === CONTROLES DEL FORMULARIO ===
-        self.txt_nombre = self._crear_input("Nombre del usuario", 350)
-        self.txt_nombre.read_only = True
+
+        self.txt_nombre = ft.TextField(
+            label="Usuario encontrado",
+            width=350,
+            read_only=True,
+            border_color="transparent",  
+            bgcolor="surfaceVariant",    
+            color=self.TEXT,
+            text_style=ft.TextStyle(weight="bold")
+        )
 
         self.text_identificador = self._crear_input("Identificador (Matrícula / Plaza / Visitante)", 350)
         self.text_identificador.on_change = self.controlador.buscar_usuario
@@ -65,10 +73,15 @@ class PantallaRegistroIncidencia(ft.Container):
         self.txt_previa = ft.Text("Libros", size=13, weight="bold")
         
         self.container_previa = ft.Container(
-            content=ft.Row([self.icono_previa, self.txt_previa], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
-            width=165, height=60, bgcolor="surfaceVariant", border_radius=12,
-            padding=10, 
-            alignment=ft.Alignment(0, 0) 
+            content=ft.Row([
+                self.icono_previa,
+                ft.Text(self.drop_cat.value, weight="bold")
+            ], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
+            width=165,
+            height=60,
+            bgcolor="surfaceVariant",
+            border_radius=12,
+            padding=10
         )
 
         self.row_cat_previa = ft.Row([self.drop_cat, self.container_previa], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
@@ -76,56 +89,29 @@ class PantallaRegistroIncidencia(ft.Container):
         self.txt_lugar = self._crear_input("Lugar (Ej. Cubículo 1)", width=165)
         
         # --- CALENDARIO ---
-        self.calendario = ft.DatePicker(on_change=self.seleccionar_fecha)
-        self._page.overlay.append(self.calendario)
-
-        self.txt_fecha = ft.TextField(
-            label="Fecha",
-            width=165,
-            border_color=self.GRIS_BORDE,
-            border_radius=12,
-            focused_border_color=self.AZUL,
-            read_only=True,
-            suffix_icon=ft.Icons.CALENDAR_MONTH,
-            on_click=self.abrir_calendario
-        )
-
-        self.row_lugar_fecha = ft.Row(
-            [self.txt_lugar, self.txt_fecha],
-            spacing=20,
-            alignment=ft.MainAxisAlignment.CENTER
-        )
 
         self.txt_mensaje = ft.Text(
             "",
-            size=13,
+            size=15,
             weight="w500",
-            color="green"
+            color="green",
+            text_align=ft.TextAlign.CENTER  
         )
-
         self.build_ui()
 
-    def seleccionar_fecha(self, e):
-        if self.calendario.value:
-            self.txt_fecha.value = self.calendario.value.strftime("%Y-%m-%d")
-            self.update()
-
-    def abrir_calendario(self, e):
-        self.calendario.open = True
-        self._page.update()
 
     def actualizar_vista_previa(self, e):
         cat = self.drop_cat.value
         self.txt_previa.value = cat
 
         if cat == "Ruido":
-            self.icono_previa.name = ft.Icons.VOLUME_UP_ROUNDED
+            self.icono_previa.icon = ft.Icons.VOLUME_UP
         elif cat == "Equipo":
-            self.icono_previa.name = ft.Icons.COMPUTER_ROUNDED
+            self.icono_previa.icon = ft.Icons.COMPUTER
         elif cat == "Comportamiento":
-            self.icono_previa.name = ft.Icons.PERSON_OFF_ROUNDED
+            self.icono_previa.icon = ft.Icons.PERSON_OFF
         else:
-            self.icono_previa.name = ft.Icons.WARNING
+            self.icono_previa.icon = ft.Icons.WARNING
 
         self.update()
 
@@ -152,7 +138,7 @@ class PantallaRegistroIncidencia(ft.Container):
                 self.drop_tipo,
                 self.txt_desc,
                 self.row_cat_previa,
-                self.row_lugar_fecha
+                self.txt_lugar  # ✅ correcto
             ],
             spacing=15,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
