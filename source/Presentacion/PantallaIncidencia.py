@@ -55,9 +55,9 @@ class PantallaIncidencias(ft.Container):
             color="onSurface",
             options=[
                 ft.dropdown.Option("Todos"),
-                ft.dropdown.Option("ALUMNO"),
-                ft.dropdown.Option("PERSONAL"),
-                ft.dropdown.Option("VISITANTE"),
+                ft.dropdown.Option("Alumno"),
+                ft.dropdown.Option("Personal"),
+                ft.dropdown.Option("Visitante"),
             ],
             value="Todos",
             on_select=self.cargar_datos
@@ -97,7 +97,13 @@ class PantallaIncidencias(ft.Container):
             on_click=lambda e: self.cambiar_estado_ui("PENDIENTE")
         )
             
-        
+        self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.GRIS_TEXTO)
+        self.txt_fecha_fin = ft.Text("Fecha fin", color=self.GRIS_TEXTO)
+
+        self.fecha_inicio_picker = ft.DatePicker(on_change=self.seleccionar_inicio)
+        self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
+
+        self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
         # 1. Controles referenciables dentro del modal (para actualizar su contenido)
         self.modal_avatar_icon = ft.Icon(ft.Icons.PERSON, size=80, color=self.NARANJA)
         self.modal_nombre = ft.Text("", size=18, weight="bold", color="black")
@@ -329,6 +335,35 @@ class PantallaIncidencias(ft.Container):
 
         self.update()
 
+    def seleccionar_inicio(self, e):
+        if e.control.value:
+            self.txt_fecha_inicio.value = e.control.value.strftime("%Y-%m-%d")
+            self.cargar_datos(e=True)
+
+    def seleccionar_fin(self, e):
+        if e.control.value:
+            self.txt_fecha_fin.value = e.control.value.strftime("%Y-%m-%d")
+            self.cargar_datos(e=True)
+
+    def abrir_picker(self, e, picker):
+        picker.open = True
+        self._page.update()
+
+    def build_boton_fecha(self, texto_ref, picker):
+        return ft.Container(
+            width=160,
+            height=40,
+            border=ft.border.all(1, self.GRIS_BORDE),
+            border_radius=12,
+            padding=ft.padding.symmetric(horizontal=12),
+            bgcolor="surface",
+            on_click=lambda e: self.abrir_picker(e, picker),
+            content=ft.Row(
+                [ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.AZUL), texto_ref],
+                spacing=10
+            )
+        )
+
     # ===== BOTONES REUTILIZABLES =====
     def build_btn_resuelto(self, id_incidencia):
         return ft.ElevatedButton(
@@ -514,11 +549,13 @@ class PantallaIncidencias(ft.Container):
             shadow=ft.BoxShadow(blur_radius=20, spread_radius=2, color="black12", offset=ft.Offset(0, 4)),
             content=ft.Row([
                 self.input_busqueda,
-                ft.Container(width=1, height=30, bgcolor=self.GRIS_BORDE),
+
+                self.build_boton_fecha(self.txt_fecha_inicio, self.fecha_inicio_picker),
+                self.build_boton_fecha(self.txt_fecha_fin, self.fecha_fin_picker),
+
                 self.dropdown_tipo,
                 self.dropdown_estado,
-
-            ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+            ], spacing=10)
         )
 
         # Contenedor dinámico para la lista
@@ -533,17 +570,24 @@ class PantallaIncidencias(ft.Container):
 
     def cargar_datos(self, e=None):
 
+        from datetime import datetime
+
+        fecha_inicio = None
+        fecha_fin = None
+
+        if self.txt_fecha_inicio.value != "Fecha inicio":
+            fecha_inicio = datetime.strptime(self.txt_fecha_inicio.value, "%Y-%m-%d").date()
+        if self.txt_fecha_fin.value != "Fecha fin":
+            fecha_fin = datetime.strptime(self.txt_fecha_fin.value, "%Y-%m-%d").date()
         if e and hasattr(e, "control"):
             if e.control in [self.input_busqueda, self.dropdown_tipo, self.dropdown_estado]:
                 self.pagina_actual = 1
-
         texto = (self.input_busqueda.value or "").lower()
         tipo = self.dropdown_tipo.value
         estado = self.dropdown_estado.value
         self.lista_incidencias.controls.clear()
         datos = self.controlador.obtener_incidencias()
         
-
         datos_filtrados = []
 
         for d in datos:
@@ -552,7 +596,7 @@ class PantallaIncidencias(ft.Container):
                 if texto not in d["nombre"].lower() and texto not in d["identificador"].lower():
                     continue
 
-            if tipo != "Todos" and d["tipo_usuario"] != tipo:
+            if tipo != "Todos" and d["tipo_usuario"].lower() != tipo.lower():
                 continue
 
             if estado != "Todos":
@@ -560,6 +604,14 @@ class PantallaIncidencias(ft.Container):
                     continue
                 if estado == "Resuelto" and d["estado"] != "RESUELTA":
                     continue
+
+            fecha_registro = datetime.strptime(d["fecha"], "%d/%m/%Y %H:%M").date()
+
+            if fecha_inicio and fecha_registro < fecha_inicio:
+                continue
+
+            if fecha_fin and fecha_registro > fecha_fin:
+                continue
 
             datos_filtrados.append(d)
 
