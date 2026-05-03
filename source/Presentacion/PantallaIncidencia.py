@@ -40,7 +40,9 @@ class PantallaIncidencias(ft.Container):
             color="onSurface",
             border=ft.InputBorder.NONE,
             content_padding=ft.padding.symmetric(horizontal=15, vertical=15),
-            text_style=ft.TextStyle(size=15)
+            text_style=ft.TextStyle(size=15),
+
+            on_change=self.cargar_datos
         )
 
         self.dropdown_tipo = ft.Dropdown(
@@ -58,6 +60,7 @@ class PantallaIncidencias(ft.Container):
                 ft.dropdown.Option("VISITANTE"),
             ],
             value="Todos",
+            on_select=self.cargar_datos
         )
 
         self.dropdown_estado = ft.Dropdown(
@@ -74,6 +77,7 @@ class PantallaIncidencias(ft.Container):
                 ft.dropdown.Option("Resuelto"),
             ],
             value="Todos",
+            on_select=self.cargar_datos
         )
 
         self.estado_actual_modal = None
@@ -514,7 +518,6 @@ class PantallaIncidencias(ft.Container):
                 self.dropdown_tipo,
                 self.dropdown_estado,
 
-                ft.ElevatedButton("Buscar", height=45, style=ft.ButtonStyle(bgcolor=self.AZUL, color="white", shape=ft.RoundedRectangleBorder(radius=25), padding=ft.padding.symmetric(horizontal=30)))
             ], spacing=5, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         )
 
@@ -529,6 +532,10 @@ class PantallaIncidencias(ft.Container):
         self.cargar_datos()
 
     def cargar_datos(self, e=None):
+
+        if e and hasattr(e, "control"):
+            if e.control in [self.input_busqueda, self.dropdown_tipo, self.dropdown_estado]:
+                self.pagina_actual = 1
 
         texto = (self.input_busqueda.value or "").lower()
         tipo = self.dropdown_tipo.value
