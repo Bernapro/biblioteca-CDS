@@ -1,9 +1,14 @@
 import flet as ft
+from Presentacion.PantallaNuevoPrestamo import PantallaNuevoPrestamo
+from Negocio.Controlador.ControladorPrestamos import ControladorPrestamos
 
 class PantallaPrestamos(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
+        
+        # Instanciamos el controlador
+        self.controlador = ControladorPrestamos(self)
         
         # ===== COLORES =====
         self.AZUL = "#3B82F6"
@@ -113,6 +118,33 @@ class PantallaPrestamos(ft.Container):
             ]
         )
 
+    # ===== LÓGICA DE NAVEGACIÓN =====
+    def ir_a_nuevo_prestamo(self, e):
+        self.content = PantallaNuevoPrestamo(self._page, vista_anterior=self)
+        self.update()
+
+    def cargar_datos(self, e=None):
+        # Obtenemos los datos desde el controlador y llenamos las filas
+        datos = self.controlador.obtener_prestamos()
+        self.tabla.rows = [self.build_row(data) for data in datos]
+        
+        # También actualizamos las tarjetas de resumen dinámicamente
+        if hasattr(self, 'resumen'):
+            stats = self.controlador.obtener_estadisticas()
+            self.resumen.controls = [
+                self.build_card_stat("Total préstamos", stats["total"], "Registros totales", ft.Icons.MENU_BOOK_ROUNDED, self.AZUL),
+                self.build_card_stat("A tiempo", stats["a_tiempo"], "Préstamos vigentes", ft.Icons.CHECK_CIRCLE_OUTLINE, self.VERDE),
+                self.build_card_stat("Atrasados", stats["atrasados"], "Préstamos vencidos", ft.Icons.ACCESS_TIME, self.ROJO),
+                self.build_card_stat("Por vencer", stats["por_vencer"], "Próximos 3 días", ft.Icons.CALENDAR_MONTH, self.NARANJA),
+            ]
+            
+        if e:
+            self.update()
+
+    # Función detectada por PantallaPrincipal para refrescar al entrar a la vista
+    def actualizar(self):
+        self.cargar_datos()
+
     # ===== CONSTRUCCIÓN PRINCIPAL =====
     def build_ui(self):
         # 1. Encabezado y botón nuevo préstamo
@@ -128,7 +160,8 @@ class PantallaPrestamos(ft.Container):
                     shape=ft.RoundedRectangleBorder(radius=8),
                     padding=ft.padding.symmetric(horizontal=20, vertical=15)
                 ),
-                height=45
+                height=45,
+                on_click=self.ir_a_nuevo_prestamo
             )
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
@@ -161,17 +194,12 @@ class PantallaPrestamos(ft.Container):
             )
         ], spacing=15)
 
-        # 3. Tarjetas de Resumen
-        resumen = ft.Row([
-            self.build_card_stat("Total préstamos", "4", "Registros totales", ft.Icons.MENU_BOOK_ROUNDED, self.AZUL),
-            self.build_card_stat("A tiempo", "2", "Préstamos vigentes", ft.Icons.CHECK_CIRCLE_OUTLINE, self.VERDE),
-            self.build_card_stat("Atrasados", "2", "Préstamos vencidos", ft.Icons.ACCESS_TIME, self.ROJO),
-            self.build_card_stat("Por vencer", "0", "Próximos 3 días", ft.Icons.CALENDAR_MONTH, self.NARANJA),
-        ], spacing=15)
+        # 3. Tarjetas de Resumen (Se poblarán en cargar_datos)
+        self.resumen = ft.Row([], spacing=15)
 
         # 4. Tabla
        
-        tabla = ft.DataTable(
+        self.tabla = ft.DataTable(
             expand=True,
             column_spacing=20,    # <-- Reducido para adaptarse a laptops y pantallas pequeñas
             horizontal_margin=15, # <-- Reducido para aprovechar mejor el espacio
@@ -192,14 +220,7 @@ class PantallaPrestamos(ft.Container):
             rows=[]
         )
 
-        datos = [
-            {"matricula": "100025787", "nombre": "Carlos Daniel", "libro": "El principito", "estado": "A tiempo", "fecha_prestamo": "24/Mar/2026", "fecha_limite": "02/Abr/2026"},
-            {"matricula": "100025788", "nombre": "Cruz Castillo", "libro": "1984", "estado": "Atrasado", "fecha_prestamo": "20/Mar/2026", "fecha_limite": "27/Mar/2026"},
-            {"matricula": "ABCDEFGA", "nombre": "Jose Angel", "libro": "Clean Code", "estado": "A tiempo", "fecha_prestamo": "26/Mar/2026", "fecha_limite": "04/Abr/2026"},
-            {"matricula": "ABCDEFGA", "nombre": "Figueroa Sales", "libro": "Python Básico", "estado": "Atrasado", "fecha_prestamo": "18/Mar/2026", "fecha_limite": "25/Mar/2026"},
-        ]
-
-        tabla.rows = [self.build_row(data) for data in datos]
+        self.cargar_datos() # Poblar la tabla por primera vez
 
         contenedor_tabla = ft.Container(
             expand=True,
@@ -207,8 +228,8 @@ class PantallaPrestamos(ft.Container):
             border_radius=15,
             border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column([
-                ft.Row([tabla], scroll=ft.ScrollMode.ADAPTIVE, expand=True)
-            ])
+                ft.Row([self.tabla], scroll=ft.ScrollMode.ADAPTIVE, expand=True)
+            ], scroll=ft.ScrollMode.AUTO, expand=True)
         )
 
         # 5. Paginación (Pie de tabla)
@@ -223,7 +244,7 @@ class PantallaPrestamos(ft.Container):
 
         # Ensamblaje Final
         self.content = ft.Column(
-            [encabezado, filtros, resumen, contenedor_tabla, paginacion],
+            [encabezado, filtros, self.resumen, contenedor_tabla, paginacion],
             spacing=20,
             expand=True
         )
