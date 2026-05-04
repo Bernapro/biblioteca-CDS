@@ -1,6 +1,6 @@
 import flet as ft
 from Presentacion.PantallaRegistrarLibro import PantallaRegistrarLibro
-from Infraestructura.API.libros_api import obtener_libros
+from Negocio.Controlador.ControladorLibros import ControladorLibros
 
 
 class PantallaLibros(ft.Container):
@@ -8,6 +8,7 @@ class PantallaLibros(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
+        self.controller = ControladorLibros()
 
         self.AZUL = "#3B82F6"
         self.FONDO = "#EAF1F7"
@@ -202,44 +203,25 @@ class PantallaLibros(ft.Container):
     
     def abrir_dialogo_libro(self, isbn):
         try:
-            from Infraestructura.API.libros_api import obtener_libro_por_isbn
+            data = self.controller.obtener_detalle(isbn)
 
-            response = obtener_libro_por_isbn(isbn)
-
-            if response.status_code != 200:
+            if not data:
                 raise Exception("No se pudo obtener el libro")
 
-            libro = response.json()
-
-            clas_congreso = libro.get("clasificacionDelCongreso", "Sin clasificación")
-            clas_decimal = libro.get("decimalUniversal", "Sin clasificación")
-
-            # Evitar None
-            clas_congreso = clas_congreso if clas_congreso else "Sin clasificación"
-            clas_decimal = clas_decimal if clas_decimal else "Sin clasificación"
-
             # DATOS PRINCIPALES
-            self.modal_titulo.value = libro.get("titulo", "Sin título")
-            self.modal_isbn.value = f"ISBN: {libro.get('isbn', 'N/A')}"
-            self.modal_editorial.value = f"Editorial: {libro.get('editorial', 'N/A')}"
-            self.modal_ejemplares.value = f"Ejemplares: {libro.get('nEjemplares', 0)}"
-            self.modal_edicion.value = f"Edición: {libro.get('edicion', 'N/A')}"
-            self.modal_fecha.value = f"Fecha: {libro.get('fechaPublicacion', 'N/A')}"
-            self.modal_dewey.value = f"Dewey: {libro.get('dewey', 'N/A')}"
-            self.modal_congreso.value = f"LCC: {clas_congreso}"
-            self.modal_decimal.value = f"CDU: {clas_decimal}"
+            self.modal_titulo.value = data["titulo"]
+            self.modal_isbn.value = f"ISBN: {data['isbn']}"
+            self.modal_editorial.value = f"Editorial: {data['editorial']}"
+            self.modal_ejemplares.value = f"Ejemplares: {data['ejemplares']}"
+            self.modal_edicion.value = f"Edición: {data['edicion']}"
+            self.modal_fecha.value = f"Fecha: {data['fecha']}"
+            self.modal_dewey.value = f"Dewey: {data['dewey']}"
+            self.modal_congreso.value = f"LCC: {data['lcc']}"
+            self.modal_decimal.value = f"CDU: {data['cdu']}"
 
             # LISTAS
-            autores = libro.get("autores", [])
-            categorias = libro.get("categorias", [])
-
-            self.modal_autores.value = "Autores: " + (
-                ", ".join(autores) if autores else "Sin autores"
-            )
-
-            self.modal_categorias.value = "Categorías: " + (
-                ", ".join(categorias) if categorias else "Sin categorías"
-            )
+            self.modal_autores.value = f"Autores: {data['autores']}"
+            self.modal_categorias.value = f"Categorías: {data['categorias']}"
 
             # MOSTRAR DIALOGO
             if self.dialogo_detalles not in self._page.overlay:
@@ -264,15 +246,14 @@ class PantallaLibros(ft.Container):
     # CARGAR LIBROS PAGINADOS
     # ===============================
     def refrescar_grid(self):
-        print("ENTRO A refrescar_grid()", flush=True)
         try:
-            response = obtener_libros(
-                n_page=self.pagina_actual,
-                length=self.tamano_pagina,
-                busqueda=self.busqueda_actual
+            resultado = self.controller.listar_libros(
+                self.pagina_actual,
+                self.tamano_pagina,
+                self.busqueda_actual
             )
 
-            if response.status_code != 200:
+            if not resultado:
                 self._page.snack_bar = ft.SnackBar(
                     ft.Text("Error al cargar libros")
                 )
@@ -280,45 +261,31 @@ class PantallaLibros(ft.Container):
                 self._page.update()
                 return
 
-            datos = response.json()
-            print("RESPUESTA API:", datos, flush=True)
+            libros = resultado["libros"]
+            self.total_paginas = resultado["total_paginas"]
+            self.total_elementos = resultado["total_elementos"]
 
-            libros = datos["contenido"]
             if not libros:
                 self._page.snack_bar = ft.SnackBar(
                     ft.Text("No se encontraron libros")
                 )
                 self._page.snack_bar.open = True
 
-            self.total_paginas = datos["totalPaginas"]
-            self.total_elementos = datos["totalElementos"]
-
             self.grid_libros.controls = [
                 self.build_card_libro(
                     libro["titulo"],
                     libro["isbn"],
-                    libro["Ejemplares"]
+                    libro["ejemplares"]
                 )
                 for libro in libros
             ]
 
-            if self.total_elementos == 0:
-                inicio = 0
-                fin = 0
-            else:
-                inicio = (self.pagina_actual * self.tamano_pagina) + 1
-                fin = min(
-                    inicio + len(libros) - 1,
-                    self.total_elementos
-                )
-
             self.info_paginacion.value = (
-                f"Mostrando {inicio}-{fin} de "
-                f"{self.total_elementos} libros"
+                f"Mostrando {resultado['inicio']}-{resultado['fin']} "
+                f"de {self.total_elementos} libros"
             )
 
             self.actualizar_paginacion()
-
             self._page.update()
 
         except Exception as e:

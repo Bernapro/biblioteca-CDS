@@ -1,8 +1,6 @@
 import flet as ft
 import datetime
-
-from Infraestructura.API.libros_api import crear_libro
-
+from Negocio.Controlador.ControladorRegistroLibro import ControladorRegistroLibro
 
 class PantallaRegistrarLibro(ft.Container):
 
@@ -11,7 +9,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         self._page = page
         self.vista_anterior = vista_anterior
-
+        self.controller = ControladorRegistroLibro()
         self.expand = True
         self.alignment = ft.Alignment(0, 0)
 
@@ -216,25 +214,6 @@ class PantallaRegistrarLibro(ft.Container):
     # ========================
     def guardar_libro(self, e):
 
-        if not self.txt_isbn.value or not self.txt_titulo.value:
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text("ISBN y Título son obligatorios")
-            )
-            self._page.snack_bar.open = True
-            self._page.update()
-            return
-
-        try:
-            n_ejemplares = int(self.txt_ejemplares.value)
-
-        except ValueError:
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text("La cantidad de ejemplares debe ser un número válido")
-            )
-            self._page.snack_bar.open = True
-            self._page.update()
-            return
-
         data = {
             "isbn": self.txt_isbn.value.strip(),
             "titulo": self.txt_titulo.value.strip(),
@@ -246,34 +225,19 @@ class PantallaRegistrarLibro(ft.Container):
             "clasificacionDecimalUniversal": self.txt_cdu.value.strip(),
             "autores": self.autores_seleccionados,
             "categorias": self.categorias_seleccionadas,
-            "nEjemplares": n_ejemplares
+            "nEjemplares": self.txt_ejemplares.value
         }
 
-        response = crear_libro(data)
+        resultado = self.controller.crear_libro(data)
 
-        if response.status_code == 201:
+        self._page.snack_bar = ft.SnackBar(
+            ft.Text(resultado["mensaje"])
+        )
+        self._page.snack_bar.open = True
 
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text("Libro registrado correctamente")
-            )
-
+        if resultado["ok"]:
             self.limpiar_formulario()
 
-            # Refresca catálogo en segundo plano
-            if response.status_code == 201:
-                self._page.snack_bar = ft.SnackBar(
-                    ft.Text("Libro registrado correctamente")
-                )
-
-                self.limpiar_formulario()
-
-        else:
-
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text(f"Error API: {response.text}")
-            )
-
-        self._page.snack_bar.open = True
         self._page.update()
 
     # ========================
