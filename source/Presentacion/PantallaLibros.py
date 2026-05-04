@@ -22,6 +22,7 @@ class PantallaLibros(ft.Container):
         self.tamano_pagina = 10
         self.total_paginas = 1
         self.total_elementos = 0
+        self.busqueda_actual = ""
 
         # COMPONENTES PAGINACIÓN
         self.info_paginacion = ft.Text(
@@ -43,19 +44,8 @@ class PantallaLibros(ft.Container):
             hint_text="Buscar por título o ISBN...",
             prefix_icon=ft.Icons.SEARCH,
             color="black",
-            bgcolor="white"
-        )
-
-        self.dropdown_disponibilidad = ft.Dropdown(
-            width=180,
-            label="Disponibilidad",
-            color="black",
             bgcolor="white",
-            options=[
-                ft.dropdown.Option(text="Todos"),
-                ft.dropdown.Option(text="Disponible"),
-                ft.dropdown.Option(text="Prestado"),
-            ]
+            on_submit=self.buscar_libros
         )
 
         # GRID
@@ -124,7 +114,8 @@ class PantallaLibros(ft.Container):
         try:
             response = obtener_libros(
                 n_page=self.pagina_actual,
-                length=self.tamano_pagina
+                length=self.tamano_pagina,
+                busqueda=self.busqueda_actual
             )
 
             if response.status_code != 200:
@@ -139,6 +130,11 @@ class PantallaLibros(ft.Container):
             print("RESPUESTA API:", datos, flush=True)
 
             libros = datos["contenido"]
+            if not libros:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("No se encontraron libros")
+                )
+                self._page.snack_bar.open = True
 
             self.total_paginas = datos["totalPaginas"]
             self.total_elementos = datos["totalElementos"]
@@ -152,11 +148,15 @@ class PantallaLibros(ft.Container):
                 for libro in libros
             ]
 
-            inicio = (self.pagina_actual * self.tamano_pagina) + 1
-            fin = min(
-                inicio + len(libros) - 1,
-                self.total_elementos
-            )
+            if self.total_elementos == 0:
+                inicio = 0
+                fin = 0
+            else:
+                inicio = (self.pagina_actual * self.tamano_pagina) + 1
+                fin = min(
+                    inicio + len(libros) - 1,
+                    self.total_elementos
+                )
 
             self.info_paginacion.value = (
                 f"Mostrando {inicio}-{fin} de "
@@ -181,68 +181,96 @@ class PantallaLibros(ft.Container):
         self.pagina_actual = nueva_pagina
         self.refrescar_grid()
 
+    def ir_a_pagina_directa(self, e):
+        try:
+            pagina = int(e.control.value)
+
+            if 1 <= pagina <= self.total_paginas:
+                self.cambiar_pagina(pagina - 1)
+            else:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("Página fuera de rango")
+                )
+                self._page.snack_bar.open = True
+                self._page.update()
+
+        except ValueError:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Ingresa un número válido")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()    
+
     # ===============================
     # GENERAR BOTONES PAGINACIÓN
     # ===============================
     def actualizar_paginacion(self):
-        print("ENTRO A actualizar_paginacion()", flush=True)
+        self.paginacion.controls.clear()
 
-        try:
-            self.paginacion.controls.clear()
+        inicio = max(0, self.pagina_actual - 2)
+        fin = min(self.total_paginas, inicio + 5)
 
-            inicio = max(0, self.pagina_actual - 2)
-            fin = min(self.total_paginas, inicio + 5)
+        if fin - inicio < 5:
+            inicio = max(0, fin - 5)
 
-            if fin - inicio < 5:
-                inicio = max(0, fin - 5)
+        # BOTÓN ANTERIOR
+        self.paginacion.controls.append(
+            ft.IconButton(
+                icon=ft.Icons.CHEVRON_LEFT,
+                disabled=self.pagina_actual == 0,
+                on_click=lambda e: self.cambiar_pagina(self.pagina_actual - 1)
+            )
+        )
 
-            print(f"inicio={inicio}, fin={fin}", flush=True)
+        # BOTONES NUMÉRICOS
+        for i in range(inicio, fin):
+            activo = i == self.pagina_actual
 
             self.paginacion.controls.append(
-                ft.IconButton(
-                    icon=ft.Icons.CHEVRON_LEFT,
-                    disabled=self.pagina_actual == 0,
-                    on_click=lambda e: self.cambiar_pagina(self.pagina_actual - 1)
-                )
-            )
-
-            for i in range(inicio, fin):
-                print(f"Creando botón página {i+1}", flush=True)
-
-                self.paginacion.controls.append(
-                    ft.ElevatedButton(
-                        str(i + 1),
-                        width=45,
-                        style=ft.ButtonStyle(
-                            bgcolor="blue" if i == self.pagina_actual else "white",
-                            color="white" if i == self.pagina_actual else "black"
-                        ),
-                        on_click=lambda e, pagina=i: self.cambiar_pagina(pagina)
+                ft.ElevatedButton(
+                    str(i + 1),
+                    width=45,
+                    height=45,
+                    on_click=lambda e, pagina=i: self.cambiar_pagina(pagina),
+                    style=ft.ButtonStyle(
+                        bgcolor=self.AZUL if activo else "white",
+                        color="white" if activo else "black",
+                        padding=0,
+                        shape=ft.RoundedRectangleBorder(radius=10)
                     )
                 )
-
-            self.paginacion.controls.append(
-                ft.IconButton(
-                    icon=ft.Icons.CHEVRON_RIGHT,
-                    disabled=self.pagina_actual >= self.total_paginas - 1,
-                    on_click=lambda e: self.cambiar_pagina(self.pagina_actual + 1)
-                )
             )
 
-            print("BOTONES FINALES:", len(self.paginacion.controls), flush=True)
+        # BOTÓN SIGUIENTE
+        self.paginacion.controls.append(
+            ft.IconButton(
+                icon=ft.Icons.CHEVRON_RIGHT,
+                disabled=self.pagina_actual >= self.total_paginas - 1,
+                on_click=lambda e: self.cambiar_pagina(self.pagina_actual + 1)
+            )
+        )
 
-        except Exception as ex:
-            print("ERROR EN PAGINACION:", ex, flush=True)
+        # INPUT IR A PÁGINA
+        self.paginacion.controls.append(
+            ft.TextField(
+                width=65,
+                height=40,
+                value=str(self.pagina_actual + 1),
+                hint_text="Página",
+                text_align=ft.TextAlign.CENTER,
+                content_padding=8,
+                border_radius=8,
+                on_submit=self.ir_a_pagina_directa
+            )
+        )
 
     # ===============================
     # BUSCAR (TEMPORAL)
     # ===============================
     def buscar_libros(self, e):
-        self._page.snack_bar = ft.SnackBar(
-            ft.Text("La búsqueda paginada se implementará después")
-        )
-        self._page.snack_bar.open = True
-        self._page.update()
+        self.busqueda_actual = self.input_busqueda.value.strip()
+        self.pagina_actual = 0
+        self.refrescar_grid()
 
     # ===============================
     # IR A REGISTRO
@@ -267,7 +295,6 @@ class PantallaLibros(ft.Container):
             content=ft.Row(
                 [
                     self.input_busqueda,
-                    self.dropdown_disponibilidad,
 
                     ft.ElevatedButton(
                         "Buscar",

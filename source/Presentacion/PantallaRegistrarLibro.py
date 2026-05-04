@@ -182,7 +182,11 @@ class PantallaRegistrarLibro(ft.Container):
         if self.vista_anterior:
             self.vista_anterior.build_ui()
             self.vista_anterior.refrescar_grid()
-            self.vista_anterior.update()
+
+            parent = self.parent
+            if parent:
+                parent.content = self.vista_anterior
+                parent.update()
 
     # ========================
     # LIMPIAR FORMULARIO
