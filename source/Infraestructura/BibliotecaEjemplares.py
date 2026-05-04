@@ -30,7 +30,7 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
             print("Código de respuesta desconocido")
         if r.status_code == 200:
             args = r.json()
-            ejem = Ejemplar(id = args["id"], noAdquisicion= args["noAdquisicion"], libro= Libro())
+            ejem = Ejemplar(id = args["id"], noAdquisicion= args["noAdquisicion"], libro= Libro(), disponible= args["disponible"])
             lib = ejem.getLibro()
             lib.setTitulo(args["titulo"])
             lib.setAutores(args["autores"])

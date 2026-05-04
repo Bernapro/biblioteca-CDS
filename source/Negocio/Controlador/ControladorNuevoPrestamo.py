@@ -1,8 +1,18 @@
 import flet as ft
+from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
 
 class ControladorNuevoPrestamo:
-    def __init__(self, pantalla):
+    def __init__(self, pantalla, endEjemplares: BibliotecaEjemplares):
         self.__pantalla = pantalla
+        self.__endEjemplares = endEjemplares
+
+
+    def listener(self,e):
+        id = e.control.data
+        if id:
+            if id == "btn_buscar":
+                self.buscarLibroPorNoAdquisicion()
+
 
     def buscar_alumno(self, e):
         matricula_buscar = self.__pantalla.txt_matricula.value
@@ -36,6 +46,14 @@ class ControladorNuevoPrestamo:
             self.__pantalla.card_alumno.content = ft.Text("Por favor, ingresa una matrícula válida.", color="red")
             
         self.__pantalla.update()
+
+    def buscarLibroPorNoAdquisicion(self):
+        noAdquisicion = self.__pantalla.txt_adquisicion.value
+        ejem = self.__endEjemplares.get(noAdquisicion)
+        if ejem:
+            self.__pantalla.libros_cache = [(ejem.getId(), ejem.getLibro().getTitulo(), " ".join(ejem.getLibro().getAutores()), ejem.getNoAdquisicion())]
+            self.__pantalla.actualizar_lista()
+
 
     def obtener_libros_prueba(self):
         # Más adelante esto será una consulta a la Base de Datos

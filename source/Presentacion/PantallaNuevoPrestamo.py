@@ -1,6 +1,7 @@
 import flet as ft
 import datetime
 from Negocio.Controlador.ControladorNuevoPrestamo import ControladorNuevoPrestamo
+from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
 
 class PantallaNuevoPrestamo(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
@@ -11,7 +12,7 @@ class PantallaNuevoPrestamo(ft.Container):
         self.alignment = ft.alignment.Alignment(0, 0)
 
         # Instanciamos el controlador
-        self.controlador = ControladorNuevoPrestamo(self)
+        self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares())
         self.libros_seleccionados = {}   # {adq: (titulo, autor, adq)}
         self.libros_cache = []
         
@@ -52,7 +53,8 @@ class PantallaNuevoPrestamo(ft.Container):
             "Buscar",
             icon=ft.Icons.SEARCH,
             style=ft.ButtonStyle(color=self.AZUL, shape=ft.RoundedRectangleBorder(radius=8)),
-            on_click=self.buscar_libros
+            data="btn_buscar",
+            on_click=self.controlador.listener
         )
 
         # === CONTENEDOR CON SCROLL PARA LOS LIBROS ===
@@ -103,7 +105,7 @@ class PantallaNuevoPrestamo(ft.Container):
         self.build_ui()
 
 
-    def crear_item_libro(self, titulo, autor, adq):
+    def crear_item_libro(self, id, titulo, autor, adq):
         return ft.Container(
             padding=10,
             border_radius=8,
@@ -117,7 +119,7 @@ class PantallaNuevoPrestamo(ft.Container):
                 ),
                 ft.Column([
                     ft.Text(titulo, weight="bold", color=self.TEXT),
-                    ft.Text(f"Autor: {autor} \nNo. Adquisición: {adq}", size=11, color=self.GRIS_TEXTO),
+                    ft.Text(f"Autores: {autor} \nNo. Adquisición: {adq}", size=11, color=self.GRIS_TEXTO),
                 ], expand=True, spacing=1),
                 ft.Row([
                     ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.VERDE, size=14),
@@ -125,7 +127,7 @@ class PantallaNuevoPrestamo(ft.Container):
                 ], spacing=4),
                 ft.Checkbox(
                     value=adq in self.libros_seleccionados,
-                    on_change=lambda e, l=(titulo, autor, adq): self.toggle_libro(l, e.control.value)
+                    on_change=lambda e, l=(id, titulo, autor, adq): self.toggle_libro(l, e.control.value)
                 )
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
@@ -140,11 +142,11 @@ class PantallaNuevoPrestamo(ft.Container):
             self.lista_libros.controls.append(
                 self.crear_item_libro(*libro)
             )
-            usados.add(adq)
+            usados.add(libro[1])
 
         # 🔹 Resultados de búsqueda
         for libro in self.libros_cache:
-            if libro[2] not in usados:
+            if libro[1] not in usados:
                 self.lista_libros.controls.append(
                     self.crear_item_libro(*libro)
                 )
@@ -152,6 +154,7 @@ class PantallaNuevoPrestamo(ft.Container):
         if self.page:
             self.update()
 
+    """
     def buscar_libros(self, e):
         filtro = self.txt_adquisicion.value.lower()
         libros = self.controlador.obtener_libros_prueba()
@@ -161,6 +164,7 @@ class PantallaNuevoPrestamo(ft.Container):
 
         self.libros_cache = libros
         self.actualizar_lista()
+    """
 
     def seleccionar_fecha_prestamo(self, e):
         if self.picker_fecha_prestamo.value:
@@ -186,18 +190,19 @@ class PantallaNuevoPrestamo(ft.Container):
             self.vista_anterior.update()
 
     def toggle_libro(self, libro, checked):
-        adq = libro[2]
+        adq = libro[3]
 
         if checked:
             self.libros_seleccionados[adq] = libro
+            print(libro)
         else:
             self.libros_seleccionados.pop(adq, None)
 
         self.actualizar_lista()  
-
+    """
     def did_mount(self):
         self.buscar_libros(None)
-
+    """
     def build_ui(self):
         formulario = ft.Column(
             [
