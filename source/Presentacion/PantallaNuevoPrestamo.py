@@ -80,13 +80,13 @@ class PantallaNuevoPrestamo(ft.Container):
         )
         self._page.overlay.extend([self.picker_fecha_prestamo, self.picker_fecha_limite])
 
+
         # Campos de texto de fechas
         self.txt_fecha_prestamo = ft.TextField(
             label="Fecha de préstamo",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_TODAY,
             expand=True, height=55, read_only=True, value=datetime.datetime.now().strftime("%d/%b/%Y"),
-            on_click=self.abrir_picker_prestamo
         )
         self.txt_fecha_limite = ft.TextField(
             label="Fecha límite (7 días)",
@@ -95,7 +95,10 @@ class PantallaNuevoPrestamo(ft.Container):
             expand=True, height=55, read_only=True, value=(datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%d/%b/%Y"),
             on_click=self.abrir_picker_limite
         )
-
+##variable proxima si van a usar la fecha inicio para algo
+        self.fecha_prestamo = datetime.datetime.now()
+        self.txt_fecha_prestamo.value = self.fecha_prestamo.strftime("%d/%b/%Y")
+        
         # Poblar libros de prueba
         self.build_ui()
 
