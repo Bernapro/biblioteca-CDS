@@ -86,7 +86,7 @@ class PantallaRegistroIncidencia(ft.Container):
 
         self.row_cat_previa = ft.Row([self.drop_cat, self.container_previa], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
 
-        self.txt_lugar = self._crear_input("Lugar (Ej. Cubículo 1)", width=165)
+        self.txt_lugar = self._crear_input("Lugar (Ej. Cubículo 1)", width=350)
         
         # --- CALENDARIO ---
 

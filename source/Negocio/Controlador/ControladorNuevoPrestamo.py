@@ -32,7 +32,7 @@ class ControladorNuevoPrestamo:
             
         else:
             # Lógica en caso de que no se encuentre el alumno o el campo esté vacío
-            self.__pantalla.card_alumno.bgcolor = ft.colors.TRANSPARENT
+            self.__pantalla.card_alumno.bgcolor = ft.Colors.TRANSPARENT
             self.__pantalla.card_alumno.content = ft.Text("Por favor, ingresa una matrícula válida.", color="red")
             
         self.__pantalla.update()
