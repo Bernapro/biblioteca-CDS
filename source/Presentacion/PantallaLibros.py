@@ -75,20 +75,58 @@ class PantallaLibros(ft.Container):
             shape=ft.RoundedRectangleBorder(radius=20),
             title=ft.Text("Detalles del libro", weight="bold", color="black"),
             content=ft.Container(
-                width=400,
-                content=ft.Column([
-                    self.modal_titulo,
-                    self.modal_isbn,
-                    self.modal_editorial,
-                    self.modal_ejemplares,
-                    self.modal_edicion,
-                    self.modal_fecha,
-                    self.modal_dewey,
-                    self.modal_congreso,
-                    self.modal_decimal,
-                    self.modal_autores,
-                    self.modal_categorias
-                ], spacing=10, scroll=ft.ScrollMode.AUTO)
+                width=450,
+                padding=20,
+                content=ft.Column(
+                    [
+                        # ======================
+                        # TITULO
+                        # ======================
+                        ft.Row(
+                            [
+                                ft.Icon(ft.Icons.MENU_BOOK, color=self.AZUL, size=28),
+                                self.modal_titulo
+                            ],
+                            alignment=ft.MainAxisAlignment.START
+                        ),
+
+                        ft.Divider(),
+
+                        # ======================
+                        # DATOS GENERALES
+                        # ======================
+                        ft.Text("Datos generales", weight="bold", size=16),
+
+                        self.modal_isbn,
+                        self.modal_editorial,
+                        self.modal_edicion,
+                        self.modal_fecha,
+                        self.modal_ejemplares,
+
+                        ft.Divider(),
+
+                        # ======================
+                        # CLASIFICACIÓN
+                        # ======================
+                        ft.Text("Clasificación", weight="bold", size=16),
+
+                        self.modal_dewey,
+                        self.modal_congreso,
+                        self.modal_decimal,
+
+                        ft.Divider(),
+
+                        # ======================
+                        # AUTORES / CATEGORÍAS
+                        # ======================
+                        ft.Text("Autores y categorías", weight="bold", size=16),
+
+                        self.modal_autores,
+                        self.modal_categorias,
+                    ],
+                    spacing=12,
+                    scroll=ft.ScrollMode.AUTO
+                )
             ),
             actions=[
                 ft.TextButton(
