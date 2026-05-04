@@ -17,6 +17,8 @@ def obtener_libros(n_page=0, length=100, busqueda=""):
         params=params
     )
 
+def obtener_libro_por_isbn(isbn):
+    return requests.get(f"{BASE_URL}/{isbn}")
 
 def crear_libro(data):
     return requests.post(BASE_URL, json=data)

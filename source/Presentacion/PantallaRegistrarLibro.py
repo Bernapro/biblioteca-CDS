@@ -179,14 +179,13 @@ class PantallaRegistrarLibro(ft.Container):
     # REGRESAR
     # ========================
     def regresar(self, e):
-        if self.vista_anterior:
-            self.vista_anterior.build_ui()
-            self.vista_anterior.refrescar_grid()
+        from Presentacion.PantallaLibros import PantallaLibros
 
-            parent = self.parent
-            if parent:
-                parent.content = self.vista_anterior
-                parent.update()
+        parent = self.parent
+
+        if parent:
+            parent.content = PantallaLibros(self._page)
+            parent.update()
 
     # ========================
     # LIMPIAR FORMULARIO
@@ -261,8 +260,12 @@ class PantallaRegistrarLibro(ft.Container):
             self.limpiar_formulario()
 
             # Refresca catálogo en segundo plano
-            if self.vista_anterior:
-                self.vista_anterior.refrescar_grid()
+            if response.status_code == 201:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("Libro registrado correctamente")
+                )
+
+                self.limpiar_formulario()
 
         else:
 

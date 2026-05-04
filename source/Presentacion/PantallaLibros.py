@@ -57,6 +57,47 @@ class PantallaLibros(ft.Container):
             run_spacing=20,
         )
 
+        self.modal_titulo = ft.Text("", size=20, weight="bold", color="black")
+        self.modal_isbn = ft.Text("", color="black")
+        self.modal_editorial = ft.Text("", color="black")
+        self.modal_ejemplares = ft.Text("", color="black")
+        self.modal_edicion = ft.Text("", color="black")
+        self.modal_fecha = ft.Text("", color="black")
+        self.modal_dewey = ft.Text("", color="black")
+        self.modal_congreso = ft.Text("", color="black")
+        self.modal_decimal = ft.Text("", color="black")
+        self.modal_autores = ft.Text("", color="black")
+        self.modal_categorias = ft.Text("", color="black")
+
+        self.dialogo_detalles = ft.AlertDialog(
+            modal=True,
+            bgcolor="white",
+            shape=ft.RoundedRectangleBorder(radius=20),
+            title=ft.Text("Detalles del libro", weight="bold", color="black"),
+            content=ft.Container(
+                width=400,
+                content=ft.Column([
+                    self.modal_titulo,
+                    self.modal_isbn,
+                    self.modal_editorial,
+                    self.modal_ejemplares,
+                    self.modal_edicion,
+                    self.modal_fecha,
+                    self.modal_dewey,
+                    self.modal_congreso,
+                    self.modal_decimal,
+                    self.modal_autores,
+                    self.modal_categorias
+                ], spacing=10, scroll=ft.ScrollMode.AUTO)
+            ),
+            actions=[
+                ft.TextButton(
+                    "Cerrar",
+                    on_click=self.cerrar_dialogo_libro
+                )
+            ]
+        )        
+
         self.build_ui()
         self.refrescar_grid()
 
@@ -70,7 +111,10 @@ class PantallaLibros(ft.Container):
             bgcolor="white",
             border_radius=20,
             padding=15,
-            shadow=ft.BoxShadow(blur_radius=15, color="black12"),
+            shadow=ft.BoxShadow(
+                blur_radius=15,
+                color="black12"
+            ),
             content=ft.Column(
                 [
                     ft.Icon(ft.Icons.MENU_BOOK, size=60, color=self.AZUL),
@@ -89,15 +133,27 @@ class PantallaLibros(ft.Container):
                         color="#374151"
                     ),
 
-                    ft.Container(
-                        padding=5,
-                        border_radius=10,
-                        bgcolor="#DBEAFE",
-                        content=ft.Text(
-                            f"Ejemplares: {ejemplares}",
-                            size=11,
-                            color="#1D4ED8"
-                        )
+                    ft.Row(
+                        [
+                            ft.Container(
+                                padding=5,
+                                border_radius=10,
+                                bgcolor="#DBEAFE",
+                                content=ft.Text(
+                                    f"Ejemplares: {ejemplares}",
+                                    size=11,
+                                    color="#1D4ED8"
+                                )
+                            ),
+
+                            ft.IconButton(
+                                icon=ft.Icons.INFO_OUTLINE,
+                                icon_color=self.AZUL,
+                                tooltip="Ver detalles",
+                                on_click=lambda e, isbn=isbn: self.abrir_dialogo_libro(isbn)
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
                     )
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -105,6 +161,66 @@ class PantallaLibros(ft.Container):
                 spacing=8
             )
         )
+    
+    def abrir_dialogo_libro(self, isbn):
+        try:
+            from Infraestructura.API.libros_api import obtener_libro_por_isbn
+
+            response = obtener_libro_por_isbn(isbn)
+
+            if response.status_code != 200:
+                raise Exception("No se pudo obtener el libro")
+
+            libro = response.json()
+
+            clas_congreso = libro.get("clasificacionDelCongreso", "Sin clasificación")
+            clas_decimal = libro.get("decimalUniversal", "Sin clasificación")
+
+            # Evitar None
+            clas_congreso = clas_congreso if clas_congreso else "Sin clasificación"
+            clas_decimal = clas_decimal if clas_decimal else "Sin clasificación"
+
+            # DATOS PRINCIPALES
+            self.modal_titulo.value = libro.get("titulo", "Sin título")
+            self.modal_isbn.value = f"ISBN: {libro.get('isbn', 'N/A')}"
+            self.modal_editorial.value = f"Editorial: {libro.get('editorial', 'N/A')}"
+            self.modal_ejemplares.value = f"Ejemplares: {libro.get('nEjemplares', 0)}"
+            self.modal_edicion.value = f"Edición: {libro.get('edicion', 'N/A')}"
+            self.modal_fecha.value = f"Fecha: {libro.get('fechaPublicacion', 'N/A')}"
+            self.modal_dewey.value = f"Dewey: {libro.get('dewey', 'N/A')}"
+            self.modal_congreso.value = f"LCC: {clas_congreso}"
+            self.modal_decimal.value = f"CDU: {clas_decimal}"
+
+            # LISTAS
+            autores = libro.get("autores", [])
+            categorias = libro.get("categorias", [])
+
+            self.modal_autores.value = "Autores: " + (
+                ", ".join(autores) if autores else "Sin autores"
+            )
+
+            self.modal_categorias.value = "Categorías: " + (
+                ", ".join(categorias) if categorias else "Sin categorías"
+            )
+
+            # MOSTRAR DIALOGO
+            if self.dialogo_detalles not in self._page.overlay:
+                self._page.overlay.append(self.dialogo_detalles)
+
+            self.dialogo_detalles.open = True
+            self._page.update()
+
+        except Exception as e:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text(f"Error al cargar detalles: {str(e)}")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+
+
+    def cerrar_dialogo_libro(self, e):
+        self.dialogo_detalles.open = False
+        self._page.update()    
 
     # ===============================
     # CARGAR LIBROS PAGINADOS
