@@ -1,5 +1,8 @@
 import flet as ft
 from Presentacion.PantallaPrincipal import PantallaPrincipal
+# Importamos el controlador que hace el trabajo sucio en la BD
+from Negocio.Controlador.ControladorLogin import ControladorLogin
+
 class PantallaLogin:
     def __init__(self, page: ft.Page):
         self.page = page
@@ -40,17 +43,28 @@ class PantallaLogin:
 
     # --- LÓGICA DEL BOTÓN INICIAR SESIÓN ---
     def intentar_login(self, e):
-        if self.usuario_input.value == "admin" and self.pass_input.value == "admin":
+        usuario_ingresado = self.usuario_input.value
+        pass_ingresada = self.pass_input.value
+
+        # 1. Efecto visual: Bloquear botón y mostrar que está cargando
+        boton = e.control
+        boton.content.controls[0].value = "Verificando..."
+        boton.disabled = True
+        self.page.update()
+
+        # 2. LA MAGIA: Le preguntamos al Controlador (arquitectura limpia)
+        acceso_valido = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
+
+        # 3. Dar acceso o rechazar
+        if acceso_valido:
             print("Acceso concedido al sistema")
             self.page.controls.clear()
             self.page.update()
             
             try:
-                
                 app_principal = PantallaPrincipal(self.page)
                 self.page.add(app_principal)
                 self.page.update()
-                
             except Exception as ex:
                 self.page.snack_bar = ft.SnackBar(
                     ft.Text(f"Error al cargar el menú principal: {ex}"), 
@@ -58,8 +72,10 @@ class PantallaLogin:
                 )
                 self.page.snack_bar.open = True
                 self.page.update()
-                
         else:
+            # Restaurar botón y mandar error de credenciales
+            boton.content.controls[0].value = "Iniciar sesión"
+            boton.disabled = False
             self.page.snack_bar = ft.SnackBar(
                 ft.Text("Usuario o contraseña incorrectos"), 
                 bgcolor=ft.Colors.ERROR 
@@ -73,12 +89,11 @@ class PantallaLogin:
         # 1. PANEL IZQUIERDO (Pegado al borde, ocupa toda la altura)
         # ==========================================
         panel_izquierdo = ft.Container(
-            expand=4, # Toma 4 partes del espacio total de la ventana
+            expand=4, 
             bgcolor=self.fondo_izquierdo,
-            # Solo tiene curva a la derecha, para que la izquierda quede plana contra el monitor
             border_radius=ft.border_radius.only(top_right=80, bottom_right=80),
             padding=ft.padding.all(30),
-            alignment=ft.alignment.Alignment(0, 0), # <--- CENTRADO CORREGIDO
+            alignment=ft.alignment.Alignment(0, 0), 
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -117,8 +132,8 @@ class PantallaLogin:
                 spread_radius=1, blur_radius=25, color=ft.Colors.BLACK12, offset=ft.Offset(0, 10)
             ),
             content=ft.Column(
-                alignment=ft.MainAxisAlignment.CENTER, # <--- PROPIEDAD CORREGIDA PARA FLET
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER, # <--- CENTRA EL CONTENIDO
+                alignment=ft.MainAxisAlignment.CENTER, 
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
                 controls=[
                     ft.Container(
                         content=ft.Column(
@@ -183,8 +198,8 @@ class PantallaLogin:
         # 3. PANEL DERECHO (Ocupa el resto de la pantalla y centra el formulario)
         # ==========================================
         panel_derecho = ft.Container(
-            expand=6, # Toma 6 partes del espacio total de la ventana
-            alignment=ft.alignment.Alignment(0, 0), # <--- CENTRADO CORREGIDO
+            expand=6, 
+            alignment=ft.alignment.Alignment(0, 0), 
             content=formulario
         )
 
@@ -196,7 +211,7 @@ class PantallaLogin:
             bgcolor="#f4f7fc", 
             content=ft.Row(
                 expand=True,
-                spacing=0, # Cero espacio entre el panel izquierdo y el derecho
+                spacing=0, 
                 controls=[panel_izquierdo, panel_derecho]
             )
         )
