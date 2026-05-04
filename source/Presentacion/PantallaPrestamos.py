@@ -103,8 +103,8 @@ class PantallaPrestamos(ft.Container):
                 ),
                 ft.DataCell(
                     ft.Row([
-                        ft.Icon(ft.Icons.MENU_BOOK, size=20, color=self.AZUL if data["estado"] == "A tiempo" else self.ROJO),
-                        ft.Text(data["libro"], color=self.TEXT, size=15)
+                        ft.Icon(ft.Icons.FORMAT_LIST_NUMBERED, size=20, color=self.AZUL if data["estado"] == "A tiempo" else self.ROJO),
+                        ft.Text(str(data["cantidad"]), color=self.TEXT, size=15)
                     ], spacing=10)
                 ),
                 ft.DataCell(self.build_estado(data["estado"])),
@@ -172,7 +172,7 @@ class PantallaPrestamos(ft.Container):
             ft.Container(
                 expand=True,
                 content=ft.TextField(
-                    hint_text="Buscar por matrícula, nombre o libro...",
+                    hint_text="Buscar por matrícula, nombre o cantidad...",
                     prefix_icon=ft.Icons.SEARCH, border=ft.InputBorder.NONE, content_padding=15
                 ),
                 bgcolor=self.CARD, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
@@ -203,17 +203,17 @@ class PantallaPrestamos(ft.Container):
        
         self.tabla = ft.DataTable(
             expand=True,
-            column_spacing=20,    # <-- Reducido para adaptarse a laptops y pantallas pequeñas
-            horizontal_margin=15, # <-- Reducido para aprovechar mejor el espacio
+            column_spacing=45,    # <-- Aumenta este valor para separar más las columnas
+            horizontal_margin=30, # <-- Aumenta el margen en los bordes de la tabla
             heading_row_color="surfaceVariant",
             heading_row_height=60,
             data_row_min_height=75, # <-- Filas más altas para la letra grande
             data_row_max_height=75,
             divider_thickness=1,
             columns=[
-                ft.DataColumn(ft.Text("Matrícula", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Id", weight="bold", color=self.TEXT, size=15)),
                 ft.DataColumn(ft.Text("Nombre", weight="bold", color=self.TEXT, size=15)),
-                ft.DataColumn(ft.Text("Libro", weight="bold", color=self.TEXT, size=15)),
+                ft.DataColumn(ft.Text("Cantidad", weight="bold", color=self.TEXT, size=15)),
                 ft.DataColumn(ft.Text("Estado", weight="bold", color=self.TEXT, size=15)),
                 ft.DataColumn(ft.Text("Fecha préstamo", weight="bold", color=self.TEXT, size=15)),
                 ft.DataColumn(ft.Text("Fecha límite", weight="bold", color=self.TEXT, size=15)),
