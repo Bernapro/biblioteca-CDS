@@ -27,7 +27,14 @@ class PantallaRegistrarLibro(ft.Container):
         # ========================
         # INPUTS
         # ========================
-        self.txt_isbn = self.crear_input("ISBN", 350)
+        self.txt_isbn = self.crear_input("ISBN", 300)
+        self.boton_buscar_isbn = ft.IconButton(
+            icon=ft.Icons.SEARCH,
+            bgcolor=self.AZUL,
+            icon_color="white",
+            tooltip="Buscar datos del libro",
+            on_click=self.buscar_isbn
+        )
         self.txt_titulo = self.crear_input("Título", 350)
         self.txt_editorial = self.crear_input("Editorial", 350)
 
@@ -247,7 +254,13 @@ class PantallaRegistrarLibro(ft.Container):
 
         formulario = ft.Column(
             [
-                self.txt_isbn,
+                ft.Row(
+                    [
+                        self.txt_isbn,
+                        self.boton_buscar_isbn
+                    ],
+                    spacing=10
+                ),
                 self.txt_titulo,
                 self.txt_editorial,
 
@@ -389,3 +402,52 @@ class PantallaRegistrarLibro(ft.Container):
             scroll=ft.ScrollMode.AUTO,
             expand=True
         )
+
+    def buscar_isbn(self, e):
+
+        isbn = self.txt_isbn.value
+
+        resultado = self.controller.buscar_por_isbn(isbn)
+
+        if not resultado["ok"]:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text(resultado["mensaje"])
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
+
+        data = resultado["data"]
+
+        # AUTOCOMPLETAR CAMPOS
+        self.txt_titulo.value = data["titulo"]
+        self.txt_editorial.value = data["editorial"]
+        self.txt_fecha.value = data["fecha"]
+        self.txt_edicion.value = data["edicion"]
+        self.txt_dewey.value = data["dewey"]
+        self.txt_cdu.value = data["cdu"]
+        self.txt_lcc.value = data["lcc"]
+
+        # AUTORES
+        self.autores_seleccionados = data["autores"]
+        self.chips_autores.controls.clear()
+
+        for autor in data["autores"]:
+            chip = ft.Chip(
+                label=ft.Text(autor),
+                on_delete=lambda ev, n=autor: self.eliminar_autor(n)
+            )
+            self.chips_autores.controls.append(chip)
+
+        # CATEGORÍAS
+        self.categorias_seleccionadas = data["categorias"]
+        self.chips_categorias.controls.clear()
+
+        for cat in data["categorias"]:
+            chip = ft.Chip(
+                label=ft.Text(cat),
+                on_delete=lambda ev, n=cat: self.eliminar_categoria(n)
+            )
+            self.chips_categorias.controls.append(chip)
+
+        self.update()        
