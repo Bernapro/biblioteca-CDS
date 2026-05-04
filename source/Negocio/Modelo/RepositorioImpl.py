@@ -91,9 +91,10 @@ class RepositorioImpl(Repositorio):
     # =============================
 
     def obtener_siguiente_vis(self):
-        """Obtiene el siguiente número de secuencia para Visitante"""
         with db.get_connection() as conn:
-            query = "SELECT nextval('seq_visitante') as numero"
+            query = """
+                SELECT last_value + 1 AS numero
+                FROM seq_visitante
+            """
             result = conn.execute(query).fetchone()
             return f"VIS-{result['numero']}"
-        

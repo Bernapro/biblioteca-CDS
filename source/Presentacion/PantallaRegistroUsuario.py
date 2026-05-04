@@ -278,6 +278,7 @@ class PantallaRegistroUsuario(ft.Container):
         self.row_semestre_grupo.visible = False
         self.n_plaza.visible = False
         self.institucion.visible = False
+        self.identificador_preview.visible = False   # 👈 FALTABA ESTE
 
         if tipo == "Alumno":
             self.matricula.visible = True
@@ -355,7 +356,7 @@ class PantallaRegistroUsuario(ft.Container):
         self.grupo.value = None
         self.licenciatura.value = None
 
-
+        self.cambiar_campos(None)
         self.update()
 
     def build_ui(self):
