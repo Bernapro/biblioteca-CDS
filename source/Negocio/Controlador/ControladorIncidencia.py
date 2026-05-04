@@ -74,7 +74,9 @@ class ControladorIncidencia:
         self.__pantalla.cerrar_dialogo(e)
 
         # refrescar lista
-        self.__pantalla.actualizar()
+       # refrescar lista correctamente
+        self.__pantalla.cargar_datos(e=True)
+        self.__pantalla.update()
 
     # =========================================
     # 📌 CUANDO ABRES EL MODAL
