@@ -1,6 +1,9 @@
 from Infraestructura.API.Interfaces.BibliotecaClientInterface import BibliotecaClientInterface
 from Infraestructura.API.Interfaces.ResponseObject import ResponseObject
 import requests
+from Negocio.Modelo.Libro import Libro
+from Negocio.Modelo.Ejemplar import Ejemplar
+
 
 class BibliotecaEjemplares(BibliotecaClientInterface):
     
@@ -18,6 +21,7 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
     def get(self, clave = "") -> ResponseObject:
         if not clave:
             return None
+        ejem = None
         url = f"{self.URL_BASE+self.ENDPOINT}/{clave}"
         r = requests.get(url)
         try:
@@ -25,5 +29,10 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
         except KeyError:
             print("Código de respuesta desconocido")
         if r.status_code == 200:
-            print(r.json())
-        return None
+            args = r.json()
+            ejem = Ejemplar(id = args["id"], noAdquisicion= args["noAdquisicion"], libro= Libro())
+            lib = ejem.getLibro()
+            lib.setTitulo(args["titulo"])
+            lib.setAutores(args["autores"])
+
+        return ejem

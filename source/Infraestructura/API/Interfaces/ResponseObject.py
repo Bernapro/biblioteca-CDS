@@ -2,6 +2,10 @@ from abc import ABC, abstractmethod
 
 class ResponseObject(ABC):
 
-    def setJSONSchema(args: dict)-> None:
+    @abstractmethod
+    def setBody(self, args: dict)-> None:
         pass
-    pass
+    
+    @abstractmethod
+    def getBody(self) -> dict:
+        pass
