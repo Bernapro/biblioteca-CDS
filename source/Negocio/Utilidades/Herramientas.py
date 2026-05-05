@@ -7,7 +7,7 @@ class Herramientas:
         if dropdown is None:
             return
 
-        # 🔥 EL SECRETO: Flet a veces ignora 'None', pero obedece inmediatamente al string vacío ""
+        #EL SECRETO: Flet a veces ignora 'None', pero obedece inmediatamente al string vacío ""
         dropdown.value = "" 
         dropdown.update()
 
@@ -56,3 +56,5 @@ class Herramientas:
             if hasattr(c, "disabled"):
                 c.disabled = True
                 c.update()
+
+    

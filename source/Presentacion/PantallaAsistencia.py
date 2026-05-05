@@ -13,13 +13,14 @@ class PantallaAsistencia(ft.Container):
 
         self.expand = True
         self.padding = 30
-        self.bgcolor = "#EAF1F7"
+        self.bgcolor = "transparent"
         self.border_radius = 30
         self.alignment = ft.alignment.Alignment(0, 0)
         self.AZUL = "#3B82F6"
-        self.CARD = "white"
-        self.TEXT = "#111827"
-        self.TEXT_SECONDARY = "#6B7280"
+        self.CARD = "surface"
+        self.TEXT = "onSurface"
+        self.TEXT_SECONDARY = "onSurfaceVariant"
+        self.GRIS_BORDE = "outline"
 
         self.mensaje_final = ft.Column(
             [],
@@ -32,9 +33,9 @@ class PantallaAsistencia(ft.Container):
             width=240,
             autofocus=True,
             text_style=ft.TextStyle(color=self.TEXT),
-            hint_style=ft.TextStyle(color=self.TEXT),
+            hint_style=ft.TextStyle(color=self.TEXT_SECONDARY),
             border_radius=12,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             prefix_icon=ft.Icons.PERSON,
             on_submit=self.procesar_qr,
             on_change=lambda e: self.limpiar_mensaje()
@@ -54,7 +55,7 @@ class PantallaAsistencia(ft.Container):
             "VISITANTE": "#F59E0B"
         }
 
-        color_tipo = colores.get(tipo_usuario, "#6B7280")
+        color_tipo = colores.get(tipo_usuario, self.TEXT_SECONDARY)
 
         # ===== TEXTO TIPO =====
         texto_tipo = tipo_usuario.capitalize() if tipo_usuario else ""
@@ -69,18 +70,14 @@ class PantallaAsistencia(ft.Container):
             padding=ft.padding.symmetric(horizontal=8, vertical=2),
             border_radius=8,
             border=ft.border.all(1, color_tipo),
-            bgcolor={
-                "ALUMNO": "#DBEAFE",
-                "PERSONAL": "#D1FAE5",
-                "VISITANTE": "#FEF3C7"
-            }.get(tipo_usuario, "#F3F4F6")
+            bgcolor="transparent"
         )
 
         # ===== MENSAJE PRINCIPAL =====
         if estado == "ENTRADA":
             mensaje = ft.Text(
                 "✅ Entrada registrada correctamente",
-                color="#16A34A",
+                color="#22C55E",
                 weight="bold"
             )
 
@@ -93,14 +90,14 @@ class PantallaAsistencia(ft.Container):
 
         elif estado == "NO_ENCONTRADO":
             self.mensaje_final.controls = [
-                ft.Text("❌ Usuario no encontrado", color="#DC2626", weight="bold")
+                ft.Text("❌ Usuario no encontrado", color="error", weight="bold")
             ]
             self.update()
             return
 
         elif estado == "INVALIDO":
             self.mensaje_final.controls = [
-                ft.Text("⚠️ Ingresa un código válido", color="#D97706", weight="bold")
+                ft.Text("⚠️ Ingresa un código válido", color="#F59E0B", weight="bold")
             ]
             self.update()
             return
@@ -113,7 +110,7 @@ class PantallaAsistencia(ft.Container):
         # ===== RESULTADO FINAL =====
         self.mensaje_final.controls = [
             mensaje,
-            ft.Text(nombre, size=16, weight="bold", color="#000000"),
+            ft.Text(nombre, size=16, weight="bold", color=self.TEXT),
             badge
         ]
 
@@ -148,7 +145,7 @@ class PantallaAsistencia(ft.Container):
         panel_qr = ft.Container(
             expand=1,
             height=260,
-            bgcolor="#F3F4F6",
+            bgcolor="surfaceVariant",
             border_radius=20,
             padding=20,
             content=ft.Column(
@@ -166,7 +163,7 @@ class PantallaAsistencia(ft.Container):
         panel_input = ft.Container(
             expand=1,
             height=260,
-            bgcolor="#F3F4F6",
+            bgcolor="surfaceVariant",
             border_radius=20,
             padding=20,
             content=ft.Column(
@@ -178,8 +175,8 @@ class PantallaAsistencia(ft.Container):
                         on_click=self.procesar_qr,
                         data="btn_qr",
                         style=ft.ButtonStyle(
-                            bgcolor="#111827",
-                            color="white"
+                            bgcolor="onSurface",
+                            color="surface"
                         )
                     ),
                 ],

@@ -16,20 +16,23 @@ class PantallaHistorial(ft.Container):
         # Propiedades del Contenedor Principal
         self.expand = True
         self.padding = 30
-        self.bgcolor = "#EAF1F7"
+        self.bgcolor = "transparent"
         self.border_radius = 30
 
         # ===== COLORES CONSTANTES =====
         self.AZUL = "#3B82F6"
-        self.TEXTO_TITULO = "#111827"
-        self.TEXTO_TABLA = "#000000" 
-        self.BORDE = "#D1D5DB"
-        self.TEXTO_HEADER = "#111827"
-        self.FONDO_HEADER = "#F3F4F6"  
+        self.TEXT = "onSurface"
+        self.GRIS_TEXTO = "onSurfaceVariant"
+        self.GRIS_BORDE = "outline"
+        self.FONDO_HEADER = "surfaceVariant"
+        self.CARD = "surface"
+        self.VERDE = "#10B981"
+        self.ROJO = "#EF4444"
+        self.NARANJA = "#F59E0B"
 
         # ===== CONTROLES DINÁMICOS =====
-        self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXTO_TITULO)
-        self.txt_fecha_fin = ft.Text("Fecha fin", color=self.TEXTO_TITULO)
+        self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXT)
+        self.txt_fecha_fin = ft.Text("Fecha fin", color=self.TEXT)
 
         self.fecha_inicio_picker = ft.DatePicker(on_change=self.seleccionar_inicio)
         self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
@@ -40,7 +43,7 @@ class PantallaHistorial(ft.Container):
                 ft.Icon(ft.Icons.CLEAR, color="white", size=18),
                 ft.Text("Limpiar filtros", color="white", size=12, weight="w500")
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
-            bgcolor="#EF4444",  # rojo suave moderno
+            bgcolor=self.ROJO,
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=10,
             on_click=self.limpiar_filtros
@@ -51,19 +54,19 @@ class PantallaHistorial(ft.Container):
             prefix_icon=ft.Icons.SEARCH,
             expand=True,
             border_radius=12,
-            border_color=self.BORDE,
+            border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            bgcolor="white",
+            bgcolor=self.CARD,
             on_change=self.filtrar, 
-            text_style=ft.TextStyle(color=self.TEXTO_TITULO),
-            label_style=ft.TextStyle(color="black"),
+            text_style=ft.TextStyle(color=self.TEXT),
+            label_style=ft.TextStyle(color=self.GRIS_TEXTO),
         )
         
         # DROPDOWN TIPO
         self.combo_tipo = ft.Dropdown(
             expand=True,
             label="Tipo de usuario",
-            border_color=self.BORDE,
+            border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
             bgcolor="surface",
@@ -82,7 +85,7 @@ class PantallaHistorial(ft.Container):
         self.combo_estado = ft.Dropdown(
             expand=True,
             label="Estado",
-            border_color=self.BORDE,
+            border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
             bgcolor="surface",
@@ -114,12 +117,12 @@ class PantallaHistorial(ft.Container):
 
         self.btn_excel = ft.Container(
             content=ft.Row([
-                ft.Icon(ft.Icons.TABLE_CHART, color="#10B981"),
-                ft.Text("Excel", color="#10B981", weight="w500")
+                ft.Icon(ft.Icons.TABLE_CHART, color=self.VERDE),
+                ft.Text("Excel", color=self.VERDE, weight="w500")
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
-            border=ft.border.all(1, "#10B981"),
+            border=ft.border.all(1, self.VERDE),
             border_radius=10,
-            bgcolor="#ECFDF5",
+            bgcolor="transparent",
             height=38,
             expand=True,
             on_click=self.exportar_excel
@@ -127,11 +130,11 @@ class PantallaHistorial(ft.Container):
 
         self.btn_pdf = ft.Container(
             content=ft.Row([
-                ft.Icon(ft.Icons.PICTURE_AS_PDF, color="#EF4444"),
-                ft.Text("PDF", color="#EF4444", weight="w500")
+                ft.Icon(ft.Icons.PICTURE_AS_PDF, color=self.ROJO),
+                ft.Text("PDF", color=self.ROJO, weight="w500")
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
-            border=ft.border.all(1, "#EF4444"),
-            bgcolor="#FEF2F2",
+            border=ft.border.all(1, self.ROJO),
+            bgcolor="transparent",
             border_radius=10,
             height=38,
             expand=True,
@@ -141,26 +144,26 @@ class PantallaHistorial(ft.Container):
         self.export_container = ft.Row(expand=True)
         self.actualizar_exportar()
 
-        self.txt_hoy = ft.Text("0", size=18, weight="bold", color="black")
+        self.txt_hoy = ft.Text("0", size=18, weight="bold", color=self.TEXT)
         
         # CARD HOY
         self.card_hoy = ft.Container(
             padding=ft.padding.symmetric(horizontal=15, vertical=5),
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=20,
-            border=ft.border.all(1, self.BORDE),
+            border=ft.border.all(1, self.GRIS_BORDE),
             expand=True,
             content=ft.Row([
                 ft.Container(
-                    content=ft.Icon(ft.Icons.PEOPLE_ALT_ROUNDED, color="white", size=20),
-                    bgcolor="black",
+                    content=ft.Icon(ft.Icons.PEOPLE_ALT_ROUNDED, color=self.CARD, size=20),
+                    bgcolor=self.TEXT,
                     padding=8,
                     border_radius=12
                 ),
                 ft.Column([
-                    ft.Text("Usuarios únicos hoy", size=12, color="black"),
+                    ft.Text("Usuarios únicos hoy", size=12, color=self.GRIS_TEXTO),
                     self.txt_hoy,
-                    ft.Text("Asistieron hoy a la biblioteca", size=12, color="black")
+                    ft.Text("Asistieron hoy a la biblioteca", size=12, color=self.GRIS_TEXTO)
                 ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
             ], spacing=10)
         )
@@ -206,10 +209,10 @@ class PantallaHistorial(ft.Container):
         return ft.Container(
             expand=True,
             height=38,
-            border=ft.border.all(1, self.BORDE),
+            border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=12),
-            bgcolor="white",
+            bgcolor=self.CARD,
             on_click=lambda e: self.abrir_picker(e, picker),
             content=ft.Row(
                 [ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.AZUL), texto_ref],
@@ -341,18 +344,18 @@ class PantallaHistorial(ft.Container):
             filas.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(str(d.get("identificador","")))),
+                        ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXT)),
 
                         ft.DataCell(
                             ft.Row([
                                 self.obtener_icono_tipo(d.get("tipo")),
-                                ft.Text(str(d.get("nombre","")))
+                                ft.Text(str(d.get("nombre","")), color=self.TEXT)
                             ], spacing=6)
                         ),
 
-                        ft.DataCell(ft.Text(d.get("fecha", ""))),
-                        ft.DataCell(ft.Text(d.get("entrada", ""))),
-                        ft.DataCell(ft.Text(d.get("salida", ""))),
+                        ft.DataCell(ft.Text(d.get("fecha", ""), color=self.GRIS_TEXTO)),
+                        ft.DataCell(ft.Text(d.get("entrada", ""), color=self.GRIS_TEXTO)),
+                        ft.DataCell(ft.Text(d.get("salida", ""), color=self.GRIS_TEXTO)),
                         ft.DataCell(
                             ft.IconButton(
                                 icon=ft.Icons.VISIBILITY,
@@ -369,15 +372,15 @@ class PantallaHistorial(ft.Container):
             expand=True,
             column_spacing=45,
             heading_row_height=55,
-            horizontal_lines=ft.border.BorderSide(1, "#E5E7EB"),
+            horizontal_lines=ft.border.BorderSide(1, self.GRIS_BORDE),
             heading_row_color=self.FONDO_HEADER,
             columns=[
-                ft.DataColumn(ft.Text("ID", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Entrada", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Salida", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Acciones", weight="bold", color=self.TEXTO_HEADER)),
+                ft.DataColumn(ft.Text("ID", weight="bold", color=self.TEXT)),
+                ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXT)),
+                ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXT)),
+                ft.DataColumn(ft.Text("Entrada", weight="bold", color=self.TEXT)),
+                ft.DataColumn(ft.Text("Salida", weight="bold", color=self.TEXT)),
+                ft.DataColumn(ft.Text("Acciones", weight="bold", color=self.TEXT)),
             ],
             rows=filas
         )
@@ -391,7 +394,7 @@ class PantallaHistorial(ft.Container):
             ft.Text(
                 f"Mostrando {len(datos)} de {self.total_registros} registros encontrados",
                 size=14,
-                color="grey"
+                color=self.GRIS_TEXTO
             ),
             self.construir_paginacion()
         ]
@@ -400,17 +403,17 @@ class PantallaHistorial(ft.Container):
     def obtener_icono_tipo(self, tipo):
         if tipo == "ALUMNO":
             return ft.Container(
-                content=ft.Icon(ft.Icons.SCHOOL, color="#3B82F6", size=16),
+                content=ft.Icon(ft.Icons.SCHOOL, color=self.AZUL, size=16),
                 tooltip="Alumno"
             )
         elif tipo == "PERSONAL":
             return ft.Container(
-                content=ft.Icon(ft.Icons.BADGE, color="#10B981", size=16),
+                content=ft.Icon(ft.Icons.BADGE, color=self.VERDE, size=16),
                 tooltip="Personal"
             )
         elif tipo == "VISITANTE":
             return ft.Container(
-                content=ft.Icon(ft.Icons.PERSON, color="#F59E0B", size=16),
+                content=ft.Icon(ft.Icons.PERSON, color=self.NARANJA, size=16),
                 tooltip="Visitante"
             )
         else:
@@ -421,13 +424,13 @@ class PantallaHistorial(ft.Container):
         
     def _input_focus(self, e):
         e.control.value = ""
-        e.control.color = "black"
+        e.control.color = self.TEXT
         self.update()
 
     def _input_blur(self, e):
         if not e.control.value:
             e.control.value = str(self.pagina_actual)
-            e.control.color = "grey"
+            e.control.color = self.GRIS_TEXTO
         self.update()
 
     def construir_paginacion(self):
@@ -448,7 +451,7 @@ class PantallaHistorial(ft.Container):
             text_align=ft.TextAlign.CENTER,
             value=str(self.pagina_actual),
             border_radius=8,
-            color="grey",
+            color=self.GRIS_TEXTO,
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
@@ -459,8 +462,8 @@ class PantallaHistorial(ft.Container):
 
         botones = []
 
-        botones.append(ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(1)))
-        botones.append(ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1)))
+        botones.append(ft.IconButton(ft.Icons.FIRST_PAGE, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(1)))
+        botones.append(ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(self.pagina_actual - 1)))
 
         rango = 2
         paginas = []
@@ -485,21 +488,21 @@ class PantallaHistorial(ft.Container):
 
         for p in paginas:
             if p == "...":
-                botones.append(ft.Text("..."))
+                botones.append(ft.Text("...", color=self.TEXT))
             else:
                 botones.append(
                     ft.TextButton(
                         content=ft.Text(str(p)),
                         on_click=lambda e, p=p: cambiar_pagina(p),
                         style=ft.ButtonStyle(
-                            bgcolor=self.AZUL if p == self.pagina_actual else None,
-                            color="white" if p == self.pagina_actual else "black"
+                            bgcolor=self.AZUL if p == self.pagina_actual else "transparent",
+                            color="white" if p == self.pagina_actual else self.TEXT
                         )
                     )
                 )
 
-        botones.append(ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="black", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)))
-        botones.append(ft.IconButton(ft.Icons.LAST_PAGE, icon_color="black", on_click=lambda e: cambiar_pagina(total_paginas)))
+        botones.append(ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)))
+        botones.append(ft.IconButton(ft.Icons.LAST_PAGE, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(total_paginas)))
 
         botones.append(input_pagina)
 
@@ -524,7 +527,7 @@ class PantallaHistorial(ft.Container):
 
         # Panel de filtros con ancho completo
         filtros_panel = ft.Container(
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=20,
             padding=10,
             width=float('inf'),
@@ -536,7 +539,7 @@ class PantallaHistorial(ft.Container):
         tabla_panel = ft.Container(
             expand=True,
             height=520,
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=20,
             padding=15,
             width=float('inf'),
@@ -553,8 +556,8 @@ class PantallaHistorial(ft.Container):
             ft.Row(
                 [
                     ft.Column([
-                        ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXTO_TITULO),
-                        ft.Text("Sistema de control digital - Registro de asistencias", color="black", size=13),
+                        ft.Text("Historial de asistencias", size=28, weight="bold", color=self.TEXT),
+                        ft.Text("Sistema de control digital - Registro de asistencias", color=self.GRIS_TEXTO, size=13),
                     ], spacing=2),
                     self.btn_limpiar
                 ],
@@ -582,9 +585,9 @@ class PantallaHistorial(ft.Container):
             ft.Container(
                 width=160, # <-- Limitamos el ancho para evitar que rompa el diseño
                 content=ft.Column([
-                    ft.Text(titulo, size=11, color="#6B7280", weight="w500"),
+                    ft.Text(titulo, size=11, color=self.GRIS_TEXTO, weight="w500"),
                     ft.Text(
-                        valor, size=13, weight="bold", color="black"
+                        valor, size=13, weight="bold", color=self.TEXT
                     ),
                 ], spacing=2)
             )
@@ -625,44 +628,44 @@ class PantallaHistorial(ft.Container):
         badges_dinamicos = []
         
         if tipo == "ALUMNO":
-            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.HEXAGON_OUTLINED, "#8B5CF6", "#EDE9FE", "Semestre:", semestre))
-            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.PEOPLE_ALT_OUTLINED, "#10B981", "#D1FAE5", "Grupo:", grupo))
-            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.SCHOOL_OUTLINED, "#3B82F6", "#DBEAFE", "Carrera:", carrera))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.HEXAGON_OUTLINED, "#8B5CF6", "transparent", "Semestre:", semestre))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.PEOPLE_ALT_OUTLINED, self.VERDE, "transparent", "Grupo:", grupo))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.SCHOOL_OUTLINED, self.AZUL, "transparent", "Carrera:", carrera))
         elif tipo == "PERSONAL":
-            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.BADGE_OUTLINED, "#10B981", "#D1FAE5", "No. Plaza:", n_plaza))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.BADGE_OUTLINED, self.VERDE, "transparent", "No. Plaza:", n_plaza))
         elif tipo == "VISITANTE":
-            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.ACCOUNT_BALANCE_OUTLINED, "#F59E0B", "#FEF3C7", "Institución:", institucion))
+            badges_dinamicos.append(self.crear_badge_icono(ft.Icons.ACCOUNT_BALANCE_OUTLINED, self.NARANJA, "transparent", "Institución:", institucion))
 
         # 2. Lógica para saber si sigue en la biblioteca o ya salió
         en_curso = (salida == "" or salida == "-" or salida == "None")
 
         # Colores y textos dinámicos según el estado
-        color_estado = "#F59E0B" if en_curso else "#10B981" # Amarillo o Verde
-        bg_estado = "#FFFBEB" if en_curso else "#ECFDF5"
-        borde_estado = "#FEF08A" if en_curso else "#A7F3D0"
+        color_estado = self.NARANJA if en_curso else self.VERDE
+        bg_estado = "transparent"
+        borde_estado = color_estado
         texto_estado_h1 = "EN CURSO" if en_curso else "FINALIZADO"
         texto_estado_h2 = "El usuario aún no ha registrado su salida en la biblioteca." if en_curso else "El usuario registró su salida correctamente."
         icono_estado = ft.Icons.ACCESS_TIME if en_curso else ft.Icons.CHECK_CIRCLE
 
         # ===== SECCIÓN 1: PERFIL =====
         seccion_perfil = ft.Container(
-            bgcolor="#F8FAFC", border_radius=15, padding=20,
+            bgcolor="surfaceVariant", border_radius=15, padding=20,
             content=ft.Row([
                 ft.Row([
                     ft.Container(
-                        content=ft.Icon(ft.Icons.PERSON, size=50, color="white"),
+                        content=ft.Icon(ft.Icons.PERSON, size=50, color="surface"),
                         bgcolor="#3B82F6", width=80, height=80, border_radius=40, alignment=ft.Alignment(0, 0)
                     ),
                     ft.Column([
-                        ft.Text(nombre, size=20, weight="bold", color="black"),
-                        ft.Text(f"ID: {identificador}", size=13, color="#6B7280"),
+                        ft.Text(nombre, size=20, weight="bold", color=self.TEXT),
+                        ft.Text(f"ID: {identificador}", size=13, color=self.GRIS_TEXTO),
                         ft.Container(
                             content=ft.Row([ft.Icon(ft.Icons.SCHOOL if tipo == "ALUMNO" else ft.Icons.BADGE, size=14, color="#2563EB"), ft.Text(tipo, size=12, weight="bold", color="#2563EB")], spacing=5),
-                            bgcolor="#DBEAFE", padding=ft.padding.symmetric(horizontal=10, vertical=5), border_radius=15
+                            bgcolor="transparent", border=ft.border.all(1, self.AZUL), padding=ft.padding.symmetric(horizontal=10, vertical=5), border_radius=15
                         )
                     ], spacing=5, expand=True)
                 ], expand=True),
-                ft.Container(width=1, height=80, bgcolor="#E5E7EB"),
+                ft.Container(width=1, height=80, bgcolor=self.GRIS_BORDE),
                 ft.Column(badges_dinamicos, spacing=10, expand=True)
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
@@ -674,22 +677,22 @@ class PantallaHistorial(ft.Container):
                 width=160,
                 content=ft.Column([
                     ft.Row([
-                        ft.Container(content=ft.Icon(ft.Icons.LOGOUT, color="#EF4444", size=18), bgcolor="#FEE2E2", padding=8, border_radius=8),
-                        ft.Text("Hora de Salida\n-", size=12, color="#6B7280")
+                        ft.Container(content=ft.Icon(ft.Icons.LOGOUT, color=self.ROJO, size=18), bgcolor="transparent", border=ft.border.all(1, self.ROJO), padding=8, border_radius=8),
+                        ft.Text("Hora de Salida\n-", size=12, color=self.GRIS_TEXTO)
                     ]),
-                    ft.Container(content=ft.Text("Sin salida registrada", color="#EF4444", size=11, weight="bold"), bgcolor="#FEE2E2", padding=ft.padding.symmetric(horizontal=8, vertical=4), border_radius=10)
+                    ft.Container(content=ft.Text("Sin salida registrada", color=self.ROJO, size=11, weight="bold"), bgcolor="transparent", border=ft.border.all(1, self.ROJO), padding=ft.padding.symmetric(horizontal=8, vertical=4), border_radius=10)
                 ])
             )
         else:
-            ui_salida = self.crear_badge_icono(ft.Icons.LOGOUT, "#EF4444", "#FEE2E2", "Hora de Salida", salida)
+            ui_salida = self.crear_badge_icono(ft.Icons.LOGOUT, self.ROJO, "transparent", "Hora de Salida", salida)
 
         seccion_tiempos = ft.Container(
-            border=ft.border.all(1, "#E5E7EB"), border_radius=15, padding=20,
+            border=ft.border.all(1, self.GRIS_BORDE), border_radius=15, padding=20,
             content=ft.Row([
-                self.crear_badge_icono(ft.Icons.CALENDAR_TODAY, "#3B82F6", "#DBEAFE", "Fecha", fecha),
-                ft.Container(width=1, height=40, bgcolor="#E5E7EB"),
-                self.crear_badge_icono(ft.Icons.LOGIN, "#10B981", "#D1FAE5", "Hora de Entrada", entrada),
-                ft.Container(width=1, height=40, bgcolor="#E5E7EB"),
+                self.crear_badge_icono(ft.Icons.CALENDAR_TODAY, self.AZUL, "transparent", "Fecha", fecha),
+                ft.Container(width=1, height=40, bgcolor=self.GRIS_BORDE),
+                self.crear_badge_icono(ft.Icons.LOGIN, self.VERDE, "transparent", "Hora de Entrada", entrada),
+                ft.Container(width=1, height=40, bgcolor=self.GRIS_BORDE),
                 ui_salida
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
@@ -701,13 +704,13 @@ class PantallaHistorial(ft.Container):
                 ft.Row([
                     ft.Icon(icono_estado, color=color_estado, size=30),
                     ft.Column([
-                        ft.Text("Estado actual", size=12, color="#6B7280"),
+                        ft.Text("Estado actual", size=12, color=self.GRIS_TEXTO),
                         ft.Text(texto_estado_h1, size=18, weight="bold", color=color_estado)
                     ], spacing=0)
                 ], expand=1),
                 ft.Container(width=1, height=40, bgcolor=borde_estado),
                 ft.Container(
-                    content=ft.Text(texto_estado_h2, size=13, color="#4B5563"),
+                    content=ft.Text(texto_estado_h2, size=13, color=self.TEXT),
                     expand=2, padding=ft.padding.only(left=20)
                 )
             ])
@@ -720,8 +723,9 @@ class PantallaHistorial(ft.Container):
         # ===== ENSAMBLAJE DEL DIÁLOGO =====
         dialogo = ft.AlertDialog(
             shape=ft.RoundedRectangleBorder(radius=20),
+            bgcolor=self.CARD,
             title=ft.Row([
-                ft.Text("Detalles de Asistencia", weight="bold", size=22, color="black"),
+                ft.Text("Detalles de Asistencia", weight="bold", size=22, color=self.TEXT),
                 ft.IconButton(ft.Icons.CLOSE, on_click=cerrar_dialogo)
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             content=ft.Container(

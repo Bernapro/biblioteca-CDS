@@ -1,5 +1,6 @@
 import flet as ft
 import datetime
+import threading 
 from Negocio.Utilidades.Validador import Validador
 from Negocio.Utilidades.Herramientas import Herramientas
 from Negocio.Controlador.ControladorRegistroUsuario import ControladorPantallaRegistroUsuario
@@ -21,12 +22,22 @@ class PantallaRegistroUsuario(ft.Container):
         )
 
         self.AZUL = "#3B82F6"
-        self.TEXT = "#111827"
-        self.CARD = "white"
+        self.TEXT = "onSurface"
+        self.TEXT_SECONDARY = "onSurfaceVariant"
+        self.CARD = "surface"
+        self.GRIS_BORDE = "outline"
 
         self.nombre = self._crear_input("Nombre(s)", width=350)
+        # Trampa para el Nombre
+        self.nombre.on_submit = self._ignorar_escaneo
+
         self.ap_paterno = self._crear_input("Apellido Paterno", width=165)
+        # 🔥 NUEVO: Trampa para Apellido Paterno
+        self.ap_paterno.on_submit = self._ignorar_escaneo
+
         self.ap_materno = self._crear_input("Apellido Materno", width=165)
+        # 🔥 NUEVO: Trampa para Apellido Materno
+        self.ap_materno.on_submit = self._ignorar_escaneo
 
         self.row_apellidos = ft.Row(
             [self.ap_paterno, self.ap_materno],
@@ -44,7 +55,7 @@ class PantallaRegistroUsuario(ft.Container):
         self.fecha_nacimiento = ft.TextField(
             label="Fecha Nacimiento",
             width=350,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
@@ -63,39 +74,39 @@ class PantallaRegistroUsuario(ft.Container):
                 ft.dropdown.Option("Personal"),
                 ft.dropdown.Option("Visitante"),
             ],
-            on_select=self.cambiar_campos # Flet usa on_change
+            on_select=self.cambiar_campos 
         )
 
         self.matricula = self._crear_input("Matrícula", width=350, visible=False)
+        self.matricula.on_submit = self._procesar_escaneo_matricula
 
-        # 🔹 Ahora los dropdowns disparan on_carrera_o_semestre_change
         self.licenciatura = ft.Dropdown(
             label="Licenciatura",
             width=350,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
             options=[],
             visible=False,
-            on_select=self.on_carrera_o_semestre_change
+            on_select=self.on_carrera_o_semestre_change 
         )
 
         self.semestre = ft.Dropdown(
             label="Semestre",
             width=165,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
             options=[],
-            on_select=self.on_carrera_o_semestre_change
+            on_select=self.on_carrera_o_semestre_change 
         )
 
         self.grupo = ft.Dropdown(
             label="Grupo",
             width=165,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
@@ -110,11 +121,12 @@ class PantallaRegistroUsuario(ft.Container):
         )
 
         self.n_plaza = self._crear_input("Número de plaza", width=350, visible=False)
+        self.n_plaza.on_submit = self._procesar_escaneo_plaza
 
         self.institucion = ft.Dropdown(
             label="Institución",
             width=350,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
@@ -127,7 +139,7 @@ class PantallaRegistroUsuario(ft.Container):
             width=350,
             read_only=True,
             visible=False,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
@@ -167,9 +179,31 @@ class PantallaRegistroUsuario(ft.Container):
         if tipo == "Personal": return self.n_plaza.value
         if tipo == "Visitante": return self.institucion.value
         return None
+    
+    def _ignorar_escaneo(self, e):
+        self.mostrar_mensaje("Usa el escáner solo para Matrícula o N. de Plaza.", "orange")
+        e.control.value = "" 
+        e.control.update()
+
+    def _procesar_escaneo_matricula(self, e):
+        valor = e.control.value.strip()
+        if valor: # Validamos que no esté vacío
+            e.control.border_color = "#22C55E" 
+            e.control.update()
+            self.mostrar_mensaje(f"Matrícula {valor} escaneada con éxito", "green")
+            self.licenciatura.focus() 
+            self.licenciatura.update()
+            self.update()
+
+    def _procesar_escaneo_plaza(self, e):
+        valor = e.control.value.strip()
+        if valor:
+            e.control.border_color = "#22C55E" 
+            e.control.update()
+            self.mostrar_mensaje(f"Plaza {valor} escaneada con éxito", "green")
+            self.update()
 
     def guardar_con_preparacion(self, e):
-
         campos = [
             (self.nombre, None),
             (self.ap_paterno, None),
@@ -212,7 +246,6 @@ class PantallaRegistroUsuario(ft.Container):
         }
 
         try:
-            #  Pasamos  el diccionario puro al controlador
             exito, identificador = self.controlador.guardar_usuario(datos_usuario)
 
             if exito:
@@ -238,7 +271,7 @@ class PantallaRegistroUsuario(ft.Container):
             label=label,
             width=width,
             visible=visible,
-            border_color="#D1D5DB",
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
@@ -289,20 +322,36 @@ class PantallaRegistroUsuario(ft.Container):
 
         self.update()
 
+        # Truco asíncrono para solucionar el bug del foco en Flet
+        def forzar_foco():
+            import time
+            time.sleep(0.2) # Le damos 200 milisegundos a la UI para que renderice los campos
+            if tipo == "Alumno":
+                self.matricula.focus()
+                self.matricula.update()
+            elif tipo == "Personal":
+                self.n_plaza.focus()
+                self.n_plaza.update()
+
+        # Ejecutamos el foco en un hilo separado para que no congele tu pantalla
+        threading.Thread(target=forzar_foco, daemon=True).start()
+
     def cancelar(self, e):
         if self.vista_anterior:
             self.vista_anterior.build_ui()
             self.vista_anterior.update()
 
     def mostrar_mensaje(self, texto, color):
-        icono = ft.Icons.CHECK_CIRCLE if color == "green" else ft.Icons.ERROR
-        bg = "#DCFCE7" if color == "green" else "#FEE2E2" if color == "red" else "#FEF9C3"
+        es_exito = (color == "green")
+        color_real = "#22C55E" if es_exito else "error" if color == "red" else "#F59E0B"
+        icono = ft.Icons.CHECK_CIRCLE if es_exito else ft.Icons.ERROR
 
-        self.mensaje.bgcolor = bg
+        self.mensaje.bgcolor = "transparent"
+        self.mensaje.border = ft.border.all(1, color_real)
         self.mensaje.content = ft.Row(
             [
-                ft.Icon(icono, color=color),
-                ft.Text(texto, color="black", size=14)
+                ft.Icon(icono, color=color_real),
+                ft.Text(texto, color=self.TEXT, size=14)
             ],
             alignment=ft.MainAxisAlignment.CENTER
         )
@@ -352,7 +401,7 @@ class PantallaRegistroUsuario(ft.Container):
                 [
                     ft.Icon(ft.Icons.PERSON_ADD_ALT_1, size=50, color=self.AZUL),
                     ft.Text("Registro de usuario", size=26, weight="bold", color=self.TEXT),
-                    ft.Text("Completa los datos base y selecciona el rol", size=14, color="black"),
+                    ft.Text("Completa los datos base y selecciona el rol", size=14, color=self.TEXT_SECONDARY),
                     ft.Divider(height=15, color="transparent"),
                     formulario,
                     ft.Divider(height=15, color="transparent"),
