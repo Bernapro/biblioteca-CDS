@@ -1,10 +1,12 @@
 import flet as ft
 from Infraestructura.API.Interfaces.BibliotecaClientInterface import BibliotecaClientInterface
-
+from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 class ControladorNuevoPrestamo:
-    def __init__(self, pantalla, endEjemplares: BibliotecaClientInterface):
+    def __init__(self, pantalla, endEjemplares: BibliotecaClientInterface, repositorio: RepositorioImpl):
         self.__pantalla = pantalla
         self.__endEjemplares = endEjemplares
+        self.__repo = repositorio
+
 
 
     def listener(self,e):
@@ -15,30 +17,34 @@ class ControladorNuevoPrestamo:
 
 
     def buscar_alumno(self, e):
+        matricula_buscar = ""
         matricula_buscar = self.__pantalla.txt_matricula.value
-        
-        # Simulamos que conectamos a la API o Base de Datos
-        if matricula_buscar:
-            nombre = "Carlos Daniel" # Reemplazar con: respuesta["nombre"]
-            carrera_semestre = "Ingeniería en Sistemas | 2°A" # Reemplazar con: respuesta["carrera"] + " | " + respuesta["semestre"]
+        if len(matricula_buscar) > 6:
+            usr = self.__repo.buscar_usuario_por_identificador(matricula_buscar)
+            print(usr)
+            if usr:
+                nombre = usr["nombre"]
+                tipoUsuario = usr["tipo_usuario"]
+                
             
-            # Actualizamos la tarjeta dinámicamente con los datos reales
-            self.__pantalla.card_alumno.bgcolor = "surfaceVariant"
-            self.__pantalla.card_alumno.border_radius = 12
-            self.__pantalla.card_alumno.padding = 15
-            self.__pantalla.card_alumno.content = ft.Row([
-                ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=self.__pantalla.AZUL),
-                ft.Column([
-                    ft.Text(nombre, weight="bold", size=16, color=self.__pantalla.TEXT),
-                    ft.Text(carrera_semestre, size=13, color=self.__pantalla.GRIS_TEXTO)
-                ], expand=True, spacing=2),
-                ft.Container(
-                    content=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=self.__pantalla.VERDE), ft.Text("Alumno encontrado", size=12, color=self.__pantalla.VERDE, weight="bold")], spacing=4),
-                    bgcolor="#D1FAE5", 
-                    padding=ft.padding.symmetric(horizontal=10, vertical=5),
-                    border_radius=15
-                )
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+
+                # Actualizamos la tarjeta dinámicamente con los datos reales
+                self.__pantalla.card_alumno.bgcolor = "surfaceVariant"
+                self.__pantalla.card_alumno.border_radius = 12
+                self.__pantalla.card_alumno.padding = 15
+                self.__pantalla.card_alumno.content = ft.Row([
+                    ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=40, color=self.__pantalla.AZUL),
+                    ft.Column([
+                        ft.Text(nombre, weight="bold", size=16, color=self.__pantalla.TEXT),
+                        ft.Text(tipoUsuario, size=13, color=self.__pantalla.GRIS_TEXTO)
+                    ], expand=True, spacing=2),
+                    ft.Container(
+                        content=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=self.__pantalla.VERDE), ft.Text("Alumno encontrado", size=12, color=self.__pantalla.VERDE, weight="bold")], spacing=4),
+                        bgcolor="#D1FAE5", 
+                        padding=ft.padding.symmetric(horizontal=10, vertical=5),
+                        border_radius=15
+                    )
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
             
         else:
             # Lógica en caso de que no se encuentre el alumno o el campo esté vacío

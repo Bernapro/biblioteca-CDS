@@ -2,6 +2,8 @@ import flet as ft
 import datetime
 from Negocio.Controlador.ControladorNuevoPrestamo import ControladorNuevoPrestamo
 from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
+from Negocio.Modelo.RepositorioImpl import RepositorioImpl
+from Persistencia.CRUD.CRUDimpl import CRUDimp
 
 class PantallaNuevoPrestamo(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
@@ -12,7 +14,7 @@ class PantallaNuevoPrestamo(ft.Container):
         self.alignment = ft.alignment.Alignment(0, 0)
 
         # Instanciamos el controlador
-        self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares())
+        self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares(), repositorio= RepositorioImpl(crud=CRUDimp()))
         self.libros_seleccionados = {}   # {adq: (titulo, autor, adq)}
         self.libros_cache = []
         
