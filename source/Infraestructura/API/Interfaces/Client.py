@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from Infraestructura.API.Interfaces.ResponseObject import ResponseObject
+from Infraestructura.API.Interfaces.PageResponse import PageResponse
 class Client(ABC):
 
     STATE_CODES = {200: "Operación exitosa", 404: "El recurso no existe", 500:"Error interno del servidor"}
@@ -9,7 +10,7 @@ class Client(ABC):
         pass
 
     @abstractmethod
-    def get(self, nPage: int, len: int) -> list[ResponseObject]:
+    def getPage(self, nPage: int, len: int) -> PageResponse[ResponseObject]:
         pass
 
     @abstractmethod

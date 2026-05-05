@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 from Infraestructura.API.Interfaces.Client import Client
 from Infraestructura.API.Interfaces.ResponseObject import ResponseObject
+from Infraestructura.API.Interfaces.PageResponse import PageResponse
+from Negocio.Modelo.Prestamo import Prestamo
+
 
 class BibliotecaClientInterface(Client):
 
@@ -10,7 +13,7 @@ class BibliotecaClientInterface(Client):
     def get(self) -> list[ResponseObject]:
         pass
     
-    def get(self, nPage: int, len: int) -> list[ResponseObject]:
+    def getPage(self, nPage: int, len: int) -> PageResponse[ResponseObject]:
         pass
 
     def get(self, clave) -> ResponseObject:

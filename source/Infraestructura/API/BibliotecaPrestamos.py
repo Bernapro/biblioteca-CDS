@@ -3,6 +3,8 @@ from Infraestructura.API.Interfaces.ResponseObject import ResponseObject
 import requests
 from Negocio.Modelo.Prestamo import Prestamo
 from Negocio.Modelo.Usuario import Usuario
+from Infraestructura.API.Interfaces.PageResponse import PageResponse
+from Infraestructura.API.Interfaces.PageMetadata import PageMetadata
 
 
 
@@ -17,9 +19,52 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
 
     def get(self) -> list[ResponseObject]:
         pass
-    
-    def get(self,nPage: int, len: int) -> list[ResponseObject]:
-        pass
+
+    def getPage(self, nPage: int, len: int) -> PageResponse[Prestamo]:
+        page = nPage if nPage else 0
+        len_p = len if len else 10
+        url = f"{self.URL_BASE}{self.ENDPOINT}?"
+        args = {
+            "nPage": page,
+            "len": len_p
+        }
+        
+        r = requests.get(url, params=args)
+        
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+            return PageResponse[Prestamo]()
+            
+        if r.status_code == 200:
+            body = r.json()
+            
+            lista_prestamos = [
+                Prestamo(
+                    id=item["id"],
+                    fechaLimite=item["fechaLimite"],
+                    fechaInicio=item["fechaInicio"],
+                    fechaDevolucion=item["fechaDevolucion"],
+                    cantidad=item["cantidad"],
+                    usuario=Usuario(nombre=item["usuario"])
+                )
+                for item in body.get("contenido", [])
+            ]
+            
+            metadatos = PageMetadata(
+                total_pages=body.get("totalPaginas", 0),
+                total_elements=body.get("totalElementos", 0),
+                size=body.get("tamanoPagina", len_p),
+                number=body.get("numeroPagina", page),
+                last=body.get("ultima", True)
+            )
+            
+            return PageResponse[Prestamo](content=lista_prestamos, metadata=metadatos)
+            
+        return PageResponse[Prestamo]()
+            
+
 
     def get(self,clave) -> ResponseObject:
         pass

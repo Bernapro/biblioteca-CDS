@@ -1,5 +1,7 @@
-from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
-b = BibliotecaEjemplares()
-r = b.get("ADQ-0000209")
-print(r.getBody())
-print(r.getLibro().getBody())
+from Infraestructura.API.BibliotecaEjemplares import BibliotecaEjemplares
+from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
+
+b = BibliotecaPrestamos()
+r = b.getPage(nPage = None, len = None)
+
+print(r)
