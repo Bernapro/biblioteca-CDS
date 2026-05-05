@@ -41,11 +41,12 @@ class PantallaLibros(ft.Container):
 
         # FILTROS
         self.input_busqueda = ft.TextField(
-            width=250,
-            hint_text="Buscar por título o ISBN...",
+            hint_text="Buscar por ISBN...",
             prefix_icon=ft.Icons.SEARCH,
-            color="black",
-            bgcolor="white",
+            border_radius=20,
+            bgcolor="#F9FAFB",
+            border_color="transparent",
+            content_padding=10,
             on_submit=self.buscar_libros
         )
 
@@ -80,9 +81,7 @@ class PantallaLibros(ft.Container):
                 padding=20,
                 content=ft.Column(
                     [
-                        # ======================
                         # TITULO
-                        # ======================
                         ft.Row(
                             [
                                 ft.Icon(ft.Icons.MENU_BOOK, color=self.AZUL, size=28),
@@ -93,9 +92,7 @@ class PantallaLibros(ft.Container):
 
                         ft.Divider(),
 
-                        # ======================
                         # DATOS GENERALES
-                        # ======================
                         ft.Text("Datos generales", weight="bold", size=16),
 
                         self.modal_isbn,
@@ -106,9 +103,7 @@ class PantallaLibros(ft.Container):
 
                         ft.Divider(),
 
-                        # ======================
                         # CLASIFICACIÓN
-                        # ======================
                         ft.Text("Clasificación", weight="bold", size=16),
 
                         self.modal_dewey,
@@ -117,9 +112,7 @@ class PantallaLibros(ft.Container):
 
                         ft.Divider(),
 
-                        # ======================
                         # AUTORES / CATEGORÍAS
-                        # ======================
                         ft.Text("Autores y categorías", weight="bold", size=16),
 
                         self.modal_autores,
@@ -140,9 +133,7 @@ class PantallaLibros(ft.Container):
         self.build_ui()
         self.refrescar_grid()
 
-    # ===============================
     # CARD LIBRO
-    # ===============================
     def build_card_libro(self, titulo, isbn, ejemplares):
         return ft.Container(
             width=200,
@@ -242,9 +233,7 @@ class PantallaLibros(ft.Container):
         self.dialogo_detalles.open = False
         self._page.update()    
 
-    # ===============================
     # CARGAR LIBROS PAGINADOS
-    # ===============================
     def refrescar_grid(self):
         try:
             resultado = self.controller.listar_libros(
@@ -295,9 +284,7 @@ class PantallaLibros(ft.Container):
             self._page.snack_bar.open = True
             self._page.update()
 
-    # ===============================
     # CAMBIAR PÁGINA
-    # ===============================
     def cambiar_pagina(self, nueva_pagina):
         self.pagina_actual = nueva_pagina
         self.refrescar_grid()
@@ -322,9 +309,7 @@ class PantallaLibros(ft.Container):
             self._page.snack_bar.open = True
             self._page.update()    
 
-    # ===============================
     # GENERAR BOTONES PAGINACIÓN
-    # ===============================
     def actualizar_paginacion(self):
         self.paginacion.controls.clear()
 
@@ -385,17 +370,42 @@ class PantallaLibros(ft.Container):
             )
         )
 
-    # ===============================
     # BUSCAR (TEMPORAL)
-    # ===============================
     def buscar_libros(self, e):
-        self.busqueda_actual = self.input_busqueda.value.strip()
-        self.pagina_actual = 0
-        self.refrescar_grid()
+        busqueda = self.input_busqueda.value.strip()
 
-    # ===============================
+        # Si está vacío → comportamiento normal
+        if not busqueda:
+            self.busqueda_actual = ""
+            self.pagina_actual = 0
+            self.refrescar_grid()
+            return
+
+        data = self.controller.obtener_detalle(busqueda)
+
+        if not data:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text("Libro no encontrado")
+            )
+            self._page.snack_bar.open = True
+            self._page.update()
+            return
+
+        self.grid_libros.controls = [
+            self.build_card_libro(
+                data["titulo"],
+                data["isbn"],
+                data["ejemplares"]
+            )
+        ]
+
+        self.info_paginacion.value = "Resultado de búsqueda"
+
+        self.paginacion.controls.clear()
+
+        self._page.update()
+
     # IR A REGISTRO
-    # ===============================
     def ir_a_registro_libro(self, e):
         self.content = PantallaRegistrarLibro(
             self._page,
@@ -403,40 +413,62 @@ class PantallaLibros(ft.Container):
         )
         self.update()
 
-    # ===============================
     # UI
-    # ===============================
     def build_ui(self):
 
         filtros = ft.Container(
             bgcolor="white",
-            border_radius=20,
-            padding=15,
-            shadow=ft.BoxShadow(blur_radius=15, color="black12"),
+            border_radius=25,
+            padding=20,
+            shadow=ft.BoxShadow(blur_radius=20, color="black12"),
             content=ft.Row(
-                [
-                    self.input_busqueda,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
 
-                    ft.ElevatedButton(
-                        "Buscar",
-                        on_click=self.buscar_libros,
-                        style=ft.ButtonStyle(
-                            bgcolor=self.AZUL,
-                            color="white"
-                        )
+                    # 🔹 IZQUIERDA: TEXTO
+                    ft.Column(
+                        [
+                            ft.Text(
+                                "Gestión de libros",
+                                size=18,
+                                weight="bold",
+                                color="black"
+                            ),
+                            ft.Text(
+                                "Busca, filtra y administra el catálogo",
+                                size=12,
+                                color="#6B7280"
+                            )
+                        ],
+                        spacing=2
                     ),
 
+                    # 🔹 CENTRO: BUSCADOR
+                    ft.Container(
+                        width=320,
+                        height=45,
+                        content=self.input_busqueda
+                    ),
+
+                    # 🔹 DERECHA: BOTÓN
                     ft.ElevatedButton(
-                        "Añadir libro",
-                        icon=ft.Icons.ADD,
+                        content=ft.Row(
+                            [
+                                ft.Icon(ft.Icons.ADD, size=18),
+                                ft.Text("Nuevo libro")
+                            ],
+                            spacing=5
+                        ),
                         on_click=self.ir_a_registro_libro,
                         style=ft.ButtonStyle(
-                            bgcolor="#10B981",
-                            color="white"
+                            bgcolor=self.AZUL,
+                            color="white",
+                            padding=ft.padding.symmetric(horizontal=20, vertical=15),
+                            shape=ft.RoundedRectangleBorder(radius=15)
                         )
                     )
-                ],
-                spacing=15
+                ]
             )
         )
 
@@ -455,7 +487,7 @@ class PantallaLibros(ft.Container):
                 ),
 
                 filtros,
-
+                
                 ft.Container(
                     expand=True,
                     content=self.grid_libros

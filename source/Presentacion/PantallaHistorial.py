@@ -180,8 +180,11 @@ class PantallaHistorial(ft.Container):
         )
 
         self.build_ui()
-        self.filtrar() 
 
+    def did_mount(self):
+        self.controlador_historial.cerrar_registros()
+        self.filtrar()
+        
     # ===== LÓGICA =====
     def seleccionar_inicio(self, e):
         if e.control.value:
@@ -312,101 +315,87 @@ class PantallaHistorial(ft.Container):
             self.update()    
 
     def filtrar(self, e=None):
-        try:
-            datos = self.controlador_historial.obtener_historial_completo(
-                texto=self.input_busqueda.value or "",
-                fecha_inicio=self.txt_fecha_inicio.value if self.txt_fecha_inicio.value != "Fecha inicio" else None,
-                fecha_fin=self.txt_fecha_fin.value if self.txt_fecha_fin.value != "Fecha fin" else None,
-                tipo=self.combo_tipo.value,
-                estado=self.combo_estado.value
-            )
 
-            try:
-                total_hoy = self.controlador_historial.contar_usuarios_hoy()
-                self.txt_hoy.value = str(total_hoy)
-            except:
-                self.txt_hoy.value = "0"
-
-        except:
-            datos = []
-            self.txt_hoy.value = "0"
-
-        # RESET PAGINA SI VIENE DE EVENTO
         if e:
             self.pagina_actual = 1
 
-        # ===== PAGINACIÓN =====
-        self.total_registros = len(datos)
-
         inicio = (self.pagina_actual - 1) * self.registros_por_pagina
-        fin = inicio + self.registros_por_pagina
 
-        datos_paginados = datos[inicio:fin]
+        datos, total = self.controlador_historial.obtener_historial(
+            texto=self.input_busqueda.value or "",
+            fecha_inicio=None if self.txt_fecha_inicio.value == "Fecha inicio" else self.txt_fecha_inicio.value,
+            fecha_fin=None if self.txt_fecha_fin.value == "Fecha fin" else self.txt_fecha_fin.value,
+            tipo=self.combo_tipo.value,
+            estado=self.combo_estado.value,
+            limit=self.registros_por_pagina,
+            offset=inicio
+        )
+        total_hoy = self.controlador_historial.contar_usuarios_hoy()
+        self.txt_hoy.value = str(total_hoy)
 
+        self.total_registros = total
+        self.datos_completos = self.controlador_historial._datos_completos
         filas = []
 
-        for d in datos_paginados:
+        for d in datos:
             filas.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(ft.Text(str(d.get("identificador","")), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Row([self.obtener_icono_tipo(d.get("tipo")),ft.Text(str(d.get("nombre","")), color=self.TEXTO_TABLA),],spacing=6,alignment=ft.MainAxisAlignment.START)),
-                        ft.DataCell(ft.Text(d["entrada"].strftime("%Y-%m-%d"), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(d["entrada"].strftime("%H:%M:%S"), color=self.TEXTO_TABLA)),
-                        ft.DataCell(ft.Text(d["salida"].strftime("%H:%M:%S") if d["salida"] else "-", color=self.TEXTO_TABLA)),
+                        ft.DataCell(ft.Text(str(d.get("identificador","")))),
+
                         ft.DataCell(
-                            ft.Container(
-                                content=ft.Icon(ft.Icons.VISIBILITY_ROUNDED, size=20, color=self.AZUL),
-                                tooltip="Ver detalles",
-                                padding=6,
-                                border_radius=8,
-                                on_click=lambda e, d=d: self.ver_detalles(d),
-                                ink=True
-                            )
+                            ft.Row([
+                                self.obtener_icono_tipo(d.get("tipo")),
+                                ft.Text(str(d.get("nombre","")))
+                            ], spacing=6)
                         ),
+
+                        ft.DataCell(ft.Text(d.get("fecha", ""))),
+                        ft.DataCell(ft.Text(d.get("entrada", ""))),
+                        ft.DataCell(ft.Text(d.get("salida", ""))),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.Icons.VISIBILITY,
+                                icon_color=self.AZUL,
+                                tooltip="Ver detalles",
+                                on_click=lambda e, d=d: self.ver_detalles(d)
+                            )
+                        )
                     ]
                 )
             )
 
         tabla = ft.DataTable(
             expand=True,
-            horizontal_lines=ft.border.BorderSide(1, "#E5E7EB"),
             column_spacing=45,
-            heading_row_color=self.FONDO_HEADER,
             heading_row_height=55,
+            horizontal_lines=ft.border.BorderSide(1, "#E5E7EB"),
+            heading_row_color=self.FONDO_HEADER,
             columns=[
                 ft.DataColumn(ft.Text("ID", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Nombre completo", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Fecha", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Entrada", weight="bold", color=self.TEXTO_HEADER)),
                 ft.DataColumn(ft.Text("Salida", weight="bold", color=self.TEXTO_HEADER)),
-                ft.DataColumn(ft.Text("Acción", weight="bold", color=self.TEXTO_HEADER)),
+                ft.DataColumn(ft.Text("Acciones", weight="bold", color=self.TEXTO_HEADER)),
             ],
-            rows=filas,
+            rows=filas
         )
-
-        # ===== TEXTO RESULTADOS =====
-        texto_resultados = ft.Text(
-            f"Mostrando {len(datos_paginados)} de {self.total_registros} registros",
-            size=14,
-            color="grey"
-        )
-        self.tabla_container.controls.clear()
-
-        self.tabla_container.controls.append(
+        self.tabla_container.controls = [
             ft.Row(
-                controls=[tabla],
+                [tabla],
                 expand=True
             )
-        )
-
+        ]
         self.footer_tabla.controls = [
-            texto_resultados,
+            ft.Text(
+                f"Mostrando {len(datos)} de {self.total_registros} registros encontrados",
+                size=14,
+                color="grey"
+            ),
             self.construir_paginacion()
         ]
-
-        if e:
-            self.update()
+        self.update()
         
     def obtener_icono_tipo(self, tipo):
         if tipo == "ALUMNO":
@@ -602,23 +591,35 @@ class PantallaHistorial(ft.Container):
         ], spacing=10)
 
     def ver_detalles(self, d):
-        # 1. Extraer los datos de la fila seleccionada
-        nombre = str(d.get("nombre", "Desconocido"))
-        identificador = str(d.get("identificador", "N/A"))
-        tipo = str(d.get("tipo", "ALUMNO")).upper()
-        fecha = d["entrada"].strftime("%Y-%m-%d")
-        entrada = d["entrada"].strftime("%H:%M:%S")
-        
-        # Validación segura para datos nulos de la base de datos
-        salida_raw = d.get("salida")
-        salida = d["salida"].strftime("%H:%M:%S") if d["salida"] else ""
 
-        # --- DATOS ACADÉMICOS ---
-        semestre = str(d.get("semestre") or "N/A")
-        grupo = str(d.get("grupo") or "N/A")
-        carrera = str(d.get("carrera") or "N/A")
-        n_plaza = str(d.get("n_plaza") or "N/A")
-        institucion = str(d.get("institucion") or "N/A")
+        registro = next(
+            (x for x in self.datos_completos 
+            if x["identificador"] == d["identificador"]),
+            None
+        )
+
+        if not registro:
+            return
+
+        # 🔥 USAR registro (NO d)
+        nombre = str(registro.get("nombre_completo", "Desconocido"))
+        identificador = str(registro.get("identificador", "N/A"))
+        tipo = str(registro.get("tipo", "ALUMNO")).upper()
+
+        fecha = registro["fecha_entrada"].strftime("%Y-%m-%d")
+        entrada = registro["fecha_entrada"].strftime("%H:%M:%S")
+
+        salida = (
+            registro["fecha_salida"].strftime("%H:%M:%S")
+            if registro["fecha_salida"]
+            else ""
+        )
+
+        semestre = str(registro.get("semestre") or "N/A")
+        grupo = str(registro.get("grupo") or "N/A")
+        carrera = str(registro.get("carrera") or "N/A")
+        n_plaza = str(registro.get("n_plaza") or "N/A")
+        institucion = str(registro.get("institucion") or "N/A")
 
         # === DATOS DINÁMICOS DESDE LA BASE DE DATOS SEGÚN EL ROL ===
         badges_dinamicos = []

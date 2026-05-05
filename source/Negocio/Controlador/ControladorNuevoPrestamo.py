@@ -3,6 +3,7 @@ from Infraestructura.API.Interfaces.BibliotecaClientInterface import BibliotecaC
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Negocio.Modelo.Usuario import Usuario
 from datetime import datetime
+from Negocio.Utilidades.Validador import Validador
 
 
 class ControladorNuevoPrestamo:
@@ -83,5 +84,6 @@ class ControladorNuevoPrestamo:
             fecha_limite = self.__pantalla.txt_fecha_limite.value
             fecha_objeto = datetime.strptime(fecha_limite, "%d/%b/%Y")
             fecha_sql = fecha_objeto.strftime("%Y-%m-%d")
-            args = {"usuario": self.__usuario.getIdentificador(), "fecha_limite": fecha_sql, "ejemplaresIds": ejemplaresIds}
+            args = {"usuario": self.__usuario.getIdentificador(), "fechaLimite": fecha_sql, "ejemplaresIds": ejemplaresIds}
             self.__endPrestamo.post(args)
+            self.__pantalla.limpiar_pantalla()

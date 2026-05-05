@@ -9,138 +9,30 @@ class ControladorRegistroIncidencia:
         self.__pantalla = pantalla
         self.__repo = RepositorioImpl(CRUDimp())
 
-    # =========================
-    # 🔍 BUSCAR USUARIO AUTOMÁTICO
-    # =========================
-    def buscar_usuario(self, e):
-        identificador = self.__pantalla.text_identificador.value.strip()
+    # BUSCAR USUARIO 
+    def buscar_usuario(self, identificador):
+        if not identificador or not str(identificador).strip():
+            return None
         
-        if not identificador:
-            self.__pantalla.txt_nombre.value = ""
-            self.__pantalla.id_usuario = None
+        # Retorna el diccionario puro del usuario o None si no existe
+        return self.__repo.buscar_usuario_por_identificador(identificador)
 
-            self.__pantalla.txt_mensaje.value = ""
 
-            self.__pantalla.update()
-            return
-
-        usuario = self.__repo.buscar_usuario_por_identificador(identificador)
-
-        if usuario:
-            nombre = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
-
-            self.__pantalla.txt_nombre.value = nombre
-            self.__pantalla.txt_nombre.disabled = True
-
-            self.__pantalla.tipo_usuario = usuario["tipo_usuario"]
-            self.__pantalla.id_usuario = usuario["id_usuario"]
-
-            self.__pantalla.txt_mensaje.value = ""
-        else:
-            self.__pantalla.txt_nombre.value = "Usuario no encontrado"
-            self.__pantalla.txt_nombre.disabled = True
-            self.__pantalla.id_usuario = None
-
-            self.__pantalla.txt_mensaje.value = "❌ Identificador no válido"
-            self.__pantalla.txt_mensaje.color = "red"
-
-        self.__pantalla.update()
-
-    # =========================
-    # 💾 GUARDAR INCIDENCIA
-    # =========================
-    def guardar(self, e):
-
-        # =========================
-        # 🔥 VALIDACIONES COMPLETAS
-        # =========================
-
-        if not hasattr(self.__pantalla, "id_usuario") or not self.__pantalla.id_usuario:
-            self.__pantalla.txt_mensaje.value = "❌ Debes seleccionar un usuario válido"
-            self.__pantalla.txt_mensaje.color = "orange"
-            self.__pantalla.update()
-            return
-
-        if not self.__pantalla.drop_tipo.value:
-            self.__pantalla.txt_mensaje.value = "❌ Selecciona el tipo de incidencia"
-            self.__pantalla.txt_mensaje.color = "orange"
-            self.__pantalla.update()
-            return
-
-        if not self.__pantalla.drop_cat.value:
-            self.__pantalla.txt_mensaje.value = "❌ Selecciona la categoría"
-            self.__pantalla.txt_mensaje.color = "orange"
-            self.__pantalla.update()
-            return
-
-        if not self.__pantalla.txt_desc.value or not self.__pantalla.txt_desc.value.strip():
-            self.__pantalla.txt_mensaje.value = "❌ Ingresa una descripción"
-            self.__pantalla.txt_mensaje.color = "orange"
-            self.__pantalla.update()
-            return
-
-        if not self.__pantalla.txt_lugar.value or not self.__pantalla.txt_lugar.value.strip():
-            self.__pantalla.txt_mensaje.value = "❌ Ingresa el lugar"
-            self.__pantalla.txt_mensaje.color = "orange"
-            self.__pantalla.update()
-            return
-
+    # GUARDAR INCIDENCIA
+    def guardar_incidencia(self, datos_incidencia):
         try:
-            # NORMALIZAR ENUMS
-            tipo = self.__pantalla.drop_tipo.value.upper().strip()
-
-            data = {
-                "id_usuario": self.__pantalla.id_usuario,
-                "tipo": tipo,
-                "motivo": self.__pantalla.drop_cat.value,
-                "descripcion": self.__pantalla.txt_desc.value.strip(),
-                "lugar": self.__pantalla.txt_lugar.value.strip()
-            }
-
+            # 🔹 El Controlador asume la responsabilidad de instanciar el Modelo
             incidencia = Incidencia()
-            incidencia.set_data(data)
+            
+            # Usamos el método que dejaste preparado
+            incidencia.set_data(datos_incidencia)
 
             resultado = self.__repo.guardar(incidencia)
 
             if resultado:
-                nombre = self.__pantalla.txt_nombre.value
-                identificador = self.__pantalla.text_identificador.value
-
-                fecha = resultado["fecha"]
-
-                fecha_formateada = fecha.strftime("%d/%m/%Y %H:%M")
-
-                self.__pantalla.txt_mensaje.value = (
-                    f"✅ Incidencia registrada para {nombre} ({identificador})\n"
-                    f"🕒 {fecha_formateada}"
-                )
-                self.__pantalla.txt_mensaje.color = "green"
-
-                self.limpiar_form()
-
-            else:
-                self.__pantalla.txt_mensaje.value = "❌ No se pudo guardar la incidencia"
-                self.__pantalla.txt_mensaje.color = "red"
+                return True, resultado
+            return False, "No se pudo guardar la incidencia en la base de datos."
 
         except Exception as ex:
-            self.__pantalla.txt_mensaje.value = "💥 Error al guardar la incidencia"
-            self.__pantalla.txt_mensaje.color = "red"
-            print("💥 ERROR REAL:", ex)
-
-        self.__pantalla.update()
-
-    # 🧹 LIMPIAR FORMULARIO
-    def limpiar_form(self):
-        self.__pantalla.txt_nombre.value = ""
-        self.__pantalla.txt_nombre.disabled = False
-
-        self.__pantalla.text_identificador.value = ""
-        self.__pantalla.txt_desc.value = ""
-        self.__pantalla.txt_lugar.value = ""
-
-        self.__pantalla.drop_tipo.value = "PARCIAL"
-        self.__pantalla.drop_cat.value = "Libros"
-
-        self.__pantalla.id_usuario = None
-
-        self.__pantalla.update()
+            print("💥 ERROR EN CONTROLADOR:", ex)
+            return False, "Error interno al procesar la solicitud."

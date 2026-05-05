@@ -1,6 +1,7 @@
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Persistencia.Postgres.Pool.DBPool import db
+from datetime import datetime, timedelta
 
 
 class ControladorHistorial:
@@ -8,64 +9,16 @@ class ControladorHistorial:
     def __init__(self):
         self.__repo = RepositorioImpl(CRUDimp())
 
-    # =========================
-    # BASE (REUTILIZABLE)
-    # =========================
-    def obtener_datos(self):
-        """Obtiene datos del historial:
-        1. Cierra registros abiertos del día anterior
-        2. Retorna vista_historial completa
-        """
-        # Ejecutar procedimiento para cerrar registros pendientes
+    def cerrar_registros(self):
         self.__repo.ejecutar_procedimiento("cerrar_registros_pendientes")
-        
-        # Obtener datos desde la vista
-        return self.__repo.obtener_todos("vista_historial")
-
-    def filtrar(self, datos, texto, fecha_inicio, fecha_fin, tipo, estado):
-        """Filtra datos en memoria (lógica de negocio Python)"""
-        resultado = []
-
-        for d in datos:
-
-            # TEXTO
-            if texto:
-                t = texto.lower()
-                if t not in d["nombre_completo"].lower() and t not in d["identificador"].lower():
-                    continue
-
-            # FECHAS
-            if fecha_inicio and d["fecha_entrada"].date() < fecha_inicio:
-                continue
-
-            if fecha_fin and d["fecha_entrada"].date() > fecha_fin:
-                continue
-
-            # TIPO
-            if tipo != "Todos" and d["tipo_usuario"] != tipo.upper():
-                continue
-
-            # ESTADO
-            if estado == "Activos" and d["fecha_salida"] is not None:
-                continue
-
-            if estado == "Finalizados" and d["fecha_salida"] is None:
-                continue
-
-            resultado.append(d)
-
-        return resultado
-
-    # =========================
-    # MAPEADORES
-    # =========================
+    
     def mapear_simple(self, datos):
         """Mapea datos completos a formato simple para tabla"""
         return [
             {
                 "identificador": d["identificador"],
                 "nombre": d["nombre_completo"],
-                "tipo": d["tipo_usuario"],
+                "tipo": d["tipo_usuario"].upper(),
                 "fecha": d["fecha_entrada"].strftime("%Y-%m-%d"),
                 "entrada": d["fecha_entrada"].strftime("%H:%M:%S"),
                 "salida": d["fecha_salida"].strftime("%H:%M:%S") if d["fecha_salida"] else "-"
@@ -74,15 +27,14 @@ class ControladorHistorial:
         ]
 
     def mapear_completo(self, datos):
-        """Mapea datos para modal de detalles (sin transformación de fechas)"""
         return [
             {
                 "id": d["id_registro"],
                 "identificador": d["identificador"],
-                "nombre": d["nombre_completo"],
+                "nombre_completo": d["nombre_completo"],  # 🔥 clave
                 "tipo": d["tipo_usuario"],
-                "entrada": d["fecha_entrada"],
-                "salida": d["fecha_salida"],
+                "fecha_entrada": d["fecha_entrada"],
+                "fecha_salida": d["fecha_salida"],
                 "matricula": d["matricula"],
                 "n_plaza": d["n_plaza"],
                 "grupo": d["grupo"],
@@ -94,40 +46,100 @@ class ControladorHistorial:
             for d in datos
         ]
 
-    # =========================
-    # PUBLICOS
-    # =========================
-    def obtener_historial(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
-        """Retorna historial filtrado y formateado para tabla"""
-        if fecha_inicio and isinstance(fecha_inicio, str):
-            from datetime import datetime
-            fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
-        if fecha_fin and isinstance(fecha_fin, str):
-            from datetime import datetime
-            fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
-        
-        datos = self.obtener_datos()
-        filtrados = self.filtrar(datos, texto, fecha_inicio, fecha_fin, tipo, estado)
-        return self.mapear_simple(filtrados)
+        # =========================
+        # PUBLICOS
+        # =========================
+    def obtener_historial(
+        self,
+        texto="",
+        fecha_inicio=None,
+        fecha_fin=None,
+        tipo="Todos",
+        estado="Todos",
+        limit=10,
+        offset=0
+    ):
 
-    def obtener_historial_completo(self, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
-        """Retorna historial completo para detalles y Excel"""
-        if fecha_inicio and isinstance(fecha_inicio, str):
-            from datetime import datetime
-            fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d").date()
-        if fecha_fin and isinstance(fecha_fin, str):
-            from datetime import datetime
-            fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
-        
-        datos = self.obtener_datos()
-        filtrados = self.filtrar(datos, texto, fecha_inicio, fecha_fin, tipo, estado)
-        return self.mapear_completo(filtrados)
+        filtros = {}
+        or_filtros = []
+
+        if texto:
+            or_filtros = [
+                {"nombre_completo__like": texto},
+                {"identificador__like": texto}
+            ]
+
+        if fecha_inicio:
+            if isinstance(fecha_inicio, str):
+                fecha_inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+
+            fecha_inicio = fecha_inicio.replace(hour=0, minute=0, second=0)
+
+            filtros["fecha_entrada__gte"] = fecha_inicio
+
+        if fecha_fin:
+            if isinstance(fecha_fin, str):
+                fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+
+            fecha_fin = fecha_fin.replace(hour=23, minute=59, second=59)
+
+            filtros["fecha_entrada__lte"] = fecha_fin
+
+        if tipo != "Todos":
+            filtros["tipo_usuario"] = tipo.upper()
+
+        if estado == "Activos":
+            filtros["fecha_salida__isnull"] = True
+        elif estado == "Finalizados":
+            filtros["fecha_salida__notnull"] = True
+
+        datos_raw = self.__repo.obtener_avanzado(
+            nombre_tabla="vista_historial",
+            filtros=filtros,
+            or_filtros=or_filtros,
+            order_by=[("fecha_entrada", "DESC")],
+            limit=limit,
+            offset=offset
+        )
+
+        total = self.__repo.contar_avanzado(
+            nombre_tabla="vista_historial",
+            filtros=filtros,
+            or_filtros=or_filtros
+        )
+        self._datos_completos = self.mapear_completo(datos_raw)
+        datos = self.mapear_simple(datos_raw)
+
+        return datos, total
+    
+
+    def obtener_historial_completo(
+        self,
+        texto="",
+        fecha_inicio=None,
+        fecha_fin=None,
+        tipo="Todos",
+        estado="Todos"
+    ):
+        datos, _ = self.obtener_historial(
+            texto=texto,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tipo=tipo,
+            estado=estado,
+            limit=None,   
+            offset=None
+        )
+
+        return self._datos_completos
 
     def contar_usuarios_hoy(self):
         """Retorna total de usuarios únicos que asistieron hoy
         Procesa datos de vista_historial en memoria (reutilización)
         """
-        datos = self.obtener_datos()
+        datos = self.__repo.obtener_avanzado(
+            nombre_tabla="vista_historial"
+        )
         usuarios_hoy = set()
         
         for d in datos:
@@ -177,10 +189,10 @@ class ControladorHistorial:
             ws.append([
                 d["id"],
                 d["identificador"],
-                d["nombre"],
+                d["nombre_completo"],
                 d["tipo"],
-                d["entrada"],
-                d["salida"],
+                d["fecha_entrada"].strftime("%Y-%m-%d %H:%M:%S"),
+                d["fecha_salida"].strftime("%Y-%m-%d %H:%M:%S") if d["fecha_salida"] else "",
                 d["matricula"],
                 d["n_plaza"],
                 d["grupo"],

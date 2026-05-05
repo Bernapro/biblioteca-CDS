@@ -75,3 +75,218 @@ class CRUDimp(CRUD):
         """Ejecuta un procedimiento SQL sin parámetros"""
         query = sql.SQL("CALL {}()").format(sql.Identifier(procedure_name))
         conn.execute(query)
+   # =========================
+    # MOTOR DE FILTROS AVANZADO
+    # =========================
+    def read_advanced(
+        self,
+        conn: Connection,
+        nombre_tabla: str,
+        filtros: dict = None,
+        or_filtros: list[dict] = None,
+        limit: int = None,
+        offset: int = None,
+        order_by: list[tuple[str, str]] = None,
+        columnas: list[str] = None
+    ) -> list[dict]:
+
+        # =========================
+        # SELECT dinámico
+        # =========================
+        if columnas:
+            query = sql.SQL("SELECT {} FROM {}").format(
+                sql.SQL(", ").join(map(sql.Identifier, columnas)),
+                sql.Identifier(nombre_tabla)
+            )
+        else:
+            query = sql.SQL("SELECT * FROM {}").format(
+                sql.Identifier(nombre_tabla)
+            )
+
+        valores = []
+        condiciones = []
+
+        # =========================
+        # FUNCIÓN INTERNA PARA OPERADORES
+        # =========================
+        def procesar_filtro(key, value):
+            if "__" not in key:
+                return (
+                    sql.SQL("{} = {}").format(sql.Identifier(key), sql.Placeholder()),
+                    [value]
+                )
+
+            campo, op = key.split("__", 1)
+
+            if op == "like":
+                return (
+                    sql.SQL("{} ILIKE {}").format(sql.Identifier(campo), sql.Placeholder()),
+                    [f"%{value}%"]
+                )
+
+            elif op == "in":
+                if not value:
+                    return (sql.SQL("FALSE"), [])
+                placeholders = sql.SQL(", ").join(sql.Placeholder() * len(value))
+                return (
+                    sql.SQL("{} IN ({})").format(sql.Identifier(campo), placeholders),
+                    list(value)
+                )
+
+            elif op == "between":
+                return (
+                    sql.SQL("{} BETWEEN {} AND {}").format(
+                        sql.Identifier(campo),
+                        sql.Placeholder(),
+                        sql.Placeholder()
+                    ),
+                    list(value)
+                )
+
+            elif op == "gte":
+                return (
+                    sql.SQL("{} >= {}").format(sql.Identifier(campo), sql.Placeholder()),
+                    [value]
+                )
+
+            elif op == "lte":
+                return (
+                    sql.SQL("{} <= {}").format(sql.Identifier(campo), sql.Placeholder()),
+                    [value]
+                )
+
+            elif op == "isnull":
+                return (sql.SQL("{} IS NULL").format(sql.Identifier(campo)), [])
+
+            elif op == "notnull":
+                return (sql.SQL("{} IS NOT NULL").format(sql.Identifier(campo)), [])
+
+            else:
+                raise ValueError(f"Operador no soportado: {op}")
+
+        # =========================
+        # AND filtros
+        # =========================
+        if filtros:
+            for key, value in filtros.items():
+                condicion, vals = procesar_filtro(key, value)
+                condiciones.append(condicion)
+                valores.extend(vals)
+
+        # =========================
+        # OR filtros (YA AVANZADO)
+        # =========================
+        if or_filtros:
+            grupos = []
+            for grupo in or_filtros:
+                sub_condiciones = []
+                for key, value in grupo.items():
+                    condicion, vals = procesar_filtro(key, value)
+                    sub_condiciones.append(condicion)
+                    valores.extend(vals)
+
+                grupos.append(
+                    sql.SQL("(") + sql.SQL(" AND ").join(sub_condiciones) + sql.SQL(")")
+                )
+
+            condiciones.append(
+                sql.SQL("(") + sql.SQL(" OR ").join(grupos) + sql.SQL(")")
+            )
+
+        # =========================
+        # WHERE
+        # =========================
+        if condiciones:
+            query += sql.SQL(" WHERE ") + sql.SQL(" AND ").join(condiciones)
+
+        # =========================
+        # ORDER BY
+        # =========================
+        if order_by:
+            orden = []
+            for campo, direccion in order_by:
+                direccion = direccion.upper()
+                if direccion not in ("ASC", "DESC"):
+                    raise ValueError("Dirección inválida en ORDER BY")
+
+                orden.append(
+                    sql.SQL("{} {}").format(
+                        sql.Identifier(campo),
+                        sql.SQL(direccion)
+                    )
+                )
+
+            query += sql.SQL(" ORDER BY ") + sql.SQL(", ").join(orden)
+
+        # =========================
+        # PAGINACIÓN
+        # =========================
+        if limit is not None:
+            query += sql.SQL(" LIMIT {}").format(sql.Literal(limit))
+
+        if offset is not None:
+            query += sql.SQL(" OFFSET {}").format(sql.Literal(offset))
+
+        # =========================
+        # EJECUCIÓN
+        # =========================
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(query, valores)
+            return cur.fetchall()
+
+
+    def count_advanced(
+        self,
+        conn,
+        nombre_tabla,
+        filtros=None,
+        or_filtros=None
+    ):
+        query = f"SELECT COUNT(*) as total FROM {nombre_tabla}"
+        condiciones = []
+        valores = []
+
+        # 🔹 filtros AND
+        if filtros:
+            for key, value in filtros.items():
+                if "__" in key:
+                    campo, op = key.split("__")
+
+                    if op == "like":
+                        condiciones.append(f"{campo} ILIKE %s")
+                        valores.append(f"%{value}%")
+
+                    elif op == "gte":
+                        condiciones.append(f"{campo} >= %s")
+                        valores.append(value)
+
+                    elif op == "lte":
+                        condiciones.append(f"{campo} <= %s")
+                        valores.append(value)
+
+                    elif op == "isnull":
+                        condiciones.append(f"{campo} IS NULL")
+
+                    elif op == "notnull":
+                        condiciones.append(f"{campo} IS NOT NULL")
+                else:
+                    condiciones.append(f"{key} = %s")
+                    valores.append(value)
+
+        # 🔹 filtros OR
+        if or_filtros:
+            or_condiciones = []
+            for f in or_filtros:
+                for key, value in f.items():
+                    campo, op = key.split("__")
+                    if op == "like":
+                        or_condiciones.append(f"{campo} ILIKE %s")
+                        valores.append(f"%{value}%")
+
+            if or_condiciones:
+                condiciones.append("(" + " OR ".join(or_condiciones) + ")")
+
+        if condiciones:
+            query += " WHERE " + " AND ".join(condiciones)
+
+        return conn.execute(query, tuple(valores)).fetchone()["total"]

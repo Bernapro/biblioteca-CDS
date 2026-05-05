@@ -24,17 +24,28 @@ class PantallaRegistrarLibro(ft.Container):
         self.autores_seleccionados = []
         self.categorias_seleccionadas = []
 
-        # ========================
         # INPUTS
-        # ========================
         self.txt_isbn = self.crear_input("ISBN", 300)
-        self.boton_buscar_isbn = ft.IconButton(
-            icon=ft.Icons.SEARCH,
+        self.txt_isbn.on_change = self.limpiar_mensaje_isbn
+
+        self.boton_buscar_isbn = ft.ElevatedButton(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.SEARCH, size=18),
+                    ft.Text("Buscar ISBN")
+                ],
+                spacing=5,
+                tight=True
+            ),
             bgcolor=self.AZUL,
-            icon_color="white",
-            tooltip="Buscar datos del libro",
+            color="white",
+            height=50,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=12)
+            ),
             on_click=self.buscar_isbn
         )
+
         self.txt_titulo = self.crear_input("Título", 350)
         self.txt_editorial = self.crear_input("Editorial", 350)
 
@@ -45,31 +56,24 @@ class PantallaRegistrarLibro(ft.Container):
         self.txt_cdu = self.crear_input("CDU", 110)
         self.txt_lcc = self.crear_input("LCC", 110)
 
-        # ========================
-        # AUTORES
-        # ========================
         self.txt_autor = self.crear_input("Autor", 300)
 
         self.chips_autores = ft.Row(
             wrap=True,
             spacing=8,
-            run_spacing=8
+            run_spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER
         )
 
-        # ========================
-        # CATEGORÍAS
-        # ========================
         self.txt_categoria = self.crear_input("Categoría", 300)
 
         self.chips_categorias = ft.Row(
             wrap=True,
             spacing=8,
-            run_spacing=8
+            run_spacing=8,
+            alignment=ft.MainAxisAlignment.CENTER
         )
 
-        # ========================
-        # CALENDARIO
-        # ========================
         self.calendario = ft.DatePicker(
             on_change=self.seleccionar_fecha,
             first_date=datetime.datetime(1900, 1, 1),
@@ -91,9 +95,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         self.build_ui()
 
-    # ========================
     # HELPERS
-    # ========================
     def crear_input(self, label, width):
         return ft.TextField(
             label=label,
@@ -101,12 +103,11 @@ class PantallaRegistrarLibro(ft.Container):
             border_radius=12,
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT)
+            text_style=ft.TextStyle(color=self.TEXT),
+            on_change=self.verificar_campos_completos
         )
 
-    # ========================
     # FECHA
-    # ========================
     def abrir_calendario(self, e):
         self.calendario.open = True
         self._page.update()
@@ -116,9 +117,7 @@ class PantallaRegistrarLibro(ft.Container):
             self.txt_fecha.value = self.calendario.value.strftime("%Y-%m-%d")
             self.txt_fecha.update()
 
-    # ========================
     # AUTORES
-    # ========================
     def agregar_autor(self, e):
         nombre = self.txt_autor.value.strip()
 
@@ -148,9 +147,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         self.update()
 
-    # ========================
     # CATEGORÍAS
-    # ========================
     def agregar_categoria(self, e):
         nombre = self.txt_categoria.value.strip()
 
@@ -180,9 +177,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         self.update()
 
-    # ========================
     # REGRESAR
-    # ========================
     def regresar(self, e):
         from Presentacion.PantallaLibros import PantallaLibros
 
@@ -192,9 +187,45 @@ class PantallaRegistrarLibro(ft.Container):
             parent.content = PantallaLibros(self._page)
             parent.update()
 
-    # ========================
+    def validar_campos(self):
+
+        valido = True
+
+        campos_obligatorios = [
+            self.txt_isbn,
+            self.txt_titulo,
+            self.txt_editorial,
+            self.txt_fecha,
+            self.txt_ejemplares
+        ]
+
+        for campo in campos_obligatorios:
+            if not campo.value.strip():
+                campo.border_color = "red"
+                valido = False
+            else:
+                campo.border_color = self.GRIS_BORDE
+
+        self.update()
+
+        return valido
+
+    def verificar_campos_completos(self, e=None):
+
+        obligatorios = [
+            self.txt_isbn,
+            self.txt_titulo,
+            self.txt_editorial,
+            self.txt_ejemplares
+        ]
+
+        for campo in obligatorios:
+            if campo.value and campo.value.strip():
+                campo.border_color = self.GRIS_BORDE
+
+        self.update()
+
     # LIMPIAR FORMULARIO
-    # ========================
     def limpiar_formulario(self):
         self.txt_isbn.value = ""
         self.txt_titulo.value = ""
@@ -214,12 +245,19 @@ class PantallaRegistrarLibro(ft.Container):
         self.chips_autores.controls.clear()
         self.chips_categorias.controls.clear()
 
+        self.verificar_campos_completos()
+
         self.update()
 
-    # ========================
     # GUARDAR
-    # ========================
     def guardar_libro(self, e):
+
+        if not self.validar_campos():
+            self.lbl_mensaje.value = "Completa los campos obligatorios"
+            self.lbl_mensaje.color = "red"
+            self.lbl_mensaje.visible = True
+            self.update()
+            return
 
         data = {
             "isbn": self.txt_isbn.value.strip(),
@@ -237,42 +275,90 @@ class PantallaRegistrarLibro(ft.Container):
 
         resultado = self.controller.crear_libro(data)
 
-        self._page.snack_bar = ft.SnackBar(
-            ft.Text(resultado["mensaje"])
-        )
-        self._page.snack_bar.open = True
+        self.lbl_mensaje.value = resultado["mensaje"]
+        self.lbl_mensaje.color = "green" if resultado["ok"] else "red"
+        self.lbl_mensaje.visible = True
 
         if resultado["ok"]:
             self.limpiar_formulario()
 
-        self._page.update()
+        self.update()
 
-    # ========================
     # UI
-    # ========================
     def build_ui(self):
+
+        self.btn_guardar = ft.ElevatedButton(
+            "Guardar Libro",
+            bgcolor=self.AZUL,
+            color="white",
+            width=180,
+            height=45,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=12)
+            ),
+            on_click=self.guardar_libro
+        )
+
+        self.lbl_mensaje = ft.Text(
+            "",
+            size=13,
+            weight="bold",
+            text_align=ft.TextAlign.CENTER,
+            visible=False
+        )
+
+        self.lbl_isbn = ft.Text(
+            "",
+            size=12,
+            color="red",
+            visible=False
+        )
 
         formulario = ft.Column(
             [
-                ft.Row(
+                ft.Column(
                     [
-                        self.txt_isbn,
-                        self.boton_buscar_isbn
+                        ft.Row(
+                            [
+                                self.txt_isbn,
+                                self.boton_buscar_isbn
+                            ],
+                            spacing=12,
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER
+                        ),
+
+                        ft.Row(
+                            [self.lbl_isbn],
+                            alignment=ft.MainAxisAlignment.CENTER
+                        )
                     ],
-                    spacing=10
+                    spacing=5
                 ),
-                self.txt_titulo,
-                self.txt_editorial,
+
+                ft.Row(
+                    [self.txt_titulo],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
+
+                ft.Row(
+                    [self.txt_editorial],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
 
                 ft.Row(
                     [
                         self.txt_edicion,
-                        self.txt_fecha
+                        self.txt_ejemplares
                     ],
-                    spacing=20
+                    spacing=20,
+                    alignment=ft.MainAxisAlignment.CENTER
                 ),
 
-                self.txt_ejemplares,
+                ft.Row(
+                    [self.txt_fecha],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
 
                 ft.Row(
                     [
@@ -280,12 +366,16 @@ class PantallaRegistrarLibro(ft.Container):
                         self.txt_cdu,
                         self.txt_lcc
                     ],
-                    spacing=15
+                    spacing=15,
+                    alignment=ft.MainAxisAlignment.CENTER
                 ),
 
                 ft.Divider(),
 
-                ft.Text("Autores", weight="bold"),
+                ft.Row(
+                    [ft.Text("Autores", weight="bold")],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
 
                 ft.Row(
                     [
@@ -296,14 +386,23 @@ class PantallaRegistrarLibro(ft.Container):
                             icon_color="white",
                             on_click=self.agregar_autor
                         )
-                    ]
+                    ],
+                    spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
 
-                self.chips_autores,
+                ft.Container(
+                    content=self.chips_autores,
+                    alignment=ft.Alignment(0, 0)
+                ),
 
                 ft.Divider(),
 
-                ft.Text("Categorías", weight="bold"),
+                ft.Row(
+                    [ft.Text("Categorías", weight="bold")],
+                    alignment=ft.MainAxisAlignment.CENTER
+                ),
 
                 ft.Row(
                     [
@@ -314,12 +413,19 @@ class PantallaRegistrarLibro(ft.Container):
                             icon_color="white",
                             on_click=self.agregar_categoria
                         )
-                    ]
+                    ],
+                    spacing=10,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
                 ),
 
-                self.chips_categorias
+                ft.Container(
+                    content=self.chips_categorias,
+                    alignment=ft.Alignment(0, 0)
+                )
             ],
-            spacing=15
+            spacing=18,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
         inner_card = ft.Container(
@@ -355,25 +461,21 @@ class PantallaRegistrarLibro(ft.Container):
 
                     formulario,
 
-                    ft.Divider(height=15, color="transparent"),
+                    ft.Divider(height=10, color="transparent"),
+
+                    self.lbl_mensaje,
+
+                    ft.Divider(height=5, color="transparent"),
 
                     ft.Row(
                         [
                             ft.OutlinedButton(
                                 "Regresar",
                                 on_click=self.regresar,
-                                style=ft.ButtonStyle(
-                                    color="red"
-                                )
+                                style=ft.ButtonStyle(color="red")
                             ),
 
-                            ft.ElevatedButton(
-                                "Guardar Libro",
-                                bgcolor=self.AZUL,
-                                color="white",
-                                width=180,
-                                on_click=self.guardar_libro
-                            )
+                            self.btn_guardar
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=20
@@ -386,7 +488,7 @@ class PantallaRegistrarLibro(ft.Container):
         self.content = ft.Column(
             [
                 ft.Container(
-                    width=700,
+                    width=760,
                     border_radius=40,
                     padding=30,
                     gradient=ft.LinearGradient(
@@ -405,21 +507,23 @@ class PantallaRegistrarLibro(ft.Container):
 
     def buscar_isbn(self, e):
 
-        isbn = self.txt_isbn.value
+        isbn = self.txt_isbn.value.strip()
 
         resultado = self.controller.buscar_por_isbn(isbn)
 
         if not resultado["ok"]:
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text(resultado["mensaje"])
-            )
-            self._page.snack_bar.open = True
-            self._page.update()
+            self.lbl_isbn.value = resultado["mensaje"]
+            self.lbl_isbn.color = "red"
+            self.lbl_isbn.visible = True
+            self.update()
             return
+
+        self.lbl_isbn.value = "ISBN encontrado correctamente"
+        self.lbl_isbn.color = "green"
+        self.lbl_isbn.visible = True
 
         data = resultado["data"]
 
-        # AUTOCOMPLETAR CAMPOS
         self.txt_titulo.value = data["titulo"]
         self.txt_editorial.value = data["editorial"]
         self.txt_fecha.value = data["fecha"]
@@ -428,26 +532,32 @@ class PantallaRegistrarLibro(ft.Container):
         self.txt_cdu.value = data["cdu"]
         self.txt_lcc.value = data["lcc"]
 
-        # AUTORES
         self.autores_seleccionados = data["autores"]
         self.chips_autores.controls.clear()
 
         for autor in data["autores"]:
-            chip = ft.Chip(
-                label=ft.Text(autor),
-                on_delete=lambda ev, n=autor: self.eliminar_autor(n)
+            self.chips_autores.controls.append(
+                ft.Chip(
+                    label=ft.Text(autor),
+                    on_delete=lambda ev, n=autor: self.eliminar_autor(n)
+                )
             )
-            self.chips_autores.controls.append(chip)
 
-        # CATEGORÍAS
         self.categorias_seleccionadas = data["categorias"]
         self.chips_categorias.controls.clear()
 
         for cat in data["categorias"]:
-            chip = ft.Chip(
-                label=ft.Text(cat),
-                on_delete=lambda ev, n=cat: self.eliminar_categoria(n)
+            self.chips_categorias.controls.append(
+                ft.Chip(
+                    label=ft.Text(cat),
+                    on_delete=lambda ev, n=cat: self.eliminar_categoria(n)
+                )
             )
-            self.chips_categorias.controls.append(chip)
 
-        self.update()        
+        self.verificar_campos_completos()
+        self.update()
+
+
+    def limpiar_mensaje_isbn(self, e):
+        self.lbl_isbn.visible = False
+        self.update()
