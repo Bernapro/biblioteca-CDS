@@ -138,8 +138,5 @@ class PantallaPrincipal(ft.Container):
         vista = self.vistas[index]
         self.content_area.content = vista
 
-        if hasattr(vista, "actualizar"):
-            vista.actualizar()
-
         if self.page is not None:
             self.content_area.update()

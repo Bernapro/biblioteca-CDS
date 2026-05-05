@@ -41,7 +41,7 @@ class RepositorioImpl(Repositorio):
                 {f"id_{nombre_tabla}": id},
                 conn
             )
-
+##no se Usa paginado debido a filtros avanzados
     def obtener_paginado(self, nombre_tabla: str, limit: int = 10, offset: int = 0):
         with db.get_connection() as conn:
             return self.__crud.get_paginated(conn, nombre_tabla, limit, offset)
@@ -98,3 +98,40 @@ class RepositorioImpl(Repositorio):
             """
             result = conn.execute(query).fetchone()
             return f"VIS-{result['numero']}"
+        
+    #
+    def obtener_avanzado(
+        self,
+        nombre_tabla: str,
+        filtros=None,
+        or_filtros=None,
+        limit=None,
+        offset=None,
+        order_by=None,
+        columnas=None
+    ):
+        with db.get_connection() as conn:
+            return self.__crud.read_advanced(
+                conn=conn,
+                nombre_tabla=nombre_tabla,
+                filtros=filtros,
+                or_filtros=or_filtros,
+                limit=limit,
+                offset=offset,
+                order_by=order_by,
+                columnas=columnas
+            )
+
+    def contar_avanzado(
+        self,
+        nombre_tabla,
+        filtros=None,
+        or_filtros=None
+    ):
+        with db.get_connection() as conn:
+            return self.__crud.count_advanced(
+                conn,
+                nombre_tabla,
+                filtros,
+                or_filtros
+            )
