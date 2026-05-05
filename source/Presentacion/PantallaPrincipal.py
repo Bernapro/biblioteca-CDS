@@ -8,7 +8,8 @@ from Presentacion.PantallaIncidencia import PantallaIncidencias as pin
 from Presentacion.PantallaLibros import PantallaLibros as pl
 from Presentacion.PantallaPrestamos import PantallaPrestamos as pp
 from Presentacion.PantallaReportes import PantallaReportes as pr
-
+from Negocio.Modelo.RepositorioImpl import RepositorioImpl
+from Persistencia.CRUD.CRUDimpl import CRUDimp
 
 class PantallaPrincipal(ft.Container):
 
@@ -16,6 +17,8 @@ class PantallaPrincipal(ft.Container):
         super().__init__()
         self.main_page = main_page
 
+        self.repo = RepositorioImpl(CRUDimp())
+        self.repo.backup_bd()
         # Arrancamos en modo claro por defecto
         self.main_page.theme_mode = ft.ThemeMode.LIGHT
 
@@ -92,7 +95,6 @@ class PantallaPrincipal(ft.Container):
                 self.columna_derecha
             ]
         )
-
     # ==========================================
     # MODO OSCURO
     # ==========================================
