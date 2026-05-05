@@ -1,6 +1,9 @@
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Persistencia.Postgres.CatalogoRepository import CatalogoRepository
+from Negocio.Modelo.Alumno import Alumno
+from Negocio.Modelo.Personal import Personal
+from Negocio.Modelo.Visitante import Visitante
 
 class ControladorPantallaRegistroUsuario:
     def __init__(self, vista):
@@ -12,7 +15,6 @@ class ControladorPantallaRegistroUsuario:
         carreras = self.__repo_catalogos.obtener_carreras()
         semestres = self.__repo_catalogos.obtener_semestres()
         instituciones = self.__repo_catalogos.obtener_instituciones()
-
         return carreras, semestres, instituciones
 
     def actualizar_grupos(self, id_licenciatura, id_semestre):
@@ -23,8 +25,21 @@ class ControladorPantallaRegistroUsuario:
     def obtener_siguiente_vis(self):
         return self.__repo_usuarios.obtener_siguiente_vis()
 
-    def guardar_usuario(self, datos_usuario, instancia_modelo):
+    # 🔹 2. Ya no recibe "instancia_modelo", solo recibe el diccionario de la UI
+    def guardar_usuario(self, datos_usuario):
         try:
+            tipo = datos_usuario.get("tipo_usuario", "").upper()
+
+            # 🔹 3. El Controlador toma la decisión de qué modelo crear
+            if tipo == "ALUMNO":
+                instancia_modelo = Alumno()
+            elif tipo == "PERSONAL":
+                instancia_modelo = Personal()
+            elif tipo == "VISITANTE":
+                instancia_modelo = Visitante()
+            else:
+                raise ValueError("Tipo de usuario no válido")
+
             # Poblamos el modelo con el diccionario
             instancia_modelo.set_columns(datos_usuario)
             usr = instancia_modelo.getPadre()

@@ -1,8 +1,5 @@
 import flet as ft
 import datetime
-from Negocio.Modelo.Alumno import Alumno
-from Negocio.Modelo.Personal import Personal
-from Negocio.Modelo.Visitante import Visitante
 from Negocio.Utilidades.Validador import Validador
 from Negocio.Utilidades.Herramientas import Herramientas
 from Negocio.Controlador.ControladorRegistroUsuario import ControladorPantallaRegistroUsuario
@@ -22,12 +19,6 @@ class PantallaRegistroUsuario(ft.Container):
             border_radius=10,
             alignment=ft.Alignment(0, 0)        
         )
-
-        self.usuarios = {
-            "Alumno": Alumno(),
-            "Personal": Personal(),
-            "Visitante": Visitante()
-        }
 
         self.AZUL = "#3B82F6"
         self.TEXT = "#111827"
@@ -220,10 +211,9 @@ class PantallaRegistroUsuario(ft.Container):
             "licenciatura": self.licenciatura.value
         }
 
-        instancia_modelo = self.usuarios[tipo]
-
         try:
-            exito, identificador = self.controlador.guardar_usuario(datos_usuario, instancia_modelo)
+            #  Pasamos  el diccionario puro al controlador
+            exito, identificador = self.controlador.guardar_usuario(datos_usuario)
 
             if exito:
                 if identificador:
