@@ -285,3 +285,34 @@ class PantallaNuevoPrestamo(ft.Container):
             scroll=ft.ScrollMode.AUTO,
             expand=True
         )
+    def limpiar_pantalla(self, e=None):
+        # 1. Limpiar campos de texto principales
+        self.txt_matricula.value = ""
+        self.txt_adquisicion.value = ""
+        
+        # 2. Limpiar el contenedor del alumno (por si se generó una tarjeta al buscar)
+        self.card_alumno.content = None
+
+        # 3. Limpiar la memoria caché, el diccionario de selección y la vista de la lista
+        self.libros_seleccionados.clear()
+        self.libros_cache.clear()
+        self.lista_libros.controls.clear()
+
+        # 4. Restablecer la lógica de fechas
+        fecha_actual = datetime.datetime.now()
+        fecha_limite_default = fecha_actual + datetime.timedelta(days=7)
+        
+        self.fecha_prestamo = fecha_actual # Restablecer la variable interna
+        
+        # Restablecer los campos de texto visuales
+        self.txt_fecha_prestamo.value = fecha_actual.strftime("%d/%b/%Y")
+        self.txt_fecha_limite.value = fecha_limite_default.strftime("%d/%b/%Y")
+        
+        # Resetear los DatePickers. 
+        # Al asignarles None, Flet olvida cualquier selección previa 
+        # y volverá a mostrar el mes actual la próxima vez que se abran.
+        self.picker_fecha_prestamo.value = None
+        self.picker_fecha_limite.value = None
+
+        # 5. Ordenar a Flet que redibuje todo el contenedor con los nuevos estados
+        self.update()

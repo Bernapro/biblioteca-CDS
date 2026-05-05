@@ -58,3 +58,23 @@ class Validador:
                 c.value = None
             elif hasattr(c, "controls"):
                 Validador.limpiar(c.controls)
+
+    @staticmethod
+    def limpiar__mod(controles: list):
+        for c in controles:
+            # 1. Limpiar campos de texto
+            if isinstance(c, ft.TextField):
+                c.value = ""
+                
+            # 2. Limpiar menús desplegables
+            elif isinstance(c, ft.Dropdown):
+                c.value = None
+                
+            # 3. Recursividad para layouts con múltiples hijos (Row, Column)
+            elif hasattr(c, "controls"):
+                Validador.limpiar(c.controls)
+                
+            # 4. Recursividad para elementos de un solo hijo (Container, Card)
+            elif hasattr(c, "content") and c.content is not None:
+                # OJO: Pasamos [c.content] como lista porque nuestro método espera una lista
+                Validador.limpiar([c.content])
