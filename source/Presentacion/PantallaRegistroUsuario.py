@@ -3,17 +3,14 @@ import datetime
 from Negocio.Modelo.Alumno import Alumno
 from Negocio.Modelo.Personal import Personal
 from Negocio.Modelo.Visitante import Visitante
-
-from Persistencia.Postgres.CatalogoRepository import CatalogoRepository
-
+from Negocio.Utilidades.Validador import Validador
+from Negocio.Utilidades.Herramientas import Herramientas
 from Negocio.Controlador.ControladorRegistroUsuario import ControladorPantallaRegistroUsuario
-
 
 class PantallaRegistroUsuario(ft.Container):
     def __init__(self, page: ft.Page, vista_anterior=None):
         super().__init__()
-        self.control = ControladorPantallaRegistroUsuario(self)
-        self.catalogo_repo = CatalogoRepository()
+        self.controlador = ControladorPantallaRegistroUsuario(self)
         self._page = page
         self.vista_anterior = vista_anterior
         self.expand = True
@@ -23,7 +20,8 @@ class PantallaRegistroUsuario(ft.Container):
             visible=False,
             padding=10,
             border_radius=10,
-            alignment=ft.Alignment(0, 0)        )
+            alignment=ft.Alignment(0, 0)        
+        )
 
         self.usuarios = {
             "Alumno": Alumno(),
@@ -36,7 +34,6 @@ class PantallaRegistroUsuario(ft.Container):
         self.CARD = "white"
 
         self.nombre = self._crear_input("Nombre(s)", width=350)
-
         self.ap_paterno = self._crear_input("Apellido Paterno", width=165)
         self.ap_materno = self._crear_input("Apellido Materno", width=165)
 
@@ -75,11 +72,12 @@ class PantallaRegistroUsuario(ft.Container):
                 ft.dropdown.Option("Personal"),
                 ft.dropdown.Option("Visitante"),
             ],
-            on_select=self.cambiar_campos
+            on_select=self.cambiar_campos # Flet usa on_change
         )
 
         self.matricula = self._crear_input("Matrícula", width=350, visible=False)
 
+        # 🔹 Ahora los dropdowns disparan on_carrera_o_semestre_change
         self.licenciatura = ft.Dropdown(
             label="Licenciatura",
             width=350,
@@ -89,7 +87,7 @@ class PantallaRegistroUsuario(ft.Container):
             text_style=ft.TextStyle(color=self.TEXT),
             options=[],
             visible=False,
-            on_select=self.on_carrera_change
+            on_select=self.on_carrera_o_semestre_change
         )
 
         self.semestre = ft.Dropdown(
@@ -100,7 +98,7 @@ class PantallaRegistroUsuario(ft.Container):
             focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
             options=[],
-            on_select=self.on_semestre_change
+            on_select=self.on_carrera_o_semestre_change
         )
 
         self.grupo = ft.Dropdown(
@@ -149,84 +147,87 @@ class PantallaRegistroUsuario(ft.Container):
             spacing=15,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
-
         self.build_ui()
 
     def did_mount(self):
-        self.cargar_catalogos()
+        carreras, semestres, instituciones = self.controlador.cargar_datos_iniciales()
+        self.poblar_catalogos(carreras, semestres, instituciones)
 
-    def cargar_catalogos(self):
-
-        carreras = self.catalogo_repo.obtener_carreras()
-        self.licenciatura.options = [
-            ft.dropdown.Option(str(c["id_carrera"]), text=c["nombre_carrera"])
-            for c in carreras
-        ]
-
-        semestres = self.catalogo_repo.obtener_semestres()
-        self.semestre.options = [
-            ft.dropdown.Option(str(s["id_semestre"]), text=s["semestre"])
-            for s in semestres
-        ]
-
-        instituciones = self.catalogo_repo.obtener_instituciones()
-        self.institucion.options = [
-            ft.dropdown.Option(str(i["id_institucion"]), text=i["nombre_institucion"])
-            for i in instituciones
-        ]
-
+    def poblar_catalogos(self, carreras, semestres, instituciones):
+        self.licenciatura.options = [ft.dropdown.Option(str(c["id_carrera"]), text=c["nombre_carrera"]) for c in carreras]
+        self.semestre.options = [ft.dropdown.Option(str(s["id_semestre"]), text=s["semestre"]) for s in semestres]
+        self.institucion.options = [ft.dropdown.Option(str(i["id_institucion"]), text=i["nombre_institucion"]) for i in instituciones]
         self.update()
 
-    def on_carrera_change(self, e):
-        self.actualizar_grupos()
-
-    def on_semestre_change(self, e):
-        self.actualizar_grupos()
-
-    def actualizar_grupos(self):
-        if not self.semestre.value or not self.licenciatura.value:
-            return
-
-        grupos = self.catalogo_repo.obtener_grupos(
-            self.licenciatura.value,
-            self.semestre.value
-        )
-
-        self.grupo.options = [
-            ft.dropdown.Option(str(g["id_grupo"]), text=g["grupo"])
-            for g in grupos
-        ]
-
+    def poblar_grupos(self, grupos):
+        self.grupo.options = [ft.dropdown.Option(str(g["id_grupo"]), text=g["grupo"]) for g in grupos]
         self.grupo.value = None
         self.update()
 
-    def preparar_identificador(self):
-        tipo = self.tipo_usuario.value
+    def on_carrera_o_semestre_change(self, e):
+        grupos = self.controlador.actualizar_grupos(
+            self.licenciatura.value,
+            self.semestre.value
+        )
+        self.poblar_grupos(grupos)
 
-        if tipo == "Alumno":
-            pass
-        elif tipo == "Personal":
-            self.matricula.value = self.n_plaza.value
-        elif tipo == "Visitante":
-            self.matricula.value = self.institucion.value
+    def _obtener_identificador_final(self, tipo):
+        if tipo == "Alumno": return self.matricula.value
+        if tipo == "Personal": return self.n_plaza.value
+        if tipo == "Visitante": return self.institucion.value
+        return None
 
     def guardar_con_preparacion(self, e):
 
-        # 🔹 Validación
-        if not self.validar_campos():
-            self.mostrar_mensaje("Completa todos los campos obligatorios", "orange")
+        campos = [
+            (self.nombre, None),
+            (self.ap_paterno, None),
+            (self.ap_materno, None),
+            (self.fecha_nacimiento, None),
+            (self.tipo_usuario, None),
+        ]
+
+        tipo = self.tipo_usuario.value
+
+        if tipo == "Alumno":
+            campos.extend([
+                (self.matricula, None),
+                (self.licenciatura, None),
+                (self.semestre, None),
+                (self.grupo, None),
+            ])
+        elif tipo == "Personal":
+            campos.append((self.n_plaza, None))
+        elif tipo == "Visitante":
+            campos.append((self.institucion, None))
+
+        valido, mensaje = Validador.validar(campos)
+
+        if not valido:
+            self.mostrar_mensaje(mensaje, "orange")
             return
 
+        datos_usuario = {
+            "nombre": self.nombre.value,
+            "ap_paterno": self.ap_paterno.value,
+            "ap_materno": self.ap_materno.value,
+            "fecha_nacimiento": self.fecha_nacimiento.value,
+            "tipo_usuario": tipo.upper() if tipo else None,
+            "identificador": self._obtener_identificador_final(tipo),
+            "semestre": self.semestre.value,
+            "grupo": self.grupo.value,
+            "institucion": self.institucion.value,
+            "licenciatura": self.licenciatura.value
+        }
+
+        instancia_modelo = self.usuarios[tipo]
+
         try:
-            self.preparar_identificador()
+            exito, identificador = self.controlador.guardar_usuario(datos_usuario, instancia_modelo)
 
-            resultado = self.control.guardar_usuario(e)
-
-            if resultado:
-                identificador = resultado["identificador"]
-
+            if exito:
                 if identificador:
-                    self.identificador_preview.value = identificador   # 🔥 CLAVE
+                    self.identificador_preview.value = identificador
                     self.identificador_preview.visible = True
                     mensaje = f"Usuario registrado: {identificador}"
                 else:
@@ -234,16 +235,12 @@ class PantallaRegistroUsuario(ft.Container):
 
                 self.mostrar_mensaje(mensaje, "green")
                 self.update()
-
                 self.limpiar_campos()
 
+        except ValueError as ve:
+            self.mostrar_mensaje(str(ve), "red")
         except Exception as ex:
-
-            if "usuario_identificador_key" in str(ex):
-                self.mostrar_mensaje("El usuario ya está registrado", "red")
-            else:
-                self.mostrar_mensaje("Error al guardar el usuario", "red")
-
+            self.mostrar_mensaje("Error al guardar el usuario", "red")
             print("ERROR:", ex)
 
     def _crear_input(self, label, width, visible=True):
@@ -270,28 +267,36 @@ class PantallaRegistroUsuario(ft.Container):
     def cambiar_campos(self, e):
         tipo = self.tipo_usuario.value
 
-        self.tipo_usuario.text_style = ft.TextStyle(color=self.TEXT)
-        self.tipo_usuario.label_style = ft.TextStyle(color=self.TEXT)
+        Herramientas.reset_dropdowns([
+            self.institucion,
+            self.grupo,
+            self.semestre,
+            self.licenciatura
+        ])
 
-        self.matricula.visible = False
-        self.licenciatura.visible = False
-        self.row_semestre_grupo.visible = False
-        self.n_plaza.visible = False
-        self.institucion.visible = False
-        self.identificador_preview.visible = False   # 👈 FALTABA ESTE
+        Herramientas.ocultar([
+            self.matricula,
+            self.licenciatura,
+            self.row_semestre_grupo,
+            self.n_plaza,
+            self.institucion,
+            self.identificador_preview
+        ])
 
         if tipo == "Alumno":
-            self.matricula.visible = True
-            self.licenciatura.visible = True
-            self.row_semestre_grupo.visible = True
+            Herramientas.mostrar([
+                self.matricula,
+                self.licenciatura,
+                self.row_semestre_grupo
+            ])
         elif tipo == "Personal":
-            self.n_plaza.visible = True
+            Herramientas.mostrar([self.n_plaza])
         elif tipo == "Visitante":
-            self.institucion.visible = True
-
-            siguiente = self.control.obtener_siguiente_vis()
+            Herramientas.mostrar([self.institucion])
+            siguiente = self.controlador.obtener_siguiente_vis()
             self.identificador_preview.value = siguiente
             self.identificador_preview.visible = True
+
         self.update()
 
     def cancelar(self, e):
@@ -301,11 +306,9 @@ class PantallaRegistroUsuario(ft.Container):
 
     def mostrar_mensaje(self, texto, color):
         icono = ft.Icons.CHECK_CIRCLE if color == "green" else ft.Icons.ERROR
-
         bg = "#DCFCE7" if color == "green" else "#FEE2E2" if color == "red" else "#FEF9C3"
 
         self.mensaje.bgcolor = bg
-
         self.mensaje.content = ft.Row(
             [
                 ft.Icon(icono, color=color),
@@ -313,51 +316,28 @@ class PantallaRegistroUsuario(ft.Container):
             ],
             alignment=ft.MainAxisAlignment.CENTER
         )
-
         self.mensaje.visible = True
         self.update()
         
-    def validar_campos(self):
-        if not self.nombre.value or not self.ap_paterno.value:
-            return False
-
-        if not self.tipo_usuario.value:
-            return False
-
-        tipo = self.tipo_usuario.value
-
-        if tipo == "Alumno":
-            if not self.matricula.value or not self.grupo.value:
-                return False
-
-        elif tipo == "Personal":
-            if not self.n_plaza.value:
-                return False
-
-        elif tipo == "Visitante":
-            if not self.institucion.value:
-                return False
-
-        return True
-        
     def limpiar_campos(self):
-        self.nombre.value = ""
-        self.ap_paterno.value = ""
-        self.ap_materno.value = ""
-        self.fecha_nacimiento.value = ""
-
-        self.tipo_usuario.value = None
-
-        self.matricula.value = ""
-        self.n_plaza.value = ""
-        self.institucion.value = None
-
-        self.semestre.value = None
-        self.grupo.value = None
-        self.licenciatura.value = None
-
-        self.cambiar_campos(None)
-        self.update()
+            Herramientas.limpiar_controles([
+                self.nombre,
+                self.row_apellidos,
+                self.fecha_nacimiento,
+                self.contenedor_dinamico
+            ])
+            
+            Herramientas.reset_dropdown(self.tipo_usuario)
+            
+            Herramientas.reset_dropdowns([
+                self.institucion,
+                self.grupo,
+                self.semestre,
+                self.licenciatura
+            ])
+            
+            self.cambiar_campos(None)
+            self.update()
 
     def build_ui(self):
         formulario = ft.Column(
@@ -384,9 +364,7 @@ class PantallaRegistroUsuario(ft.Container):
                     ft.Text("Registro de usuario", size=26, weight="bold", color=self.TEXT),
                     ft.Text("Completa los datos base y selecciona el rol", size=14, color="black"),
                     ft.Divider(height=15, color="transparent"),
-
                     formulario,
-
                     ft.Divider(height=15, color="transparent"),
                     ft.Row(
                         [
