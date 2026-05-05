@@ -36,3 +36,6 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
             lib.setAutores(args["autores"])
 
         return ejem
+    
+    def post(self, args) -> ResponseObject:
+        pass

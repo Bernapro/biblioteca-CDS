@@ -1,7 +1,8 @@
 import flet as ft
 import datetime
 from Negocio.Controlador.ControladorNuevoPrestamo import ControladorNuevoPrestamo
-from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
+from Infraestructura.API.BibliotecaEjemplares import BibliotecaEjemplares
+from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 
@@ -14,7 +15,7 @@ class PantallaNuevoPrestamo(ft.Container):
         self.alignment = ft.alignment.Alignment(0, 0)
 
         # Instanciamos el controlador
-        self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares(), repositorio= RepositorioImpl(crud=CRUDimp()))
+        self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares(), repositorio= RepositorioImpl(crud=CRUDimp()), endPrestamo=BibliotecaPrestamos())
         self.libros_seleccionados = {}   # {adq: (titulo, autor, adq)}
         self.libros_cache = []
         
@@ -102,7 +103,7 @@ class PantallaNuevoPrestamo(ft.Container):
         )
 ##variable proxima si van a usar la fecha inicio para algo
         self.fecha_prestamo = datetime.datetime.now()
-        self.txt_fecha_prestamo.value = self.fecha_prestamo.strftime("%d/%b/%Y")
+        self.txt_fecha_prestamo.value = self.fecha_prestamo.strftime("%Y-%m-%d")
         
         # Poblar libros de prueba
         self.build_ui()

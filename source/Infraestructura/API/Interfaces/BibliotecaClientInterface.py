@@ -15,3 +15,6 @@ class BibliotecaClientInterface(Client):
 
     def get(self, clave) -> ResponseObject:
         pass
+
+    def post(self, args) -> ResponseObject:
+        pass

@@ -15,3 +15,7 @@ class Client(ABC):
     @abstractmethod
     def get(self, clave) -> ResponseObject:
         pass
+
+    @abstractmethod
+    def post(self, args) -> ResponseObject:
+        pass
