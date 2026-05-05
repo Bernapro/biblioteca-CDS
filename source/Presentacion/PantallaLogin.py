@@ -155,15 +155,8 @@ class PantallaLogin:
                         width=550,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Checkbox(
-                                label="Recordarme", 
-                                label_style=ft.TextStyle(color=self.texto_gris, size=12),
-                                fill_color=self.azul_unach
-                            ),
-                            ft.TextButton(
-                                "¿Olvidaste tu contraseña?", 
-                                style=ft.ButtonStyle(color=self.azul_unach, text_style=ft.TextStyle(size=12))
-                            )
+                           
+                           
                         ]
                     ),
                     ft.Container(height=30),

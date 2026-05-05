@@ -15,10 +15,10 @@ class PantallaRegistrarLibro(ft.Container):
 
         # Colores
         self.AZUL = "#3B82F6"
-        self.GRIS_BORDE = "#D1D5DB"
-        self.GRIS_TEXTO = "#6B7280"
-        self.TEXT = "#111827"
-        self.CARD = "white"
+        self.GRIS_BORDE = "outline"
+        self.GRIS_TEXTO = "onSurfaceVariant"
+        self.TEXT = "onSurface"
+        self.CARD = "surface"
 
         # Datos dinámicos
         self.autores_seleccionados = []
@@ -89,6 +89,7 @@ class PantallaRegistrarLibro(ft.Container):
             border_radius=12,
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
+            text_style=ft.TextStyle(color=self.TEXT),
             suffix_icon=ft.Icons.CALENDAR_MONTH,
             on_click=self.abrir_calendario
         )
@@ -201,7 +202,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         for campo in campos_obligatorios:
             if not campo.value.strip():
-                campo.border_color = "red"
+                campo.border_color = "error"
                 valido = False
             else:
                 campo.border_color = self.GRIS_BORDE
@@ -254,7 +255,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         if not self.validar_campos():
             self.lbl_mensaje.value = "Completa los campos obligatorios"
-            self.lbl_mensaje.color = "red"
+            self.lbl_mensaje.color = "error"
             self.lbl_mensaje.visible = True
             self.update()
             return
@@ -276,7 +277,7 @@ class PantallaRegistrarLibro(ft.Container):
         resultado = self.controller.crear_libro(data)
 
         self.lbl_mensaje.value = resultado["mensaje"]
-        self.lbl_mensaje.color = "green" if resultado["ok"] else "red"
+        self.lbl_mensaje.color = "#22C55E" if resultado["ok"] else "error"
         self.lbl_mensaje.visible = True
 
         if resultado["ok"]:
@@ -310,7 +311,7 @@ class PantallaRegistrarLibro(ft.Container):
         self.lbl_isbn = ft.Text(
             "",
             size=12,
-            color="red",
+            color="error",
             visible=False
         )
 
@@ -373,7 +374,7 @@ class PantallaRegistrarLibro(ft.Container):
                 ft.Divider(),
 
                 ft.Row(
-                    [ft.Text("Autores", weight="bold")],
+                    [ft.Text("Autores", weight="bold", color=self.TEXT)],
                     alignment=ft.MainAxisAlignment.CENTER
                 ),
 
@@ -400,7 +401,7 @@ class PantallaRegistrarLibro(ft.Container):
                 ft.Divider(),
 
                 ft.Row(
-                    [ft.Text("Categorías", weight="bold")],
+                    [ft.Text("Categorías", weight="bold", color=self.TEXT)],
                     alignment=ft.MainAxisAlignment.CENTER
                 ),
 
@@ -472,7 +473,7 @@ class PantallaRegistrarLibro(ft.Container):
                             ft.OutlinedButton(
                                 "Regresar",
                                 on_click=self.regresar,
-                                style=ft.ButtonStyle(color="red")
+                                style=ft.ButtonStyle(color="error")
                             ),
 
                             self.btn_guardar
@@ -513,13 +514,13 @@ class PantallaRegistrarLibro(ft.Container):
 
         if not resultado["ok"]:
             self.lbl_isbn.value = resultado["mensaje"]
-            self.lbl_isbn.color = "red"
+            self.lbl_isbn.color = "error"
             self.lbl_isbn.visible = True
             self.update()
             return
 
         self.lbl_isbn.value = "ISBN encontrado correctamente"
-        self.lbl_isbn.color = "green"
+        self.lbl_isbn.color = "#22C55E"
         self.lbl_isbn.visible = True
 
         data = resultado["data"]

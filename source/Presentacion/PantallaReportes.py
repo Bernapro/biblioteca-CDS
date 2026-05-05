@@ -9,11 +9,13 @@ class PantallaReportes(ft.Container):
         self._page = page
 
         self.AZUL = "#2563EB"
-        self.GRIS = "#6B7280"
-        self.FONDO = "#F3F4F6"
+        self.TEXT = "onSurface"
+        self.TEXT_SECONDARY = "onSurfaceVariant"
+        self.CARD = "surface"
+        self.GRIS_BORDE = "outline"
 
         self.expand = True
-        self.bgcolor = self.FONDO
+        self.bgcolor = "transparent"
         self.padding = 20
 
         self.tipo_actual = "Tipo Usuario"
@@ -39,8 +41,8 @@ class PantallaReportes(ft.Container):
 
                 # ===== HEADER =====
                 ft.Column([
-                    ft.Text("Reportes", size=28, weight="bold"),
-                    ft.Text("Estadísticas del sistema de asistencia", color=self.GRIS),
+                    ft.Text("Reportes", size=28, weight="bold", color=self.TEXT),
+                    ft.Text("Estadísticas del sistema de asistencia", color=self.TEXT_SECONDARY),
                 ]),
 
                 # ===== FILTROS =====
@@ -62,7 +64,7 @@ class PantallaReportes(ft.Container):
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Última actualización: 31/05/2025 10:30 AM", color=self.GRIS),
+                        ft.Text("Última actualización: 31/05/2025 10:30 AM", color=self.TEXT_SECONDARY),
                         ft.TextButton("Actualizar datos")
                     ]
                 )
@@ -77,6 +79,9 @@ class PantallaReportes(ft.Container):
         self.dropdown = ft.Dropdown(
             width=200,
             value=self.tipo_actual,
+            border_color=self.GRIS_BORDE,
+            bgcolor=self.CARD,
+            color=self.TEXT,
             options=[
                 ft.dropdown.Option("Alumnos"),
                 ft.dropdown.Option("Personal"),
@@ -88,8 +93,8 @@ class PantallaReportes(ft.Container):
         return ft.Container(
             padding=15,
             border_radius=15,
-            bgcolor="white",
-            shadow=ft.BoxShadow(blur_radius=10, color="#00000010"),
+            bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
@@ -117,11 +122,12 @@ class PantallaReportes(ft.Container):
         return ft.Container(
             padding=10,
             border_radius=10,
-            bgcolor="#F9FAFB",
+            bgcolor="surfaceVariant",
+            border=ft.border.all(1, self.GRIS_BORDE),
             on_click=lambda e: self.abrir_picker(picker),
             content=ft.Row([
-                ft.Icon(ft.Icons.CALENDAR_MONTH, size=18),
-                ft.Text(text)
+                ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.TEXT),
+                ft.Text(text, color=self.TEXT)
             ])
         )
 
@@ -147,16 +153,16 @@ class PantallaReportes(ft.Container):
             expand=True,
             padding=20,
             border_radius=15,
-            bgcolor="white",
-            shadow=ft.BoxShadow(blur_radius=10, color="#00000010"),
+            bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
 
                     ft.Column([
-                        ft.Text(title, color=self.GRIS),
+                        ft.Text(title, color=self.TEXT_SECONDARY),
                         ft.Text(value, size=28, weight="bold", color=color),
-                        ft.Text("+12% vs mes anterior", size=12, color="#16A34A")
+                        ft.Text("+12% vs mes anterior", size=12, color="#22C55E")
                     ]),
 
                     ft.Icon(ft.Icons.SHOW_CHART, color=color)
@@ -170,11 +176,11 @@ class PantallaReportes(ft.Container):
             expand=True,
             padding=20,
             border_radius=15,
-            bgcolor="white",
-            shadow=ft.BoxShadow(blur_radius=10, color="#00000010"),
+            bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column(
                 controls=[
-                    ft.Text("Reporte: Tipo Usuario", weight="bold"),
+                    ft.Text("Reporte: Tipo Usuario", weight="bold", color=self.TEXT),
 
                     ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
@@ -198,7 +204,7 @@ class PantallaReportes(ft.Container):
                     bgcolor=color,
                     border_radius=5
                 ),
-                ft.Text(label, size=12)
+                ft.Text(label, size=12, color=self.TEXT_SECONDARY)
             ]
         )
 
@@ -208,26 +214,26 @@ class PantallaReportes(ft.Container):
             expand=True,
             padding=20,
             border_radius=15,
-            bgcolor="white",
-            shadow=ft.BoxShadow(blur_radius=10, color="#00000010"),
+            bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column(
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-                    ft.Text("Distribución: Tipo Usuario", weight="bold"),
+                    ft.Text("Distribución: Tipo Usuario", weight="bold", color=self.TEXT),
 
                     ft.Container(
                         width=150,
                         height=150,
                         border_radius=75,
-                        bgcolor="#E5E7EB",
+                        bgcolor="surfaceVariant",
                         alignment=ft.Alignment.CENTER,
-                        content=ft.Text("185\nTotal", text_align="center")
+                        content=ft.Text("185\nTotal", text_align="center", color=self.TEXT)
                     ),
 
                     ft.Column([
-                        ft.Text("Alumnos 120 (64%)"),
-                        ft.Text("Personal 40 (21%)"),
-                        ft.Text("Visitantes 25 (13%)"),
+                        ft.Text("Alumnos 120 (64%)", color=self.TEXT_SECONDARY),
+                        ft.Text("Personal 40 (21%)", color=self.TEXT_SECONDARY),
+                        ft.Text("Visitantes 25 (13%)", color=self.TEXT_SECONDARY),
                     ])
                 ]
             )

@@ -11,11 +11,14 @@ class PantallaLibros(ft.Container):
         self.controller = ControladorLibros()
 
         self.AZUL = "#3B82F6"
-        self.FONDO = "#EAF1F7"
+        self.TEXT = "onSurface"
+        self.TEXT_SECONDARY = "onSurfaceVariant"
+        self.CARD = "surface"
+        self.GRIS_BORDE = "outline"
 
         self.expand = True
         self.padding = 30
-        self.bgcolor = self.FONDO
+        self.bgcolor = "transparent"
         self.border_radius = 30
 
         # PAGINACIÓN
@@ -28,7 +31,7 @@ class PantallaLibros(ft.Container):
         # COMPONENTES PAGINACIÓN
         self.info_paginacion = ft.Text(
             "",
-            color="black",
+            color=self.TEXT_SECONDARY,
             size=14
         )
 
@@ -44,8 +47,9 @@ class PantallaLibros(ft.Container):
             hint_text="Buscar por ISBN...",
             prefix_icon=ft.Icons.SEARCH,
             border_radius=20,
-            bgcolor="#F9FAFB",
-            border_color="transparent",
+            bgcolor=self.CARD,
+            border_color=self.GRIS_BORDE,
+            text_style=ft.TextStyle(color=self.TEXT),
             content_padding=10,
             on_submit=self.buscar_libros
         )
@@ -59,23 +63,23 @@ class PantallaLibros(ft.Container):
             run_spacing=20,
         )
 
-        self.modal_titulo = ft.Text("", size=20, weight="bold", color="black")
-        self.modal_isbn = ft.Text("", color="black")
-        self.modal_editorial = ft.Text("", color="black")
-        self.modal_ejemplares = ft.Text("", color="black")
-        self.modal_edicion = ft.Text("", color="black")
-        self.modal_fecha = ft.Text("", color="black")
-        self.modal_dewey = ft.Text("", color="black")
-        self.modal_congreso = ft.Text("", color="black")
-        self.modal_decimal = ft.Text("", color="black")
-        self.modal_autores = ft.Text("", color="black")
-        self.modal_categorias = ft.Text("", color="black")
+        self.modal_titulo = ft.Text("", size=20, weight="bold", color=self.TEXT)
+        self.modal_isbn = ft.Text("", color=self.TEXT)
+        self.modal_editorial = ft.Text("", color=self.TEXT)
+        self.modal_ejemplares = ft.Text("", color=self.TEXT)
+        self.modal_edicion = ft.Text("", color=self.TEXT)
+        self.modal_fecha = ft.Text("", color=self.TEXT)
+        self.modal_dewey = ft.Text("", color=self.TEXT)
+        self.modal_congreso = ft.Text("", color=self.TEXT)
+        self.modal_decimal = ft.Text("", color=self.TEXT)
+        self.modal_autores = ft.Text("", color=self.TEXT)
+        self.modal_categorias = ft.Text("", color=self.TEXT)
 
         self.dialogo_detalles = ft.AlertDialog(
             modal=True,
-            bgcolor="white",
+            bgcolor=self.CARD,
             shape=ft.RoundedRectangleBorder(radius=20),
-            title=ft.Text("Detalles del libro", weight="bold", color="black"),
+            title=ft.Text("Detalles del libro", weight="bold", color=self.TEXT),
             content=ft.Container(
                 width=450,
                 padding=20,
@@ -93,7 +97,7 @@ class PantallaLibros(ft.Container):
                         ft.Divider(),
 
                         # DATOS GENERALES
-                        ft.Text("Datos generales", weight="bold", size=16),
+                        ft.Text("Datos generales", weight="bold", size=16, color=self.TEXT),
 
                         self.modal_isbn,
                         self.modal_editorial,
@@ -104,7 +108,7 @@ class PantallaLibros(ft.Container):
                         ft.Divider(),
 
                         # CLASIFICACIÓN
-                        ft.Text("Clasificación", weight="bold", size=16),
+                        ft.Text("Clasificación", weight="bold", size=16, color=self.TEXT),
 
                         self.modal_dewey,
                         self.modal_congreso,
@@ -113,7 +117,7 @@ class PantallaLibros(ft.Container):
                         ft.Divider(),
 
                         # AUTORES / CATEGORÍAS
-                        ft.Text("Autores y categorías", weight="bold", size=16),
+                        ft.Text("Autores y categorías", weight="bold", size=16, color=self.TEXT),
 
                         self.modal_autores,
                         self.modal_categorias,
@@ -138,9 +142,10 @@ class PantallaLibros(ft.Container):
         return ft.Container(
             width=200,
             height=220,
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=20,
             padding=15,
+            border=ft.border.all(1, self.GRIS_BORDE),
             shadow=ft.BoxShadow(
                 blur_radius=15,
                 color="black12"
@@ -153,14 +158,14 @@ class PantallaLibros(ft.Container):
                         titulo,
                         weight="bold",
                         size=14,
-                        color="black",
+                        color=self.TEXT,
                         text_align="center"
                     ),
 
                     ft.Text(
                         f"ISBN: {isbn}",
                         size=12,
-                        color="#374151"
+                        color=self.TEXT_SECONDARY
                     ),
 
                     ft.Row(
@@ -168,11 +173,12 @@ class PantallaLibros(ft.Container):
                             ft.Container(
                                 padding=5,
                                 border_radius=10,
-                                bgcolor="#DBEAFE",
+                                bgcolor="transparent",
+                                border=ft.border.all(1, self.AZUL),
                                 content=ft.Text(
                                     f"Ejemplares: {ejemplares}",
                                     size=11,
-                                    color="#1D4ED8"
+                                    color=self.AZUL
                                 )
                             ),
 
@@ -339,8 +345,8 @@ class PantallaLibros(ft.Container):
                     height=45,
                     on_click=lambda e, pagina=i: self.cambiar_pagina(pagina),
                     style=ft.ButtonStyle(
-                        bgcolor=self.AZUL if activo else "white",
-                        color="white" if activo else "black",
+                        bgcolor=self.AZUL if activo else "transparent",
+                        color="white" if activo else self.TEXT,
                         padding=0,
                         shape=ft.RoundedRectangleBorder(radius=10)
                     )
@@ -366,6 +372,8 @@ class PantallaLibros(ft.Container):
                 text_align=ft.TextAlign.CENTER,
                 content_padding=8,
                 border_radius=8,
+                border_color=self.GRIS_BORDE,
+                color=self.TEXT,
                 on_submit=self.ir_a_pagina_directa
             )
         )
@@ -417,9 +425,10 @@ class PantallaLibros(ft.Container):
     def build_ui(self):
 
         filtros = ft.Container(
-            bgcolor="white",
+            bgcolor=self.CARD,
             border_radius=25,
             padding=20,
+            border=ft.border.all(1, self.GRIS_BORDE),
             shadow=ft.BoxShadow(blur_radius=20, color="black12"),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -433,12 +442,12 @@ class PantallaLibros(ft.Container):
                                 "Gestión de libros",
                                 size=18,
                                 weight="bold",
-                                color="black"
+                                color=self.TEXT
                             ),
                             ft.Text(
                                 "Busca, filtra y administra el catálogo",
                                 size=12,
-                                color="#6B7280"
+                                color=self.TEXT_SECONDARY
                             )
                         ],
                         spacing=2
@@ -478,12 +487,12 @@ class PantallaLibros(ft.Container):
                     "Catálogo de libros",
                     size=32,
                     weight="bold",
-                    color="black"
+                    color=self.TEXT
                 ),
 
                 ft.Text(
                     "Busca y gestiona el catálogo de libros registrados en el sistema",
-                    color="black"
+                    color=self.TEXT_SECONDARY
                 ),
 
                 filtros,
