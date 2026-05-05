@@ -25,13 +25,27 @@ class MenuLateral(ft.Container):
             (ft.Icons.WARNING, "Incidencias"),
         ]
 
+        # Botón Cerrar Sesión
+        self.btn_logout = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.LOGOUT, size=22, color="error"),
+                ft.Text("Cerrar sesión", size=15, weight="bold", color="error"),
+            ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+            padding=12,
+            border_radius=12,
+            ink=True,
+            on_click=self.cerrar_sesion
+        )
+
         # Menú dinámico
         self.menu_items = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
         self.content = ft.Column(
             controls=[
                 ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # 🔥 Texto directo
                 ft.Divider(height=20, color="transparent"),
-                self.menu_items
+                self.menu_items,
+                ft.Divider(height=10, color="transparent"),
+                self.btn_logout
             ],
             expand=True
         )
@@ -67,3 +81,11 @@ class MenuLateral(ft.Container):
         self.build_menu()
         self.update()
         self.on_menu_click(index)
+
+    def cerrar_sesion(self, e):
+        # Importación local para evitar dependencias circulares
+        from Presentacion.PantallaLogin import PantallaLogin
+        e.page.controls.clear()
+        login_app = PantallaLogin(e.page)
+        e.page.add(login_app.construir_vista())
+        e.page.update()

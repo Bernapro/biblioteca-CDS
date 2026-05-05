@@ -89,10 +89,9 @@ class PantallaPrincipal(ft.Container):
                 self.columna_derecha 
             ]
         )
-
-    # ==========================================
-    # 🔥 LA MAGIA DEL MODO OSCURO (MÉTODO OFICIAL)
-    # ==========================================
+# ==========================================
+    # MODO OSCURO 
+    
     def cambiar_tema(self, e):
         if e.control.value: # Si la Luna está activa
             self.main_page.theme_mode = ft.ThemeMode.DARK

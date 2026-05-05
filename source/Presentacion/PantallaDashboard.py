@@ -19,7 +19,7 @@ class PantallaDashboard(ft.Container):
                 # HEADER
                 ft.Column(
                     [
-                        ft.Row([ft.Text("Hola, José", size=28, weight="bold", color=self.TEXT_MAIN), ft.Text("👋", size=24)]),
+                        ft.Row([ft.Text("Hola, Toileteros", size=28, weight="bold", color=self.TEXT_MAIN), ft.Text("👋", size=24)]),
                         ft.Text("Aquí tienes un resumen del sistema hoy.", size=14, color=self.TEXT_SECONDARY),
                     ],
                     spacing=2
