@@ -26,12 +26,15 @@ class MenuLateral(ft.Container):
         ]
 
         # Menú dinámico
-        self.menu_items = ft.Column(spacing=10)
-        self.content = ft.Column([
-            ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # 🔥 Texto directo
-            ft.Divider(height=20, color="transparent"),
-            self.menu_items
-        ])
+        self.menu_items = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
+        self.content = ft.Column(
+            controls=[
+                ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # 🔥 Texto directo
+                ft.Divider(height=20, color="transparent"),
+                self.menu_items
+            ],
+            expand=True
+        )
         
         # Dibuja el menú por primera vez
         self.build_menu()

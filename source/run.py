@@ -1,4 +1,8 @@
+import sys
+import os
 import flet as ft
+
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from Presentacion.main import run
 from Negocio.Modelo.Alumno import Alumno
 from datetime import date
@@ -19,3 +23,5 @@ if __name__ == "__main__":
     run()
     print("saliendo ...")
     db.close_pool()
+
+    

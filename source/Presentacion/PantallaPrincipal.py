@@ -83,6 +83,7 @@ class PantallaPrincipal(ft.Container):
         # Layout general ensamblado
         self.content = ft.Row(
             expand=True,
+            vertical_alignment=ft.CrossAxisAlignment.STRETCH,
             controls=[
                 self.sidebar,
                 self.columna_derecha 
