@@ -41,74 +41,74 @@ class PantallaLogin:
             width=550
         )
 
-    # --- LÓGICA DEL BOTÓN INICIAR SESIÓN ---
+    def mostrar_alerta(self, mensaje, es_error=True):
+        alerta = ft.SnackBar(
+            content=ft.Text(mensaje, color=ft.Colors.WHITE, weight="bold"),
+            bgcolor=ft.Colors.ERROR if es_error else ft.Colors.GREEN_400,
+            # 💡 Quitamos action_color para evitar el crash
+            action="Entendido", 
+        )
+        self.page.overlay.append(alerta)
+        alerta.open = True
+        self.page.update()
+
     def intentar_login(self, e):
         usuario_ingresado = self.usuario_input.value
         pass_ingresada = self.pass_input.value
 
-        # 1. Efecto visual: Bloquear botón y mostrar que está cargando
+        if not usuario_ingresado or not pass_ingresada:
+            self.mostrar_alerta("Por favor, llena todos los campos.")
+            return
+
         boton = e.control
-        boton.content.controls[0].value = "Verificando..."
+        texto_boton = boton.content.controls[0] 
+        texto_original = texto_boton.value
+        
+        texto_boton.value = "Verificando..."
         boton.disabled = True
         self.page.update()
 
-        # 2. LA MAGIA: Le preguntamos al Controlador (arquitectura limpia)
-        acceso_valido = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
+        try:
+            acceso_valido = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
+        except Exception as ex:
+            texto_boton.value = texto_original
+            boton.disabled = False
+            self.mostrar_alerta(f"Error de conexión: {ex}")
+            return
 
-        # 3. Dar acceso o rechazar
         if acceso_valido:
-            print("Acceso concedido al sistema")
             self.page.controls.clear()
             self.page.update()
-            
             try:
                 app_principal = PantallaPrincipal(self.page)
                 self.page.add(app_principal)
                 self.page.update()
             except Exception as ex:
-                self.page.snack_bar = ft.SnackBar(
-                    ft.Text(f"Error al cargar el menú principal: {ex}"), 
-                    bgcolor=ft.Colors.ERROR 
-                )
-                self.page.snack_bar.open = True
-                self.page.update()
+                self.mostrar_alerta(f"Error al cargar menú principal: {ex}")
         else:
-            # Restaurar botón y mandar error de credenciales
-            boton.content.controls[0].value = "Iniciar sesión"
+            texto_boton.value = texto_original
             boton.disabled = False
-            self.page.snack_bar = ft.SnackBar(
-                ft.Text("Usuario o contraseña incorrectos"), 
-                bgcolor=ft.Colors.ERROR 
-            )
-            self.page.snack_bar.open = True
-            self.page.update()
+            self.pass_input.value = ""
+            self.mostrar_alerta("Usuario o contraseña incorrectos.")
 
-    # --- CONSTRUCCIÓN DE LA INTERFAZ ---
     def construir_vista(self):
-        # ==========================================
-        # 1. PANEL IZQUIERDO (Pegado al borde, ocupa toda la altura)
-        # ==========================================
         panel_izquierdo = ft.Container(
             expand=4, 
             bgcolor=self.fondo_izquierdo,
             border_radius=ft.border_radius.only(top_right=80, bottom_right=80),
             padding=ft.padding.all(30),
+            # CORRECCIÓN: Usamos Alignment(0,0) para evitar AttributeError
             alignment=ft.alignment.Alignment(0, 0), 
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
                     ft.Image(src="logo.png", width=160, fit="contain"),
-                    
                     ft.Container(height=10),
                     ft.Text("Sistema de Gestión de Biblioteca", size=14, color=ft.Colors.BLACK87),
-                    
                     ft.Container(height=50),
-                    
                     ft.Image(src="Ilustracion.png", width=280, fit="contain"),
-                    
                     ft.Container(height=50),
-                    
                     ft.Text(
                         "“ La lectura es la llave\nque abre puertas al conocimiento ”",
                         italic=True,
@@ -120,16 +120,16 @@ class PantallaLogin:
             )
         )
 
-        # ==========================================
-        # 2. EL FORMULARIO BLANCO (Flotando a la derecha)
-        # ==========================================
         formulario = ft.Container(
             width=650, 
             bgcolor=ft.Colors.WHITE,
             padding=ft.padding.only(left=50, right=50, top=60, bottom=40),
             border_radius=20,
             shadow=ft.BoxShadow(
-                spread_radius=1, blur_radius=25, color=ft.Colors.BLACK12, offset=ft.Offset(0, 10)
+                spread_radius=1, 
+                blur_radius=25, 
+                color=ft.Colors.BLACK12, 
+                offset=ft.Offset(0, 10)
             ),
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER, 
@@ -143,15 +143,14 @@ class PantallaLogin:
                                 ft.Text("Inicia sesión para continuar", size=14, color=self.texto_gris),
                             ]
                         ),
+                        # CORRECCIÓN: Usamos Alignment(0,0)
                         alignment=ft.alignment.Alignment(0, 0),
                         margin=ft.margin.only(bottom=40) 
                     ),
-                    
                     self.usuario_input,
                     ft.Container(height=15),
                     self.pass_input,
                     ft.Container(height=15),
-                    
                     ft.Row(
                         width=550,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -167,9 +166,7 @@ class PantallaLogin:
                             )
                         ]
                     ),
-                    
                     ft.Container(height=30),
-                    
                     ft.ElevatedButton(
                         content=ft.Row(
                             alignment=ft.MainAxisAlignment.CENTER,
@@ -183,30 +180,24 @@ class PantallaLogin:
                         style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
                         on_click=self.intentar_login
                     ),
-                    
                     ft.Container(height=40),
-                    
                     ft.Container(
                         content=ft.Text("Sistema de Gestión de Biblioteca", size=11, color="#d1d5db"),
+                        # CORRECCIÓN: Usamos Alignment(0,0)
                         alignment=ft.alignment.Alignment(0, 0) 
                     )
                 ]
             )
         )
 
-        # ==========================================
-        # 3. PANEL DERECHO (Ocupa el resto de la pantalla y centra el formulario)
-        # ==========================================
         panel_derecho = ft.Container(
             expand=6, 
+            # CORRECCIÓN: Usamos Alignment(0,0)
             alignment=ft.alignment.Alignment(0, 0), 
             content=formulario
         )
 
-        # ==========================================
-        # 4. FONDO PANTALLA (El contenedor principal sin márgenes)
-        # ==========================================
-        fondo_pantalla = ft.Container(
+        return ft.Container(
             expand=True,
             bgcolor="#f4f7fc", 
             content=ft.Row(
@@ -215,5 +206,3 @@ class PantallaLogin:
                 controls=[panel_izquierdo, panel_derecho]
             )
         )
-
-        return fondo_pantalla
