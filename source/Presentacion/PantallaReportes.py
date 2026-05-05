@@ -8,27 +8,29 @@ class PantallaReportes(ft.Container):
 
         self._page = page
 
+        # ===== COLORES (modo oscuro) =====
         self.AZUL = "#2563EB"
+        self.PURPURA = "#7C3AED"
+        self.VERDE = "#059669"
+
         self.TEXT = "onSurface"
         self.TEXT_SECONDARY = "onSurfaceVariant"
         self.CARD = "surface"
-        self.GRIS_BORDE = "outline"
+        self.BORDER = "outline"
 
         self.expand = True
-        self.bgcolor = "transparent"
         self.padding = 20
+        self.bgcolor = "transparent"
 
-        self.tipo_actual = "Tipo Usuario"
+        self.tipo_actual = "Alumnos"
 
         self.fecha_inicio_picker = ft.DatePicker()
         self.fecha_fin_picker = ft.DatePicker()
 
-        self.build_ui()
+        # labels distribución
+        self.total_usuarios = 185
 
-    def did_mount(self):
-        self._page.overlay.append(self.fecha_inicio_picker)
-        self._page.overlay.append(self.fecha_fin_picker)
-        self._page.update()
+        self.build_ui()
 
     # ================= UI =================
     def build_ui(self):
@@ -37,12 +39,13 @@ class PantallaReportes(ft.Container):
 
         self.content = ft.Column(
             spacing=20,
+            scroll=ft.ScrollMode.AUTO,
             controls=[
 
                 # ===== HEADER =====
                 ft.Column([
                     ft.Text("Reportes", size=28, weight="bold", color=self.TEXT),
-                    ft.Text("Estadísticas del sistema de asistencia", color=self.TEXT_SECONDARY),
+                    ft.Text("Estadísticas del sistema", color=self.TEXT_SECONDARY),
                 ]),
 
                 # ===== FILTROS =====
@@ -54,17 +57,19 @@ class PantallaReportes(ft.Container):
                 # ===== GRAFICAS =====
                 ft.Row(
                     spacing=20,
+                    vertical_alignment=ft.CrossAxisAlignment.START,
                     controls=[
                         self.build_bar_chart(),
-                        self.build_donut_chart()
+                        self.build_distribution_panel()
                     ]
                 ),
 
-                # FOOTER
+                # ===== FOOTER =====
                 ft.Row(
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
-                        ft.Text("Última actualización: 31/05/2025 10:30 AM", color=self.TEXT_SECONDARY),
+                        ft.Text("Última actualización: 31/05/2025 10:30 AM",
+                                color=self.TEXT_SECONDARY),
                         ft.TextButton("Actualizar datos")
                     ]
                 )
@@ -79,7 +84,7 @@ class PantallaReportes(ft.Container):
         self.dropdown = ft.Dropdown(
             width=200,
             value=self.tipo_actual,
-            border_color=self.GRIS_BORDE,
+            border_color=self.BORDER,
             bgcolor=self.CARD,
             color=self.TEXT,
             options=[
@@ -88,13 +93,12 @@ class PantallaReportes(ft.Container):
                 ft.dropdown.Option("Visitantes"),
             ],
         )
-        self.dropdown.on_change = self.cambiar_reporte
 
         return ft.Container(
             padding=15,
             border_radius=15,
             bgcolor=self.CARD,
-            border=ft.border.all(1, self.GRIS_BORDE),
+            border=ft.border.all(1, self.BORDER),
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
@@ -102,8 +106,8 @@ class PantallaReportes(ft.Container):
                     ft.Row(
                         spacing=15,
                         controls=[
-                            self.input_fecha("01/05/2025", self.fecha_inicio_picker),
-                            self.input_fecha("31/05/2025", self.fecha_fin_picker),
+                            self.input_fecha("01/05/2025"),
+                            self.input_fecha("31/05/2025"),
                             self.dropdown
                         ]
                     ),
@@ -118,34 +122,29 @@ class PantallaReportes(ft.Container):
             )
         )
 
-    def input_fecha(self, text, picker):
+    def input_fecha(self, text):
         return ft.Container(
             padding=10,
             border_radius=10,
             bgcolor="surfaceVariant",
-            border=ft.border.all(1, self.GRIS_BORDE),
-            on_click=lambda e: self.abrir_picker(picker),
+            border=ft.border.all(1, self.BORDER),
             content=ft.Row([
                 ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.TEXT),
                 ft.Text(text, color=self.TEXT)
             ])
         )
 
-    def abrir_picker(self, picker):
-        picker.open = True
-        self._page.update()
-
     # ================= CARDS =================
     def cargar_cards(self):
 
         data = [
-            ("Alumnos", "120", "#2563EB"),
-            ("Personal", "40", "#7C3AED"),
-            ("Visitantes", "25", "#059669"),
+            ("Alumnos", "120", self.AZUL),
+            ("Personal", "40", self.PURPURA),
+            ("Visitantes", "25", self.VERDE),
         ]
 
         self.cards_row.controls = [
-            self.card(*d) for d in data
+            self.card(t, v, c) for t, v, c in data
         ]
 
     def card(self, title, value, color):
@@ -154,92 +153,125 @@ class PantallaReportes(ft.Container):
             padding=20,
             border_radius=15,
             bgcolor=self.CARD,
-            border=ft.border.all(1, self.GRIS_BORDE),
-            content=ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                controls=[
-
-                    ft.Column([
-                        ft.Text(title, color=self.TEXT_SECONDARY),
-                        ft.Text(value, size=28, weight="bold", color=color),
-                        ft.Text("+12% vs mes anterior", size=12, color="#22C55E")
-                    ]),
-
-                    ft.Icon(ft.Icons.SHOW_CHART, color=color)
-                ]
-            )
+            border=ft.border.all(1, self.BORDER),
+            content=ft.Column([
+                ft.Text(title, color=self.TEXT_SECONDARY),
+                ft.Text(value, size=28, weight="bold", color=color),
+            ])
         )
 
-    # ================= GRAFICA BARRAS (FAKE) =================
+    # ================= GRAFICA BARRAS (ESTILO DASHBOARD) =================
     def build_bar_chart(self):
+
+        labels = ["Alumnos", "Personal", "Visitantes"]
+        values = [120, 40, 25]
+        colors = [self.AZUL, self.PURPURA, self.VERDE]
+        max_val = max(values)
+
+        bars = []
+
+        for i in range(len(labels)):
+            bars.append(
+                ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    controls=[
+                        ft.Text(str(values[i]), size=12, color=self.TEXT_SECONDARY),
+                        ft.Container(
+                            width=35,
+                            height=80 + int((values[i] / max_val) * 160),
+                            bgcolor=colors[i],
+                            border_radius=6
+                        ),
+                        ft.Text(labels[i], size=12, color=self.TEXT_SECONDARY)
+                    ]
+                )
+            )
+
         return ft.Container(
             expand=True,
             padding=20,
             border_radius=15,
             bgcolor=self.CARD,
-            border=ft.border.all(1, self.GRIS_BORDE),
-            content=ft.Column(
-                controls=[
-                    ft.Text("Reporte: Tipo Usuario", weight="bold", color=self.TEXT),
+            border=ft.border.all(1, self.BORDER),
+            content=ft.Column([
+                ft.Text("Reporte: Tipo Usuario",
+                        weight="bold", color=self.TEXT),
 
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                    vertical_alignment=ft.CrossAxisAlignment.END,
+                    controls=bars
+                )
+            ])
+        )
+
+    # ================= DISTRIBUCIÓN (SIN DONA) =================
+    def build_distribution_panel(self):
+
+        data = [
+            ("Alumnos", 120, self.AZUL),
+            ("Personal", 40, self.PURPURA),
+            ("Visitantes", 25, self.VERDE),
+        ]
+
+        items = []
+
+        for name, value, color in data:
+            percent = round((value / self.total_usuarios) * 100, 1)
+
+            items.append(
+                ft.Column([
                     ft.Row(
-                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            self.bar(120, "Alumnos", "#2563EB"),
-                            self.bar(40, "Personal", "#7C3AED"),
-                            self.bar(25, "Visitantes", "#059669"),
+                            ft.Row([
+                                ft.Icon(ft.Icons.PERSON, color=color, size=18),
+                                ft.Text(name, color=self.TEXT)
+                            ]),
+                            ft.Text(f"{value} ({percent}%)",
+                                    color=self.TEXT_SECONDARY)
                         ]
-                    )
-                ]
+                    ),
+                    ft.Container(
+                        height=6,
+                        border_radius=10,
+                        bgcolor="surfaceVariant",
+                        content=ft.Container(
+                            width=percent * 2,
+                            bgcolor=color,
+                            border_radius=10
+                        )
+                    ),
+                    ft.Container(height=10)
+                ])
             )
-        )
 
-    def bar(self, value, label, color):
-        return ft.Column(
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            controls=[
-                ft.Container(
-                    width=30,
-                    height=value,
-                    bgcolor=color,
-                    border_radius=5
-                ),
-                ft.Text(label, size=12, color=self.TEXT_SECONDARY)
-            ]
-        )
-
-    # ================= DONUT FAKE =================
-    def build_donut_chart(self):
         return ft.Container(
-            expand=True,
+            width=320,
             padding=20,
             border_radius=15,
             bgcolor=self.CARD,
-            border=ft.border.all(1, self.GRIS_BORDE),
-            content=ft.Column(
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                controls=[
-                    ft.Text("Distribución: Tipo Usuario", weight="bold", color=self.TEXT),
+            border=ft.border.all(1, self.BORDER),
+            content=ft.Column([
+                ft.Text("Distribución: Tipo Usuario",
+                        weight="bold", color=self.TEXT),
 
-                    ft.Container(
-                        width=150,
-                        height=150,
-                        border_radius=75,
-                        bgcolor="surfaceVariant",
-                        alignment=ft.Alignment.CENTER,
-                        content=ft.Text("185\nTotal", text_align="center", color=self.TEXT)
-                    ),
+                ft.Container(height=10),
 
-                    ft.Column([
-                        ft.Text("Alumnos 120 (64%)", color=self.TEXT_SECONDARY),
-                        ft.Text("Personal 40 (21%)", color=self.TEXT_SECONDARY),
-                        ft.Text("Visitantes 25 (13%)", color=self.TEXT_SECONDARY),
+                *items,
+
+                ft.Container(height=10),
+
+                ft.Container(
+                    padding=10,
+                    border_radius=12,
+                    bgcolor="surfaceVariant",
+                    content=ft.Column([
+                        ft.Text("Total usuarios",
+                                color=self.TEXT_SECONDARY, size=12),
+                        ft.Text(str(self.total_usuarios),
+                                size=20, weight="bold", color=self.TEXT)
                     ])
-                ]
-            )
+                )
+            ])
         )
-
-    # ================= EVENTOS =================
-    def cambiar_reporte(self, e):
-        self.tipo_actual = e.control.value
-        self._page.update()
