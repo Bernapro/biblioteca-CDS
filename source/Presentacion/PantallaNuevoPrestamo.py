@@ -22,7 +22,8 @@ class PantallaNuevoPrestamo(ft.Container):
         self.GRIS_BORDE = "outline"          
         self.GRIS_TEXTO = "onSurfaceVariant" 
         self.TEXT = "onSurface"              
-        self.CARD = "surface"                
+        self.CARD = "surface" 
+        self.ROJO = "#E53A2E"               
 
         # === CONTROLES DEL FORMULARIO ===
         
@@ -105,7 +106,9 @@ class PantallaNuevoPrestamo(ft.Container):
         self.build_ui()
 
 
-    def crear_item_libro(self, id, titulo, autor, adq):
+    def crear_item_libro(self, id, titulo, autor, adq, disponible):
+        disponibilidad = "Disponible" if disponible else "No disponible"
+        color = self.VERDE if disponible else ft.Colors.RED_200
         return ft.Container(
             padding=10,
             border_radius=8,
@@ -122,12 +125,13 @@ class PantallaNuevoPrestamo(ft.Container):
                     ft.Text(f"Autores: {autor} \nNo. Adquisición: {adq}", size=11, color=self.GRIS_TEXTO),
                 ], expand=True, spacing=1),
                 ft.Row([
-                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=self.VERDE, size=14),
-                    ft.Text("Disponible", color=self.VERDE, size=12, weight="bold")
+                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=color, size=14),
+                    ft.Text(disponibilidad, color=color, size=12, weight="bold")
                 ], spacing=4),
                 ft.Checkbox(
                     value=adq in self.libros_seleccionados,
-                    on_change=lambda e, l=(id, titulo, autor, adq): self.toggle_libro(l, e.control.value)
+                    disabled = not disponible,
+                    on_change=lambda e, l=(id, titulo, autor, adq, disponible): self.toggle_libro(l, e.control.value)
                 )
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )

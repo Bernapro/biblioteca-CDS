@@ -1,8 +1,8 @@
 import flet as ft
-from Infraestructura.BibliotecaEjemplares import BibliotecaEjemplares
+from Infraestructura.API.Interfaces.BibliotecaClientInterface import BibliotecaClientInterface
 
 class ControladorNuevoPrestamo:
-    def __init__(self, pantalla, endEjemplares: BibliotecaEjemplares):
+    def __init__(self, pantalla, endEjemplares: BibliotecaClientInterface):
         self.__pantalla = pantalla
         self.__endEjemplares = endEjemplares
 
@@ -50,8 +50,9 @@ class ControladorNuevoPrestamo:
     def buscarLibroPorNoAdquisicion(self):
         noAdquisicion = self.__pantalla.txt_adquisicion.value
         ejem = self.__endEjemplares.get(noAdquisicion)
+        args = ejem.getBody()
         if ejem:
-            self.__pantalla.libros_cache = [(ejem.getId(), ejem.getLibro().getTitulo(), " ".join(ejem.getLibro().getAutores()), ejem.getNoAdquisicion())]
+            self.__pantalla.libros_cache = [(args["id"], args["libro"].getTitulo(), " ".join(args["libro"].getAutores()), args["noAdquisicion"], args["disponible"])]
             self.__pantalla.actualizar_lista()
 
 
@@ -67,4 +68,4 @@ class ControladorNuevoPrestamo:
 
     def registrar_prestamo(self, e):
         # Aquí irá la lógica de guardado a la base de datos a través de tu repositorio
-        print("Préstamo registrado exitosamente desde el controlador.")
+        print(self.__pantalla.libros_seleccionados)
