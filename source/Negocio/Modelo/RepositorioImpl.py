@@ -188,6 +188,24 @@ class RepositorioImpl(Repositorio):
                 "visitas_semana": visitas_semana
             }
         
+    def obtener_pg_dump(self):
+        import os
+        from shutil import which
+
+        pg = which("pg_dump")
+        if pg:
+            return pg
+
+        versiones = range(18, 9, -1)
+
+        for v in versiones:
+            ruta = fr"C:\Program Files\PostgreSQL\{v}\bin\pg_dump.exe"
+            if os.path.exists(ruta):
+                return ruta
+
+        raise FileNotFoundError("No se encontró pg_dump en el sistema")
+
+
     def backup_bd(self):
         try:
             import os
@@ -204,15 +222,17 @@ class RepositorioImpl(Repositorio):
             if os.path.exists(archivo):
                 return
 
-            conninfo = db._pool.conninfo  # ← aquí está todo
-
+            conninfo = db._pool.conninfo
             partes = dict(item.split("=") for item in conninfo.split())
 
             env = os.environ.copy()
             env["PGPASSWORD"] = partes.get("password", "")
 
+            # 🔥 AQUÍ ESTÁ LA CLAVE
+            pg_dump = self.obtener_pg_dump()
+
             subprocess.run([
-                "pg_dump",
+                pg_dump,
                 "-U", partes.get("user"),
                 "-h", partes.get("host", "localhost"),
                 "-p", partes.get("port", "5432"),
@@ -224,4 +244,3 @@ class RepositorioImpl(Repositorio):
 
         except Exception as e:
             print("❌ Error backup (no crítico):", e)
-
