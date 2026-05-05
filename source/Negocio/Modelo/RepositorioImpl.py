@@ -137,41 +137,48 @@ class RepositorioImpl(Repositorio):
                 filtros,
                 or_filtros
             )
+#DASHBOARD PRIMER CUADRO
+    def contar_sesiones_activas_hoy(self):
+        with db.get_connection() as conn:
+            query = """
+                SELECT COUNT(*) AS total
+                FROM registro
+                WHERE DATE(fecha_entrada) = CURRENT_DATE
+                AND fecha_salida IS NULL
+            """
+            result = conn.execute(query).fetchone()
+            return result["total"] if isinstance(result, dict) else result[0]
 
-# =============================
     # DASHBOARD
-    # =============================
     def obtener_estadisticas_dashboard(self):
         """Obtiene todos los conteos necesarios para el dashboard"""
         with db.get_connection() as conn:
-            cur = conn.cursor() # 🔹 Cursor normal (devuelve tuplas, no diccionarios)
+            cur = conn.cursor()
             
-            # 1. Sesiones Hoy (Usuarios que entraron hoy)
-            cur.execute("SELECT COUNT(*) FROM Registro WHERE DATE(fecha_entrada) = CURRENT_DATE")
-            sesiones_hoy = cur.fetchone()[0] # 🔹 Accedemos al primer elemento
+            cur.execute("SELECT COUNT(*) AS total FROM registro WHERE DATE(fecha_entrada) = CURRENT_DATE")
+            row = cur.fetchone()
+            sesiones_hoy = row["total"] if isinstance(row, dict) else row[0]
             
-            # 2. Usuarios totales registrados
-            cur.execute("SELECT COUNT(*) FROM Usuario")
-            usuarios_totales = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) AS total FROM usuario")
+            row = cur.fetchone()
+            usuarios_totales = row["total"] if isinstance(row, dict) else row[0]
             
-            # 3. Visitas totales históricas
-            cur.execute("SELECT COUNT(*) FROM Registro")
-            visitas_totales = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) AS total FROM registro")
+            row = cur.fetchone()
+            visitas_totales = row["total"] if isinstance(row, dict) else row[0]
             
-            # 4. Incidencias Abiertas
-            cur.execute("SELECT COUNT(*) FROM Incidencia WHERE estado = 'PENDIENTE'")
-            incidencias_abiertas = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) AS total FROM incidencia WHERE estado = 'PENDIENTE'")
+            row = cur.fetchone()
+            incidencias_abiertas = row["total"] if isinstance(row, dict) else row[0]
             
-            # 5. Visitas de la semana actual (Lunes a Domingo)
             query_semana = """
                 SELECT EXTRACT(ISODOW FROM fecha_entrada) as dia, COUNT(*) as total
-                FROM Registro
+                FROM registro
                 WHERE fecha_entrada >= date_trunc('week', CURRENT_DATE)
                 GROUP BY dia
             """
             cur.execute(query_semana)
-            # row[0] es el día, row[1] es el total
-            visitas_semana = {int(row[0]): row[1] for row in cur.fetchall()}
+            visitas_semana = {int(row["dia"]): row["total"] for row in cur.fetchall()}
             
             return {
                 "sesiones_hoy": sesiones_hoy,
@@ -197,10 +204,8 @@ class RepositorioImpl(Repositorio):
             if os.path.exists(archivo):
                 return
 
-            # 🔥 EXTRAER DATOS DEL POOL (SIN HARDCODE)
             conninfo = db._pool.conninfo  # ← aquí está todo
 
-            # Convertir conninfo a variables
             partes = dict(item.split("=") for item in conninfo.split())
 
             env = os.environ.copy()

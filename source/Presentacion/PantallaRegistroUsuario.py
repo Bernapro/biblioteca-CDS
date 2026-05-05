@@ -191,7 +191,7 @@ class PantallaRegistroUsuario(ft.Container):
             e.control.border_color = "#22C55E" 
             e.control.update()
             self.mostrar_mensaje(f"Matrícula {valor} escaneada con éxito", "green")
-            self.licenciatura.focus() 
+            self.page.set_focus(self.licenciatura)
             self.licenciatura.update()
             self.update()
 
