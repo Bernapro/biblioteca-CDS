@@ -21,6 +21,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
         pass
 
     def getPage(self, nPage: int, len: int) -> PageResponse[Prestamo]:
+        print("En función de pagina")
         page = nPage if nPage else 0
         len_p = len if len else 10
         url = f"{self.URL_BASE}{self.ENDPOINT}?"

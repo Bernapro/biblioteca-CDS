@@ -1,14 +1,16 @@
 import flet as ft
 from Presentacion.PantallaNuevoPrestamo import PantallaNuevoPrestamo
 from Negocio.Controlador.ControladorPrestamos import ControladorPrestamos
+from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
 
 class PantallaPrestamos(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
         
+        self.texto_pagina = ft.Text("1", color="white", weight="bold")
         # Instanciamos el controlador
-        self.controlador = ControladorPrestamos(self)
+        self.controlador = ControladorPrestamos(self, endPrestamos=BibliotecaPrestamos())
         
         # ===== COLORES =====
         self.AZUL = "#3B82F6"
@@ -20,14 +22,12 @@ class PantallaPrestamos(ft.Container):
         self.GRIS_BORDE = "outline"
         self.TEXT = "onSurface"
         self.CARD = "surface"
-
         self.expand = True
         self.padding = 30
         self.bgcolor = self.FONDO
         self.border_radius = 30
 
         self.build_ui()
-
     #TARJETAS
     def build_card_stat(self, titulo, valor, sub_valor, icono, color):
         color_fondo = color.replace("#", "#20")
@@ -234,12 +234,12 @@ class PantallaPrestamos(ft.Container):
             ], scroll=ft.ScrollMode.AUTO, expand=True)
         )
 
-        # 5. Paginación (Pie de tabla)
         paginacion = ft.Row([
             ft.Text("Mostrando 1-4 de 4 préstamos", color=self.GRIS_TEXTO, size=13),
             ft.Row([
                 ft.IconButton(icon=ft.Icons.CHEVRON_LEFT, icon_color=self.GRIS_TEXTO),
-                ft.Container(content=ft.Text("1", color="white", weight="bold"), bgcolor=self.AZUL, padding=ft.padding.symmetric(horizontal=12, vertical=6), border_radius=6),
+                # Usamos la referencia aquí
+                ft.Container(content=self.texto_pagina, bgcolor=self.AZUL, padding=ft.padding.symmetric(horizontal=12, vertical=6), border_radius=6),
                 ft.IconButton(icon=ft.Icons.CHEVRON_RIGHT, icon_color=self.GRIS_TEXTO),
             ], spacing=5)
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)

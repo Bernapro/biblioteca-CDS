@@ -41,7 +41,7 @@ class MenuLateral(ft.Container):
         self.menu_items = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)
         self.content = ft.Column(
             controls=[
-                ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # 🔥 Texto directo
+                ft.Text("UNACH", size=22, weight="bold", color="onSurface"), # Texto directo
                 ft.Divider(height=20, color="transparent"),
                 self.menu_items,
                 ft.Divider(height=10, color="transparent"),
@@ -63,14 +63,14 @@ class MenuLateral(ft.Container):
                 content=ft.Row([
                     ft.Container(width=5, height=40, bgcolor="primary" if activo else "transparent", border_radius=5),
                     
-                    # 🔥 Textos directos en vez de ft.Colors
+                    # Textos directos en vez de ft.Colors
                     ft.Icon(icon, size=22, color="primary" if activo else "onSurfaceVariant"),
                     ft.Text(texto, size=15, weight="bold" if activo else "normal", color="primary" if activo else "onSurfaceVariant"),
                 ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=12,
                 border_radius=12,
                 
-                # 🔥 Texto directo
+                #  Texto directo
                 bgcolor="primaryContainer" if activo else "transparent",
                 on_click=lambda e, idx=index: self.cambiar_seleccion(idx)
             )

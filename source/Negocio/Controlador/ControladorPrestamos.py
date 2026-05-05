@@ -1,19 +1,35 @@
+from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos, BibliotecaClientInterface
+
+
+
 class ControladorPrestamos:
-    def __init__(self, pantalla):
+    def __init__(self, pantalla, endPrestamos: BibliotecaClientInterface):
         self.__pantalla = pantalla
+        self.__endPrestamos = endPrestamos
+
 
     def obtener_prestamos(self, busqueda="", estado="Todos"):
         # Aquí irá la consulta a la base de datos en el futuro
         # Por ahora, retornamos los datos simulados que estaban en la vista
-        todos_los_datos = [
-            {"matricula": "100025787", "nombre": "Carlos Daniel", "cantidad": "3", "estado": "A tiempo", "fecha_prestamo": "24/Mar/2026", "fecha_limite": "02/Abr/2026"},
-            {"matricula": "100025788", "nombre": "Cruz Castillo", "cantidad": "2", "estado": "Atrasado", "fecha_prestamo": "20/Mar/2026", "fecha_limite": "27/Mar/2026"},
-            {"matricula": "ABCDEFGA", "nombre": "Jose Angel", "cantidad": "1", "estado": "A tiempo", "fecha_prestamo": "26/Mar/2026", "fecha_limite": "04/Abr/2026"},
-            {"matricula": "ABCDEFGA", "nombre": "Figueroa Sales", "cantidad": "4", "estado": "Atrasado", "fecha_prestamo": "18/Mar/2026", "fecha_limite": "25/Mar/2026"},
+        print(self.__pantalla.texto_pagina.value)
+        prestamos = self.__endPrestamos.getPage(nPage=int(self.__pantalla.texto_pagina.value)-1,len=10)
+        datos = [{}]
+
+        datos = [
+        {
+        "matricula": body["usuario"].getNombre() if body["usuario"] else "N/A", 
+        "nombre": "Nombre Pendiente",
+        "cantidad": str(body["cantidad"]),
+        "estado": "A tiempo", 
+        "fecha_prestamo": body["fechaInicio"],
+        "fecha_limite": body["fechaLimite"] if body["fechaLimite"] else "Sin límite" 
+        }
+        for prestamo in prestamos.content 
+        for body in [prestamo.getBody()]  
         ]
-        
+         
         resultados = []
-        for d in todos_los_datos:
+        for d in datos:
             # Lógica de filtrado de negocio
             match_texto = busqueda.lower() in d["matricula"].lower() or busqueda.lower() in d["nombre"].lower() or busqueda.lower() in str(d["cantidad"]).lower()
             match_estado = (estado == "Todos") or (d["estado"] == estado)

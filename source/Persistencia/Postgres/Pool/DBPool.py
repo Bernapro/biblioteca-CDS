@@ -33,4 +33,4 @@ class DBPool:
 
 # instancia de manera global, para la inyección de dependencias 
 #lo cambiaré por un archivo para que la información de la bd no esté en el código
-db = DBPool("dbname=nombre user=usuario password=contraseña")
+db = DBPool("dbname=biblioteca_cds user=postgres password=bernapro190")
