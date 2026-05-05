@@ -36,15 +36,12 @@ class PantallaPrincipal(ft.Container):
         # Instanciar el Sidebar
         self.sidebar = ml(on_menu_click=self.cambiar_vista, active_index=0)
         
-        self.vistas = [
-            dsh(self.main_page), pa(self.main_page), 
-            ph(self.main_page), pr(self.main_page), 
-            pl(self.main_page), pp(self.main_page), 
-            pin(self.main_page)
-        ]
+        # Lazy Loading de vistas
+        self.vistas = [None] * 7
         
         # Área de contenido
-        self.content_area = ft.Container(expand=True, content=self.vistas[0])
+        self.content_area = ft.Container(expand=True)
+        self.cambiar_vista(0)
         
         # El switch del sol y la luna
         self.toggle_theme_container = ft.Row(
@@ -89,7 +86,8 @@ class PantallaPrincipal(ft.Container):
                 self.columna_derecha 
             ]
         )
-# ==========================================
+
+    # ==========================================
     # MODO OSCURO 
     
     def cambiar_tema(self, e):
@@ -107,6 +105,30 @@ class PantallaPrincipal(ft.Container):
     # ENRUTADOR DE VISTAS
     # ==========================================
     def cambiar_vista(self, index):
+
+        if self.vistas[index] is None:
+
+            if index == 0:
+                self.vistas[index] = dsh(self.main_page)
+
+            elif index == 1:
+                self.vistas[index] = pa(self.main_page)
+
+            elif index == 2:
+                self.vistas[index] = ph(self.main_page)
+
+            elif index == 3:
+                self.vistas[index] = pr(self.main_page)
+
+            elif index == 4:
+                self.vistas[index] = pl(self.main_page)
+
+            elif index == 5:
+                self.vistas[index] = pp(self.main_page)
+
+            elif index == 6:
+                self.vistas[index] = pin(self.main_page)
+
         vista = self.vistas[index]
         self.content_area.content = vista
 
