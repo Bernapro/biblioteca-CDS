@@ -9,14 +9,9 @@ class ControladorHistorial:
     def __init__(self):
         self.__repo = RepositorioImpl(CRUDimp())
 
-    # =========================
-    # BASE (REUTILIZABLE)
-    # =========================
-
-
-    # =========================
-    # MAPEADORES
-    # =========================
+    def cerrar_registros(self):
+        self.__repo.ejecutar_procedimiento("cerrar_registros_pendientes")
+    
     def mapear_simple(self, datos):
         """Mapea datos completos a formato simple para tabla"""
         return [

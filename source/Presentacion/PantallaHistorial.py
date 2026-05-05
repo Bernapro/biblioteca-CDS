@@ -182,6 +182,7 @@ class PantallaHistorial(ft.Container):
         self.build_ui()
 
     def did_mount(self):
+        self.controlador_historial.cerrar_registros()
         self.filtrar()
         
     # ===== LÓGICA =====
