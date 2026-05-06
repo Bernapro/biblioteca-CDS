@@ -253,6 +253,7 @@ class PantallaRegistrarLibro(ft.Container):
     # GUARDAR
     def guardar_libro(self, e):
 
+        # VALIDAR CAMPOS VACÍOS
         if not self.validar_campos():
             self.lbl_mensaje.value = "Completa los campos obligatorios"
             self.lbl_mensaje.color = "error"
@@ -260,8 +261,19 @@ class PantallaRegistrarLibro(ft.Container):
             self.update()
             return
 
+        # VALIDAR FORMATO ISBN
+        isbn = self.txt_isbn.value.strip()
+
+        if not self.controller.validar_isbn(isbn):
+            self.lbl_mensaje.value = "Formato de ISBN inválido"
+            self.lbl_mensaje.color = "error"
+            self.lbl_mensaje.visible = True
+            self.update()
+            return
+
+        # CREAR DATA
         data = {
-            "isbn": self.txt_isbn.value.strip(),
+            "isbn": isbn,
             "titulo": self.txt_titulo.value.strip(),
             "editorial": self.txt_editorial.value.strip(),
             "edicion": self.txt_edicion.value.strip(),
@@ -274,6 +286,7 @@ class PantallaRegistrarLibro(ft.Container):
             "nEjemplares": self.txt_ejemplares.value
         }
 
+        # ENVIAR A CONTROLADOR
         resultado = self.controller.crear_libro(data)
 
         self.lbl_mensaje.value = resultado["mensaje"]

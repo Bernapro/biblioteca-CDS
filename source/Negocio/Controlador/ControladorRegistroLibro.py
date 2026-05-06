@@ -125,3 +125,8 @@ class ControladorRegistroLibro:
                 "ok": False,
                 "mensaje": "Ocurrió un error inesperado al buscar ISBN"
             }
+        
+    def validar_isbn(self, isbn):
+        import re
+        isbn_limpio = isbn.replace("-", "").strip()
+        return re.fullmatch(r"^(?:\d{9}[\dXx]|\d{13})$", isbn_limpio)
