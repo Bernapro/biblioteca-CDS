@@ -570,17 +570,23 @@ class PantallaIncidencias(ft.Container):
 
     def cargar_datos(self, e=None):
 
-        from datetime import datetime
+        from datetime import datetime, time
 
         fecha_inicio = None
         fecha_fin = None
 
         if self.txt_fecha_inicio.value != "Fecha inicio":
-            fecha_inicio = datetime.strptime(self.txt_fecha_inicio.value, "%Y-%m-%d").date()
+            fecha_inicio = datetime.combine(
+                datetime.strptime(self.txt_fecha_inicio.value, "%Y-%m-%d").date(),
+                time.min
+            )
         if self.txt_fecha_fin.value != "Fecha fin":
-            fecha_fin = datetime.strptime(self.txt_fecha_fin.value, "%Y-%m-%d").date()
+            fecha_fin = datetime.combine(
+                datetime.strptime(self.txt_fecha_fin.value, "%Y-%m-%d").date(),
+                time.max
+            )
         if e and hasattr(e, "control"):
-            if e.control in [self.input_busqueda, self.dropdown_tipo, self.dropdown_estado]:
+            if e.control in [self.input_busqueda, self.dropdown_tipo, self.dropdown_estado, self.fecha_inicio_picker, self.fecha_fin_picker]:
                 self.pagina_actual = 1
         texto = self.input_busqueda.value or ""
         tipo = self.dropdown_tipo.value
