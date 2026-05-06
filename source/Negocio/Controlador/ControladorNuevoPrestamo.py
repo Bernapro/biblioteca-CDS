@@ -45,7 +45,7 @@ class ControladorNuevoPrestamo:
                         ft.Text(self.__usuario.getTipo_usuario(), size=13, color=self.__pantalla.GRIS_TEXTO)
                     ], expand=True, spacing=2),
                     ft.Container(
-                        content=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=self.__pantalla.VERDE), ft.Text("Alumno encontrado", size=12, color=self.__pantalla.VERDE, weight="bold")], spacing=4),
+                        content=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, size=14, color=self.__pantalla.VERDE), ft.Text("Usuario encontrado", size=12, color=self.__pantalla.VERDE, weight="bold")], spacing=4),
                         bgcolor="#D1FAE5", 
                         padding=ft.padding.symmetric(horizontal=10, vertical=5),
                         border_radius=15
