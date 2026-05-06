@@ -179,9 +179,13 @@ class PantallaNuevoPrestamo(ft.Container):
             self.txt_fecha_prestamo.update()
 
     def seleccionar_fecha_limite(self, e):
-        if self.picker_fecha_limite.value:
-            self.txt_fecha_limite.value = self.picker_fecha_limite.value.strftime("%d/%b/%Y")
-            self.txt_fecha_limite.update()
+        fecha = self.picker_fecha_limite.value
+        if fecha:
+            if fecha.weekday() >= 5:
+                self.picker_fecha_limite.value = None
+            else:
+                self.txt_fecha_limite.value = self.picker_fecha_limite.value.strftime("%d/%b/%Y")
+                self.txt_fecha_limite.update()
 
     def abrir_picker_prestamo(self, e):
         self.picker_fecha_prestamo.open = True
