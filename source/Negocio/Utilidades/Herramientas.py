@@ -23,6 +23,9 @@ class Herramientas:
             control.update()
         elif isinstance(control, ft.Dropdown):
             Herramientas.reset_dropdown(control)
+        elif isinstance(control, ft.DatePicker):
+            control.value = None
+            control.update()
         elif hasattr(control, "controls"): 
             Herramientas.limpiar_controles(control.controls)
 
@@ -56,6 +59,17 @@ class Herramientas:
             if hasattr(c, "disabled"):
                 c.disabled = True
                 c.update()
+
+    @staticmethod
+    def reset_datepicker(picker):
+        if picker is None:
+            return
+        picker.value = None
+        try:
+            if hasattr(picker, "update"):
+                picker.update()
+        except Exception:
+            pass
 
     
 

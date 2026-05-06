@@ -1,5 +1,6 @@
 import flet as ft
 from Negocio.Controlador.ControladorHistorial import ControladorHistorial
+from Negocio.Utilidades.Herramientas import Herramientas
 
 from tkinter import filedialog
 import tkinter as tk
@@ -304,8 +305,13 @@ class PantallaHistorial(ft.Container):
             ]
 
     def limpiar_filtros(self, e=None):
-        # Reset valores
-        self.input_busqueda.value = ""
+        # Reset valores usando utilidades
+        Herramientas.limpiar_control(self.input_busqueda)
+        Herramientas.reset_dropdown(self.combo_tipo)
+        Herramientas.reset_dropdown(self.combo_estado)
+        Herramientas.reset_datepicker(self.fecha_inicio_picker)
+        Herramientas.reset_datepicker(self.fecha_fin_picker)
+
         self.txt_fecha_inicio.value = "Fecha inicio"
         self.txt_fecha_fin.value = "Fecha fin"
         self.combo_tipo.value = "Todos"
@@ -314,8 +320,8 @@ class PantallaHistorial(ft.Container):
         # Refrescar filtros
         self.filtrar()
 
-        if self.page:
-            self.update()    
+        if self._page:
+            self.update()
 
     def filtrar(self, e=None):
 
