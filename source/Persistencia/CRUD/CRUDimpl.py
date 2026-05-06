@@ -53,6 +53,20 @@ class CRUDimp(CRUD):
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(query, (limit, offset))
             return cur.fetchall()
+
+    def get_by_pk_batch(self, conn: Connection, nombre_tabla: str, nombre_columna_pk: str, lista_pks: list) -> list[dict]:
+
+        if not lista_pks:
+            return []
+
+        query = sql.SQL("SELECT * FROM {tabla} WHERE {columna} = ANY(%s)").format(
+            tabla=sql.Identifier(nombre_tabla),
+            columna=sql.Identifier(nombre_columna_pk)
+        )
+        
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(query, (lista_pks,))
+            return cur.fetchall()   
         
     # -----------------------------------------------------------------------------------------------------------------
 

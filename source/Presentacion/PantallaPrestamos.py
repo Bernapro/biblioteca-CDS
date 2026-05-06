@@ -2,6 +2,9 @@ import flet as ft
 from Presentacion.PantallaNuevoPrestamo import PantallaNuevoPrestamo
 from Negocio.Controlador.ControladorPrestamos import ControladorPrestamos
 from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
+from Negocio.Modelo.RepositorioImpl import RepositorioImpl
+from Persistencia.CRUD.CRUDimpl import CRUDimp
+
 
 class PantallaPrestamos(ft.Container):
     def __init__(self, page: ft.Page):
@@ -10,7 +13,7 @@ class PantallaPrestamos(ft.Container):
         
         self.texto_pagina = ft.Text("1", color="white", weight="bold")
         # Instanciamos el controlador
-        self.controlador = ControladorPrestamos(self, endPrestamos=BibliotecaPrestamos())
+        self.controlador = ControladorPrestamos(self, endPrestamos=BibliotecaPrestamos(), repo=RepositorioImpl(crud=CRUDimp()))
         # ===== COLORES =====
         self.AZUL = "#3B82F6"
         self.VERDE = "#10B981" 
@@ -100,7 +103,7 @@ class PantallaPrestamos(ft.Container):
     def build_row(self, data):
         return ft.DataRow(
             cells=[
-                ft.DataCell(ft.Text(data["matricula"], color=self.GRIS_TEXTO, size=14)),
+                ft.DataCell(ft.Text(data["identificador"], color=self.GRIS_TEXTO, size=14)),
                 ft.DataCell(
                     ft.Row([
                         ft.Icon(ft.Icons.PERSON, size=18, color=self.AZUL),

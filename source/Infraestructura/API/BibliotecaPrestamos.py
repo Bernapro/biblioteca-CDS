@@ -48,7 +48,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
                     fechaInicio=item["fechaInicio"],
                     fechaDevolucion=item["fechaDevolucion"],
                     cantidad=item["cantidad"],
-                    usuario=Usuario(nombre=item["usuario"])
+                    usuario=Usuario(identificador=item["usuario"])
                 )
                 for item in body.get("contenido", [])
             ]

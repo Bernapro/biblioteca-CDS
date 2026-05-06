@@ -1,14 +1,17 @@
 from Negocio.Modelo.Interfaces.Repositorio import Repositorio
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Persistencia.Postgres.Pool.DBPool import db
-import subprocess
-from datetime import datetime
-import os
 
 class RepositorioImpl(Repositorio):
 
     def __init__(self, crud: CRUDimp):
         self.__crud = crud
+
+
+    def obtener_por_bloque(self, pks: list = [], tabla: str = "", columna: str = ""):
+        with db.get_connection() as conn:
+            return self.__crud.get_by_pk_batch(conn = conn, nombre_tabla =tabla, nombre_columna_pk = columna, lista_pks = pks)
+
 
     # =============================
     # INTERFAZ (SE RESPETA TAL CUAL)
