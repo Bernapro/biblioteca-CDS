@@ -20,3 +20,7 @@ class Client(ABC):
     @abstractmethod
     def post(self, args) -> ResponseObject:
         pass
+
+    @abstractmethod
+    def getEstado(self, parametro) -> ResponseObject:
+        pass

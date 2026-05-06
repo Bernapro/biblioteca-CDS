@@ -5,6 +5,7 @@ from Negocio.Modelo.Prestamo import Prestamo
 from Negocio.Modelo.Usuario import Usuario
 from Infraestructura.API.Interfaces.PageResponse import PageResponse
 from Infraestructura.API.Interfaces.PageMetadata import PageMetadata
+from Negocio.Modelo.ReporteEstadoPrestamo import ReporteEstadoPrestamo
 
 
 
@@ -86,5 +87,21 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             usr = prestamo.getUsuario()
             usr.setIdentificador(args["usuario"])
             print(prestamo.getBody())
+
+    def getEstado(self, parametro = 3) -> ResponseObject:
+        url = f"{self.URL_BASE+self.ENDPOINT}/estado/{parametro}"
+        r = requests.get(url)
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+        if r.status_code == 200:
+            args = r.json()
+            reporte = ReporteEstadoPrestamo()
+            reporte.setBody(args)
+            return reporte
+
+
+
 
 

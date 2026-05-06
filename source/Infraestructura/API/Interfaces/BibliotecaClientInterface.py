@@ -21,3 +21,6 @@ class BibliotecaClientInterface(Client):
 
     def post(self, args) -> ResponseObject:
         pass
+
+    def getEstado(self, parametro) -> ResponseObject:
+        pass
