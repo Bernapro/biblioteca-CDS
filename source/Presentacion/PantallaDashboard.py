@@ -240,12 +240,6 @@ class PantallaDashboard(ft.Container):
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
                             ft.Text("Gráfica de la semana", size=16, weight="bold", color=self.TEXT_MAIN),
-                            ft.Container(
-                                content=ft.Row([ft.Text("Esta semana", size=11, color=self.TEXT_MAIN), ft.Icon(ft.Icons.KEYBOARD_ARROW_DOWN, size=14, color=self.TEXT_MAIN)], spacing=5),
-                                border=ft.border.all(1, "outlineVariant"),
-                                padding=ft.padding.symmetric(horizontal=8, vertical=4),
-                                border_radius=8
-                            )
                         ]
                     ),
                     self.bar_chart_row
