@@ -95,10 +95,10 @@ class PantallaNuevoPrestamo(ft.Container):
             expand=True, height=55, read_only=True, value=datetime.datetime.now().strftime("%d/%b/%Y"),
         )
         self.txt_fecha_limite = ft.TextField(
-            label="Fecha límite (7 días)",
+            label="Fecha límite",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_MONTH,
-            expand=True, height=55, read_only=True, value=(datetime.datetime.now() + datetime.timedelta(days=7)).strftime("%d/%b/%Y"),
+            expand=True, height=55, read_only=True, value="",
             on_click=self.abrir_picker_limite
         )
 ##variable proxima si van a usar la fecha inicio para algo
