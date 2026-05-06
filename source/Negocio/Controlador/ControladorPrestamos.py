@@ -1,4 +1,5 @@
 from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos, BibliotecaClientInterface
+from datetime import datetime
 
 
 
@@ -20,9 +21,9 @@ class ControladorPrestamos:
         "matricula": body["usuario"].getNombre() if body["usuario"] else "N/A", 
         "nombre": "Nombre Pendiente",
         "cantidad": str(body["cantidad"]),
-        "estado": "A tiempo", 
+        "estado": "Devuelto" if body["fechaDevolucion"] else ("Atrasado" if datetime.strptime(body["fechaLimite"], "%Y-%m-%d").date() <= datetime.now().date() else ("Por vencer" if (datetime.strptime(body["fechaLimite"], "%Y-%m-%d").date() - datetime.now().date()).days <= 3 else "A tiempo")), 
         "fecha_prestamo": body["fechaInicio"],
-        "fecha_limite": body["fechaLimite"] if body["fechaLimite"] else "Sin límite" 
+        "fecha_limite": body["fechaLimite"] 
         }
         for prestamo in prestamos.content 
         for body in [prestamo.getBody()]  

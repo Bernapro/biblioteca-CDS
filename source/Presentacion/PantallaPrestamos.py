@@ -11,7 +11,6 @@ class PantallaPrestamos(ft.Container):
         self.texto_pagina = ft.Text("1", color="white", weight="bold")
         # Instanciamos el controlador
         self.controlador = ControladorPrestamos(self, endPrestamos=BibliotecaPrestamos())
-        
         # ===== COLORES =====
         self.AZUL = "#3B82F6"
         self.VERDE = "#10B981" 
@@ -26,7 +25,8 @@ class PantallaPrestamos(ft.Container):
         self.padding = 30
         self.bgcolor = self.FONDO
         self.border_radius = 30
-
+        self.colores = {"A tiempo": self.VERDE, "Atrasado": self.ROJO, "Por vencer": self.NARANJA}
+        self.iconos = {"A tiempo": ft.Icons.CHECK_CIRCLE, "Atrasado": ft.Icons.CANCEL, "Por vencer": ft.Icons.CALENDAR_MONTH}
         self.pagina_actual = 1
         self.registros_por_pagina = 10
         self.total_registros = 0
@@ -64,8 +64,9 @@ class PantallaPrestamos(ft.Container):
     # ===== BADGE DE ESTADO =====
     def build_estado(self, estado):
         #  colores del texto
-        color_texto = self.VERDE if estado == "A tiempo" else self.ROJO
-        icono = ft.Icons.CHECK_CIRCLE if estado == "A tiempo" else ft.Icons.CANCEL
+        color_texto = self.colores[estado] if estado in self.colores else self.GRIS_TEXTO
+        
+        icono = self.iconos[estado] if estado in self.iconos else ft.Icons.CIRCLE
         
         # DEFINIMOS EL COLOR DE RELLENO (FONDO) AQUÍ
         color_fondo = "#DCFCE7" if estado == "A tiempo" else "#FEE2E2" # Cambia "#FEE2E2" por el color que más te guste
@@ -108,7 +109,7 @@ class PantallaPrestamos(ft.Container):
                 ),
                 ft.DataCell(
                     ft.Row([
-                        ft.Icon(ft.Icons.FORMAT_LIST_NUMBERED, size=18, color=self.AZUL if data["estado"] == "A tiempo" else self.ROJO),
+                        ft.Icon(ft.Icons.FORMAT_LIST_NUMBERED, size=18, color=self.colores[data["estado"]] if data["estado"] in self.colores else self.GRIS_TEXTO),
                         ft.Text(str(data["cantidad"]), color=self.TEXT, size=14)
                     ], spacing=8)
                 ),
