@@ -43,12 +43,9 @@ class PantallaAsistencia(ft.Container):
 
         self.build_ui()
 
-    # =========================
-    # MENSAJE DINÁMICO
-    # =========================
     def mostrar_resultado(self, estado, nombre, tipo_usuario):
 
-        # ===== COLORES POR TIPO =====
+        # COLORES POR TIPO 
         colores = {
             "ALUMNO": "#3B82F6",
             "PERSONAL": "#10B981",
@@ -57,7 +54,7 @@ class PantallaAsistencia(ft.Container):
 
         color_tipo = colores.get(tipo_usuario, self.TEXT_SECONDARY)
 
-        # ===== TEXTO TIPO =====
+        #TEXTO TIPO
         texto_tipo = tipo_usuario.capitalize() if tipo_usuario else ""
 
         badge = ft.Container(
@@ -73,7 +70,7 @@ class PantallaAsistencia(ft.Container):
             bgcolor="transparent"
         )
 
-        # ===== MENSAJE PRINCIPAL =====
+        #  MENSAJE PRINCIPAL 
         if estado == "ENTRADA":
             mensaje = ft.Text(
                 "✅ Entrada registrada correctamente",
@@ -107,7 +104,7 @@ class PantallaAsistencia(ft.Container):
             self.update()
             return
 
-        # ===== RESULTADO FINAL =====
+        #RESULTADO FINAL
         self.mensaje_final.controls = [
             mensaje,
             ft.Text(nombre, size=16, weight="bold", color=self.TEXT),
@@ -119,9 +116,7 @@ class PantallaAsistencia(ft.Container):
     def limpiar_mensaje(self):
         self.mensaje_final.value = ""
         self.update()
-    # =========================
-    # PROCESAR QR (CORREGIDO)
-    # =========================
+    # PROCESAR QR 
     def procesar_qr(self, e):
         e.control.data = "btn_qr"
 

@@ -11,7 +11,7 @@ class MenuLateral(ft.Container):
         self.margin = ft.margin.only(left=20, top=20, bottom=20)
         self.padding = 20
         self.border_radius = 20
-        self.bgcolor = "surface" # 🔥 Texto directo
+        self.bgcolor = "surface" 
         self.shadow = ft.BoxShadow(blur_radius=25, color="black12", offset=ft.Offset(0, 10))
 
         # Opciones del menú
@@ -50,7 +50,6 @@ class MenuLateral(ft.Container):
             expand=True
         )
         
-        # Dibuja el menú por primera vez
         self.build_menu()
 
     def build_menu(self):
@@ -63,14 +62,12 @@ class MenuLateral(ft.Container):
                 content=ft.Row([
                     ft.Container(width=5, height=40, bgcolor="primary" if activo else "transparent", border_radius=5),
                     
-                    # Textos directos en vez de ft.Colors
                     ft.Icon(icon, size=22, color="primary" if activo else "onSurfaceVariant"),
                     ft.Text(texto, size=15, weight="bold" if activo else "normal", color="primary" if activo else "onSurfaceVariant"),
                 ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
                 padding=12,
                 border_radius=12,
                 
-                #  Texto directo
                 bgcolor="primaryContainer" if activo else "transparent",
                 on_click=lambda e, idx=index: self.cambiar_seleccion(idx)
             )
@@ -83,7 +80,6 @@ class MenuLateral(ft.Container):
         self.on_menu_click(index)
 
     def cerrar_sesion(self, e):
-        # Importación local para evitar dependencias circulares
         from Presentacion.PantallaLogin import PantallaLogin
         e.page.controls.clear()
         login_app = PantallaLogin(e.page)

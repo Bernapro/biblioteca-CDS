@@ -28,15 +28,13 @@ class PantallaRegistroUsuario(ft.Container):
         self.GRIS_BORDE = "outline"
 
         self.nombre = self._crear_input("Nombre(s)", width=350)
-        # Trampa para el Nombre
         self.nombre.on_submit = self._ignorar_escaneo
 
         self.ap_paterno = self._crear_input("Apellido Paterno", width=165)
-        # 🔥 NUEVO: Trampa para Apellido Paterno
+
         self.ap_paterno.on_submit = self._ignorar_escaneo
 
         self.ap_materno = self._crear_input("Apellido Materno", width=165)
-        # 🔥 NUEVO: Trampa para Apellido Materno
         self.ap_materno.on_submit = self._ignorar_escaneo
 
         self.row_apellidos = ft.Row(
@@ -187,7 +185,7 @@ class PantallaRegistroUsuario(ft.Container):
 
     def _procesar_escaneo_matricula(self, e):
         valor = e.control.value.strip()
-        if valor: # Validamos que no esté vacío
+        if valor: 
             e.control.border_color = "#22C55E" 
             e.control.update()
             self.mostrar_mensaje(f"Matrícula {valor} escaneada con éxito", "green")
@@ -322,10 +320,10 @@ class PantallaRegistroUsuario(ft.Container):
 
         self.update()
 
-        # Truco asíncrono para solucionar el bug del foco en Flet
+        #  asíncrono para solucionar el bug del Flet
         def forzar_foco():
             import time
-            time.sleep(0.2) # Le damos 200 milisegundos a la UI para que renderice los campos
+            time.sleep(0.2) 
             if tipo == "Alumno":
                 self.matricula.focus()
                 self.matricula.update()
@@ -333,7 +331,7 @@ class PantallaRegistroUsuario(ft.Container):
                 self.n_plaza.focus()
                 self.n_plaza.update()
 
-        # Ejecutamos el foco en un hilo separado para que no congele tu pantalla
+        
         threading.Thread(target=forzar_foco, daemon=True).start()
 
     def cancelar(self, e):

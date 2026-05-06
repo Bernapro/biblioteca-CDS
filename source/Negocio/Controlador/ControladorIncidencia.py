@@ -15,36 +15,76 @@ class ControladorIncidencia:
     # =========================================
     # 📌 OBTENER INCIDENCIAS (USA LA VISTA)
     # =========================================
-    def obtener_incidencias(self):
-        with db.get_connection() as conn:
-            query = "SELECT * FROM vista_incidencias ORDER BY fecha DESC"
-            datos = conn.execute(query).fetchall()
+    def obtener_incidencias(
+        self,
+        texto: str = "",
+        fecha_inicio=None,
+        fecha_fin=None,
+        tipo: str = "Todos",
+        estado: str = "Todos",
+        limit: int = 10,
+        offset: int = 0
+    ):
+        filtros = {}
+        or_filtros = []
+
+        texto = (texto or "").strip()
+        if texto:
+            or_filtros = [
+                {"nombre_completo__like": texto},
+                {"identificador__like": texto},
+                {"matricula__like": texto},
+                {"n_plaza__like": texto},
+            ]
+
+        if tipo and tipo != "Todos":
+            filtros["tipo_usuario"] = tipo.upper()
+
+        if estado == "Pendiente":
+            filtros["estado"] = "PENDIENTE"
+        elif estado == "Resuelto":
+            filtros["estado"] = "RESUELTA"
+
+        if fecha_inicio:
+            filtros["fecha__gte"] = fecha_inicio
+        if fecha_fin:
+            filtros["fecha__lte"] = fecha_fin
+
+        datos = self.__repo.obtener_avanzado(
+            nombre_tabla="vista_incidencias",
+            filtros=filtros,
+            or_filtros=or_filtros if or_filtros else None,
+            order_by=[("fecha", "DESC")],
+            limit=limit,
+            offset=offset
+        )
+
+        total = self.__repo.contar_avanzado(
+            nombre_tabla="vista_incidencias",
+            filtros=filtros,
+            or_filtros=or_filtros if or_filtros else None
+        )
 
         resultado = []
-
         for d in datos:
             resultado.append({
                 "id": d["id_incidencia"],
                 "nombre": d["nombre_completo"],
                 "identificador": d.get("matricula") or d.get("n_plaza") or d.get("identificador"),
                 "tipo_usuario": d["tipo_usuario"],
-
                 "carrera": d.get("nombre_carrera") or "-",
                 "semestre": d.get("semestre") or "-",
-
-                "categoria": d["motivo"],        
-                "descripcion": d["descripcion"], 
-
+                "categoria": d["motivo"],
+                "descripcion": d["descripcion"],
                 "lugar": d["lugar"],
                 "fecha": d["fecha"].strftime("%d/%m/%Y %H:%M"),
-
                 "tipo": d["tipo"],
                 "estado": d["estado"],
                 "comentario": d.get("comentario") or "",
                 "institucion": d.get("nombre_institucion") or "-"
             })
 
-        return resultado
+        return resultado, total
 
     # =========================================
     # 📌 GUARDAR CAMBIOS DEL MODAL

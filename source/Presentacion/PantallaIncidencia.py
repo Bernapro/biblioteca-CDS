@@ -582,53 +582,28 @@ class PantallaIncidencias(ft.Container):
         if e and hasattr(e, "control"):
             if e.control in [self.input_busqueda, self.dropdown_tipo, self.dropdown_estado]:
                 self.pagina_actual = 1
-        texto = (self.input_busqueda.value or "").lower()
+        texto = self.input_busqueda.value or ""
         tipo = self.dropdown_tipo.value
         estado = self.dropdown_estado.value
         self.lista_incidencias.controls.clear()
-        datos = self.controlador.obtener_incidencias()
-        
-        datos_filtrados = []
+
+        datos, total = self.controlador.obtener_incidencias(
+            texto=texto,
+            fecha_inicio=fecha_inicio,
+            fecha_fin=fecha_fin,
+            tipo=tipo,
+            estado=estado,
+            limit=self.registros_por_pagina,
+            offset=(self.pagina_actual - 1) * self.registros_por_pagina
+        )
+
+        self.total_registros = total
 
         for d in datos:
-
-            if texto:
-                if texto not in d["nombre"].lower() and texto not in d["identificador"].lower():
-                    continue
-
-            if tipo != "Todos" and d["tipo_usuario"].lower() != tipo.lower():
-                continue
-
-            if estado != "Todos":
-                if estado == "Pendiente" and d["estado"] != "PENDIENTE":
-                    continue
-                if estado == "Resuelto" and d["estado"] != "RESUELTA":
-                    continue
-
-            fecha_registro = datetime.strptime(d["fecha"], "%d/%m/%Y %H:%M").date()
-
-            if fecha_inicio and fecha_registro < fecha_inicio:
-                continue
-
-            if fecha_fin and fecha_registro > fecha_fin:
-                continue
-
-            datos_filtrados.append(d)
-
-        # ===== PAGINACIÓN DESPUÉS DEL FILTRO =====
-        self.total_registros = len(datos_filtrados)
-
-        inicio = (self.pagina_actual - 1) * self.registros_por_pagina
-        fin = inicio + self.registros_por_pagina
-
-        datos_paginados = datos_filtrados[inicio:fin]
-            
-        for d in datos_paginados:
             self.lista_incidencias.controls.append(self.build_card(d))
 
-
         texto_resultados = ft.Text(
-            f"Mostrando {len(datos_paginados)} de {self.total_registros} incidencias",
+            f"Mostrando {len(datos)} de {self.total_registros} incidencias",
             size=14,
             color="onSurfaceVariant"
         )
