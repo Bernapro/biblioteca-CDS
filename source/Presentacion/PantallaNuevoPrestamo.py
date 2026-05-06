@@ -13,6 +13,14 @@ class PantallaNuevoPrestamo(ft.Container):
         self.vista_anterior = vista_anterior
         self.expand = True
         self.alignment = ft.alignment.Alignment(0, 0)
+        numDias = 4
+        fechaHoy = datetime.datetime.now()
+        fechaEstimada = fechaHoy + datetime.timedelta(days=numDias)
+        fechaEstimadaDomingo = fechaEstimada + datetime.timedelta(days=1)
+        fechaEstimadaSabado = fechaEstimada - datetime.timedelta(days=1)
+        diaFechaEstimada = fechaEstimada.weekday()
+        fechaLimite = fechaEstimada if diaFechaEstimada < 5 else (fechaEstimadaDomingo if diaFechaEstimada == 6 else fechaEstimadaSabado)
+        numDias = (fechaLimite - fechaHoy).days
 
         # Instanciamos el controlador
         self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares(), repositorio= RepositorioImpl(crud=CRUDimp()), endPrestamo=BibliotecaPrestamos())
@@ -92,19 +100,16 @@ class PantallaNuevoPrestamo(ft.Container):
             label="Fecha de préstamo",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_TODAY,
-            expand=True, height=55, read_only=True, value=datetime.datetime.now().strftime("%d/%b/%Y"),
+            expand=True, height=55, read_only=True, value= fechaHoy.strftime("%d/%b/%Y"),
+            on_click=self.abrir_picker_prestamo
         )
         self.txt_fecha_limite = ft.TextField(
-            label="Fecha límite",
+            label=f"Fecha límite ({numDias} dias)",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_MONTH,
-            expand=True, height=55, read_only=True, value="",
+            expand=True, height=55, read_only=True, value=fechaLimite.strftime("%d/%b/%Y"),
             on_click=self.abrir_picker_limite
         )
-##variable proxima si van a usar la fecha inicio para algo
-        self.fecha_prestamo = datetime.datetime.now()
-        self.txt_fecha_prestamo.value = self.fecha_prestamo.strftime("%Y-%m-%d")
-        
         # Poblar libros de prueba
         self.build_ui()
 
