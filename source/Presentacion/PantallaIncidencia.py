@@ -1,6 +1,8 @@
 import flet as ft
 from Presentacion.PantallaRegistroIncidencia import PantallaRegistroIncidencia
 from Negocio.Controlador.ControladorIncidencia import ControladorIncidencia
+from Negocio.Utilidades.Herramientas import Herramientas
+from Negocio.Utilidades.FormatearFecha import FormatearFecha
 
 class PantallaIncidencias(ft.Container):
     def __init__(self, page: ft.Page):
@@ -337,17 +339,34 @@ class PantallaIncidencias(ft.Container):
 
     def seleccionar_inicio(self, e):
         if e.control.value:
-            self.txt_fecha_inicio.value = e.control.value.strftime("%Y-%m-%d")
+            fecha_iso = e.control.value.strftime("%Y-%m-%d")
+            self.txt_fecha_inicio.value = FormatearFecha.formatear_fecha_iso(fecha_iso)
             self.cargar_datos(e=True)
 
     def seleccionar_fin(self, e):
         if e.control.value:
-            self.txt_fecha_fin.value = e.control.value.strftime("%Y-%m-%d")
+            fecha_iso = e.control.value.strftime("%Y-%m-%d")
+            self.txt_fecha_fin.value = FormatearFecha.formatear_fecha_iso(fecha_iso)
             self.cargar_datos(e=True)
 
     def abrir_picker(self, e, picker):
         picker.open = True
         self._page.update()
+
+    def limpiar_filtros(self, e=None):
+        Herramientas.limpiar_control(self.input_busqueda)
+        Herramientas.reset_dropdown(self.dropdown_tipo)
+        Herramientas.reset_dropdown(self.dropdown_estado)
+        Herramientas.reset_datepicker(self.fecha_inicio_picker)
+        Herramientas.reset_datepicker(self.fecha_fin_picker)
+
+        self.txt_fecha_inicio.value = "Fecha inicio"
+        self.txt_fecha_fin.value = "Fecha fin"
+        self.dropdown_tipo.value = "Todos"
+        self.dropdown_estado.value = "Todos"
+        self.pagina_actual = 1
+        self.cargar_datos()
+        self.update()
 
     def build_boton_fecha(self, texto_ref, picker):
         return ft.Container(
@@ -536,12 +555,24 @@ class PantallaIncidencias(ft.Container):
             on_click=self.ir_a_registro
         )
 
+        btn_limpiar = ft.ElevatedButton(
+            "Limpiar filtros",
+            bgcolor="white",
+            color="onSurface",
+            height=45,
+            style=ft.ButtonStyle(
+                shape=ft.RoundedRectangleBorder(radius=10),
+                side=ft.BorderSide(1, self.GRIS_BORDE)
+            ),
+            on_click=self.limpiar_filtros
+        )
+
         encabezado = ft.Row([
             ft.Column([
                 ft.Text("Gestión de Incidencias", size=32, weight="bold", color="onSurface"),
                 ft.Text("Busca y gestiona el catálogo de incidencias registradas en el sistema.", color=self.GRIS_TEXTO)
             ]),
-            btn_nueva_incidencia
+            ft.Row([btn_limpiar, btn_nueva_incidencia], spacing=10)
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
         filtros = ft.Container(
@@ -572,17 +603,23 @@ class PantallaIncidencias(ft.Container):
 
         from datetime import datetime, time
 
+        def parse_fecha(texto, formato_iso="%Y-%m-%d", formato_formateado="%d/%b/%Y"):
+            try:
+                return datetime.strptime(texto, formato_iso).date()
+            except Exception:
+                return datetime.strptime(texto, formato_formateado).date()
+
         fecha_inicio = None
         fecha_fin = None
 
         if self.txt_fecha_inicio.value != "Fecha inicio":
             fecha_inicio = datetime.combine(
-                datetime.strptime(self.txt_fecha_inicio.value, "%Y-%m-%d").date(),
+                parse_fecha(self.txt_fecha_inicio.value),
                 time.min
             )
         if self.txt_fecha_fin.value != "Fecha fin":
             fecha_fin = datetime.combine(
-                datetime.strptime(self.txt_fecha_fin.value, "%Y-%m-%d").date(),
+                parse_fecha(self.txt_fecha_fin.value),
                 time.max
             )
         if e and hasattr(e, "control"):
