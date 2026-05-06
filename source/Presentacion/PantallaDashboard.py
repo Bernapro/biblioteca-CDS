@@ -66,7 +66,7 @@ class PantallaDashboard(ft.Container):
                     spacing=15,
                     controls=[
                         self.build_card("Sesiones activas hoy", self.label_sesiones, ft.Icons.PEOPLE_OUTLINED, self.PRIMARY),
-                        self.build_card("Préstamos", self.label_prestamos, ft.Icons.BOOK_OUTLINED, "#10B981"),
+                        self.build_card("Préstamos activos", self.label_prestamos, ft.Icons.BOOK_OUTLINED, "#10B981"),
                         self.build_card("Vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "error"),
                     ]
                 ),
@@ -104,6 +104,9 @@ class PantallaDashboard(ft.Container):
         self.content = self.layout_principal
         self.cargar_datos()
 
+    def did_mount(self):
+        self.cargar_datos()
+
     def build_card(self, title, value, icon_name, color_hex):
         return ft.Container(
             expand=True,
@@ -128,10 +131,13 @@ class PantallaDashboard(ft.Container):
             return ft.Row(
                 spacing=12,
                 controls=[
-                    ft.Container(content=ft.Icon(icono, size=16, color=self.PRIMARY), padding=8),
+                    ft.Container(
+                        content=ft.Icon(icono, size=16, color=self.PRIMARY),
+                        padding=8
+                    ),
                     ft.Column([
                         ft.Text(titulo, size=12, color=self.TEXT_SECONDARY),
-                        ft.Text(valor, size=14, weight="bold", color=self.TEXT_MAIN)
+                        valor
                     ], spacing=0)
                 ]
             )
@@ -149,16 +155,16 @@ class PantallaDashboard(ft.Container):
                     ft.Container(
                         content=ft.Row([
                             ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINED, color=self.PRIMARY, size=20),
-                            ft.Text(self.turno_estado.value, size=20, weight="bold", color=self.TEXT_MAIN)
+                            self.turno_estado
                         ], spacing=10),
                         padding=ft.padding.symmetric(horizontal=16, vertical=14),
                         border_radius=14,
                         bgcolor="surfaceVariant"
                     ),
-                    detalle_turno(ft.Icons.PLAY_ARROW_OUTLINED, "Inicio", self.turno_inicio.value),
-                    detalle_turno(ft.Icons.FLAG_OUTLINED, "Fin", self.turno_fin.value),
-                    detalle_turno(ft.Icons.ACCESS_TIME, "Duración", self.turno_duracion.value),
-                    detalle_turno(ft.Icons.HOURGLASS_BOTTOM, "Tiempo restante", self.turno_restante.value),
+                    detalle_turno(ft.Icons.PLAY_ARROW_OUTLINED, "Inicio", self.turno_inicio),
+                    detalle_turno(ft.Icons.FLAG_OUTLINED, "Fin", self.turno_fin),
+                    detalle_turno(ft.Icons.ACCESS_TIME, "Duración", self.turno_duracion),
+                    detalle_turno(ft.Icons.HOURGLASS_BOTTOM, "Tiempo restante", self.turno_restante),
                     ft.Container(
                         bgcolor="primaryContainer",
                         border_radius=12,
@@ -279,8 +285,8 @@ class PantallaDashboard(ft.Container):
         datos = self.controlador.obtener_datos_dashboard()
 
         self.label_sesiones.value = str(datos["sesiones_activas_hoy"])
-        self.label_prestamos.value = "N/D"
-        self.label_vencidos.value = "N/D"
+        self.label_prestamos.value = str(datos["prestamos"])
+        self.label_vencidos.value = str(datos["vencidos"])
 
         self.label_visitas_totales.value = str(datos["visitas_semana_totales"])
         self.label_usuarios_registrados.value = str(datos["usuarios_registrados"])
