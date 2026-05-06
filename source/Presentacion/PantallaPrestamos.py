@@ -149,10 +149,10 @@ class PantallaPrestamos(ft.Container):
         if hasattr(self, 'resumen'):
             stats = self.controlador.obtener_estadisticas()
             self.resumen.controls = [
-                self.build_card_stat("Total préstamos", stats["total"], "Registros totales", ft.Icons.MENU_BOOK_ROUNDED, self.AZUL),
-                self.build_card_stat("A tiempo", stats["a_tiempo"], "Préstamos vigentes", ft.Icons.CHECK_CIRCLE_OUTLINE, self.VERDE),
-                self.build_card_stat("Atrasados", stats["atrasados"], "Préstamos vencidos", ft.Icons.ACCESS_TIME, self.ROJO),
-                self.build_card_stat("Por vencer", stats["por_vencer"], "Próximos 3 días", ft.Icons.CALENDAR_MONTH, self.NARANJA),
+                self.build_card_stat("Total préstamos", stats["totales"], "Registros totales", ft.Icons.MENU_BOOK_ROUNDED, self.AZUL),
+                self.build_card_stat("A tiempo", stats["vigentes"], "Préstamos vigentes", ft.Icons.CHECK_CIRCLE_OUTLINE, self.VERDE),
+                self.build_card_stat("Atrasados", stats["vencidos"], "Préstamos vencidos", ft.Icons.ACCESS_TIME, self.ROJO),
+                self.build_card_stat("Por vencer", stats["proximosAVencer"], "Próximos 3 días", ft.Icons.CALENDAR_MONTH, self.NARANJA),
             ]
             
         texto_resultados = ft.Text(

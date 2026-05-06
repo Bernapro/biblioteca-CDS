@@ -53,9 +53,4 @@ class ControladorPrestamos:
 
     def obtener_estadisticas(self):
         # Más adelante esto será un COUNT() a la base de datos
-        return {
-            "total": "4",
-            "a_tiempo": "2",
-            "atrasados": "2",
-            "por_vencer": "0"
-        }
+        return self.__endPrestamos.getEstado().getBody()
