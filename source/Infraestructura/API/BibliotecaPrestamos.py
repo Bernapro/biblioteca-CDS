@@ -6,6 +6,9 @@ from Negocio.Modelo.Usuario import Usuario
 from Infraestructura.API.Interfaces.PageResponse import PageResponse
 from Infraestructura.API.Interfaces.PageMetadata import PageMetadata
 from Negocio.Modelo.ReporteEstadoPrestamo import ReporteEstadoPrestamo
+from Negocio.Modelo.Ejemplar import Ejemplar
+from Negocio.Modelo.Libro import Libro
+
 
 
 
@@ -100,6 +103,30 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             reporte = ReporteEstadoPrestamo()
             reporte.setBody(args)
             return reporte
+        
+    def getDetalle(self, id = ""):
+        if not id:
+            return list()
+        url = f"{self.URL_BASE+self.ENDPOINT}/detalle/{id}"
+        r = requests.get(url)
+        listaEjemplares = list()
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+        if r.status_code == 200:
+            args = r.json()
+            listaEjemplares= [
+                Ejemplar(
+                    id=item["id"],
+                    noAdquisicion=item["noAdquisicion"],
+                    libro = Libro(titulo=item["titulo"],
+                    autores=item["autores"]),
+                    disponible=item["disponible"]
+                )
+                for item in args
+            ]
+        return listaEjemplares
 
 
 
