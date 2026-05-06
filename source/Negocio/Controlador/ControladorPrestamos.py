@@ -7,6 +7,7 @@ from Negocio.Modelo.Usuario import Usuario
 
 
 class ControladorPrestamos:
+
     def __init__(self, pantalla, endPrestamos: BibliotecaClientInterface, repo: RepositorioImpl):
         self.__pantalla = pantalla
         self.__endPrestamos = endPrestamos
@@ -29,6 +30,7 @@ class ControladorPrestamos:
         print(usuarios_dict)
         datos = [
         {
+        "prestamo": body["id"],
         "identificador": body["usuario"].getIdentificador() if body["usuario"] else "N/A", 
         "nombre": usuarios_dict[body["usuario"].getIdentificador()].getNombre() if body["usuario"] else "N/A",
         "cantidad": str(body["cantidad"]),
@@ -54,3 +56,6 @@ class ControladorPrestamos:
     def obtener_estadisticas(self):
         # Más adelante esto será un COUNT() a la base de datos
         return self.__endPrestamos.getEstado().getBody()
+    
+    def finalizarPrestamo(self, e, prestamo=""):
+        print(prestamo)

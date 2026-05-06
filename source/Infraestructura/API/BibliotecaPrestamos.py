@@ -8,6 +8,7 @@ from Infraestructura.API.Interfaces.PageMetadata import PageMetadata
 from Negocio.Modelo.ReporteEstadoPrestamo import ReporteEstadoPrestamo
 from Negocio.Modelo.Ejemplar import Ejemplar
 from Negocio.Modelo.Libro import Libro
+from Negocio.Modelo.PrestamoFinalizado import PrestamoFinalizado
 
 
 
@@ -127,6 +128,23 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
                 for item in args
             ]
         return listaEjemplares
+    
+    def patch(self, args = ""):
+        if not args:
+            return None
+        prestamo = None
+        url = f"{self.URL_BASE+self.ENDPOINT}/{args}"
+        r = requests.patch(url)
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+        if r.status_code == 200:
+            args = r.json()
+            prestamo = PrestamoFinalizado()
+            prestamo.setBody(args)
+            return prestamo
+        return prestamo
 
 
 

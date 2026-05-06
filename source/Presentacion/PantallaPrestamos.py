@@ -148,7 +148,7 @@ class PantallaPrestamos(ft.Container):
         )
 
     # ===== BOTONES DE ACCIÓN =====
-    def build_btn_accion(self, texto, icono, color, on_click_action=None):
+    def build_btn_accion(self, texto, icono, color, on_click_action=None, data=""):
         return ft.OutlinedButton(
             texto,
             icon=icono,
@@ -159,12 +159,14 @@ class PantallaPrestamos(ft.Container):
                 padding=ft.padding.symmetric(horizontal=10, vertical=5)
             ),
             height=35,
-            on_click=on_click_action # <- Nuevo parámetro
+            on_click=on_click_action,
+            data= data
         )
 
     # FILAS DE LA TABLA 
     def build_row(self, data):
-        return ft.DataRow(
+        print(data["prestamo"])
+        row = ft.DataRow(
             cells=[
                 ft.DataCell(ft.Text(data["identificador"], color=self.GRIS_TEXTO, size=14)),
                 ft.DataCell(
@@ -188,13 +190,15 @@ class PantallaPrestamos(ft.Container):
                             "Extender", 
                             ft.Icons.CALENDAR_MONTH, 
                             self.AZUL,
-                            on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "extender")
+                            on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "extender"),
+                            data= data["prestamo"]
                         ),
                         self.build_btn_accion(
                             "Devolver", 
                             ft.Icons.KEYBOARD_RETURN, 
                             self.VERDE,
-                            on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "devolver")
+                            on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "devolver"),
+                            data= data["prestamo"]
                         ),
                         ft.IconButton(
                             icon=ft.Icons.MORE_VERT, 
@@ -205,6 +209,8 @@ class PantallaPrestamos(ft.Container):
                 ),
             ]
         )
+        return row
+
 
     # ===== LÓGICA DE NAVEGACIÓN =====
     def ir_a_nuevo_prestamo(self, e):
@@ -221,6 +227,7 @@ class PantallaPrestamos(ft.Container):
         datos_paginados = datos[inicio:fin]
 
         self.tabla.rows = [self.build_row(data) for data in datos_paginados]
+        print(data.key for data in self.tabla.rows)
 
         # También actualizamos las tarjetas de resumen dinámicamente
         if hasattr(self, 'resumen'):
@@ -435,6 +442,7 @@ class PantallaPrestamos(ft.Container):
         )
     # ===== LÓGICA DEL DIÁLOGO REUTILIZABLE =====
     def abrir_dialogo_prestamo(self, e, d, accion):
+        prestamo = e.control.data
         
         # 1. SIMULACIÓN DE DATOS DE LA API (Dummy Data)
         # Aquí fingimos que con el d["identificador"] fuimos a la BD y trajimos el perfil
@@ -500,7 +508,7 @@ class PantallaPrestamos(ft.Container):
             ])
             
             self.dialogo_accion.actions = [
-                ft.ElevatedButton("Confirmar Devolución", bgcolor=self.VERDE, color="white", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.cerrar_dialogo)
+                ft.ElevatedButton("Confirmar Devolución", bgcolor=self.VERDE, color="white", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)), on_click=lambda e, p = prestamo: self.controlador.finalizarPrestamo(e, p))
             ]
 
         elif accion == "extender":

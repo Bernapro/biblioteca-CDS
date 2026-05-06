@@ -24,3 +24,6 @@ class BibliotecaClientInterface(Client):
 
     def getEstado(self, parametro) -> ResponseObject:
         pass
+
+    def patch(self, args) -> ResponseObject:
+        pass
