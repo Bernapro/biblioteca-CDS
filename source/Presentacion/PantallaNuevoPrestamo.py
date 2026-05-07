@@ -42,6 +42,7 @@ class PantallaNuevoPrestamo(ft.Container):
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
             expand=True, height=50, content_padding=10,
+            on_submit=self.controlador.buscar_alumno,
             on_change=self.limpiar_error_borde # Limpia el color rojo al escribir
         )
         self.btn_buscar_alumno = ft.OutlinedButton("Buscar", icon=ft.Icons.SEARCH, style=ft.ButtonStyle(color=self.AZUL, shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.controlador.buscar_alumno)

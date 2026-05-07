@@ -59,7 +59,7 @@ class PantallaDashboard(ft.Container):
                         ft.Column([
                             ft.Row([
                                 ft.Text(
-                                    "Hola, Toileteros",
+                                    "Hola, Bernardo",
                                     size=28,
                                     weight="bold",
                                     color=self.TEXT_MAIN
