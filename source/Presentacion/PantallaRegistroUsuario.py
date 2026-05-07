@@ -319,9 +319,8 @@ class PantallaRegistroUsuario(ft.Container):
             Herramientas.mostrar([self.n_plaza])
         elif tipo == "Visitante":
             Herramientas.mostrar([self.institucion])
-            self.identificador_preview.value = "Se generará automáticamente"  
+            self.identificador_preview.value = self.controlador.obtener_siguiente_vis()
             self.identificador_preview.visible = True
-
         self.update()
 
         #  asíncrono 

@@ -87,16 +87,26 @@ class RepositorioImpl(Repositorio):
             return conn.execute(query, (id_registro,)).fetchone()
 
     # REGISTRO DE USUARIOS
-
     def obtener_siguiente_vis(self):
+
         with db.get_connection() as conn:
+
             query = """
-                SELECT last_value + 1 AS numero
-                FROM seq_visitante
+                SELECT COALESCE(
+                    MAX(
+                        CAST(
+                            REPLACE(identificador, 'VIS-', '') AS INTEGER
+                        )
+                    ),
+                0) + 1 AS siguiente
+                FROM usuario
+                WHERE identificador LIKE 'VIS-%'
             """
+
             result = conn.execute(query).fetchone()
-            return f"VIS-{result['numero']}"
-        
+
+            return f"VIS-{result['siguiente']}"
+            
     #
     def obtener_avanzado(
         self,
