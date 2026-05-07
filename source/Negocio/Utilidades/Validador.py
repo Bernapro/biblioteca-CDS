@@ -92,15 +92,12 @@ class Validador:
         picker_fin=None,
         callback=None
     ):
-
         valido, mensaje = Validador.validar_rango_fechas(
             fecha_inicio,
             fecha_fin
         )
-
         if valido:
             return True
-
         dialogo = ft.AlertDialog(
             modal=False,
             bgcolor="white",
@@ -116,9 +113,7 @@ class Validador:
                     weight="bold"
                 )
             ]),
-
             content=ft.Text(mensaje),
-
             actions=[
                 ft.TextButton(
                     "Aceptar",
@@ -128,30 +123,19 @@ class Validador:
         )
 
         def cerrar_dialogo(e):
-
             dialogo.open = False
-
             if txt_inicio:
                 txt_inicio.value = "Fecha inicio"
-
             if txt_fin:
                 txt_fin.value = "Fecha fin"
-
             if picker_inicio:
                 picker_inicio.value = None
-
             if picker_fin:
                 picker_fin.value = None
-
             if callback:
                 callback()
-
             page.update()
-
         page.overlay.append(dialogo)
-
         dialogo.open = True
-
         page.update()
-
         return False

@@ -3,6 +3,7 @@ from Presentacion.PantallaRegistroIncidencia import PantallaRegistroIncidencia
 from Negocio.Controlador.ControladorIncidencia import ControladorIncidencia
 from Negocio.Utilidades.Herramientas import Herramientas
 from Negocio.Utilidades.FormatearFecha import FormatearFecha
+from Negocio.Utilidades.Validador import Validador
 
 class PantallaIncidencias(ft.Container):
     def __init__(self, page: ft.Page):
@@ -587,6 +588,31 @@ class PantallaIncidencias(ft.Container):
 
         fecha_inicio = None
         fecha_fin = None
+
+        fecha_inicio_texto = None
+        fecha_fin_texto = None
+
+        if self.fecha_inicio_picker.value:
+            fecha_inicio_texto = self.fecha_inicio_picker.value.strftime("%Y-%m-%d")
+
+        if self.fecha_fin_picker.value:
+            fecha_fin_texto = self.fecha_fin_picker.value.strftime("%Y-%m-%d")
+
+        if not Validador.validar_fechas_ui(
+            page=self._page,
+
+            fecha_inicio=fecha_inicio_texto,
+            fecha_fin=fecha_fin_texto,
+
+            txt_inicio=self.txt_fecha_inicio,
+            txt_fin=self.txt_fecha_fin,
+
+            picker_inicio=self.fecha_inicio_picker,
+            picker_fin=self.fecha_fin_picker,
+
+            callback=lambda: self.cargar_datos()
+        ):
+            return
 
         if self.txt_fecha_inicio.value != "Fecha inicio":
             fecha_inicio = datetime.combine(
