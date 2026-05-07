@@ -83,8 +83,26 @@ class ControladorPrestamos:
                 msg = dict["comentario"]
                 print(dict["comentario"])
                 color = "green"
-        boton = e.control
-        if boton:
-            boton.visible = False
+                boton = e.control
+                if boton:
+                    boton.visible = False
         self.__pantalla.cargar_datos()
         self.__pantalla.mostrar_mensaje(msg, color)
+    
+    def extenderPrestamo(self, e, prestamo, fecha):
+        f = datetime.strptime(fecha, "%d/%b/%Y")
+        f_ex = f.strftime("%Y-%m-%d")
+        msg = "No se puede realizar esta operación"
+        color = "red"
+        res = self.__endPrestamos.patch_extender(id= prestamo, fecha= f_ex)
+        if res:
+            msg = res.getComentario()
+            color = "green" if res.getFechaInicio() != res.getFechaLimite() else "orange"
+            boton = e.control
+            if boton:
+                boton.visible = False
+        self.__pantalla.cargar_datos()
+        self.__pantalla.mostrar_mensaje(msg, color)
+        
+
+        

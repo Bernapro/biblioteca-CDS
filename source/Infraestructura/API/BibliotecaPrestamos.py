@@ -146,6 +146,24 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             return prestamo
         return prestamo
 
+    def patch_extender(self, fecha = "", id = ""):
+        if not fecha and not id:
+            return None
+        prestamo = None
+        url = f"{self.URL_BASE+self.ENDPOINT}/{id}/{fecha}"
+        r = requests.patch(url)
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+        if r.status_code == 200:
+            args = r.json()
+            prestamo = PrestamoFinalizado(comentario= args["mensaje"], fechaInicio= args["fechaAntigua"], fechaLimite= args["fechaNueva"])
+            print("body",prestamo.getBody())
+            print("body",args)
+
+            return prestamo
+        return prestamo
 
 
 

@@ -49,6 +49,21 @@ class PantallaPrestamos(ft.Container):
         self.modal_titulo = ft.Text("", size=18, weight="bold", color=self.TEXT)
         self.modal_contenido_dinamico = ft.Column(spacing=15)
         
+        # --- NUEVO: CONTROLES PARA EXTENSIÓN DE FECHA ---
+        self.txt_nueva_fecha = ft.TextField(
+            label="Nueva fecha límite", 
+            read_only=True, 
+            prefix_icon=ft.Icons.CALENDAR_MONTH, 
+            border_radius=8,
+            border_color=self.GRIS_BORDE,
+            on_click=self.abrir_picker_extension # Se dispara al hacer clic en el input
+        )
+        
+        self.picker_extension = ft.DatePicker(
+            on_change=self.seleccionar_fecha_extension,
+            help_text="SELECCIONA UN DÍA HÁBIL"
+        )
+        
         # --- NUEVO: CONTROLES DE ACCIÓN PERSONALIZADOS ---
         self.mensaje = ft.Container(
             visible=False,
@@ -480,17 +495,37 @@ class PantallaPrestamos(ft.Container):
 
     def abrir_dialogo_prestamo(self, e, d, accion):
         # 1. Resetear el estado visual instantáneamente
-        args = (d["prestamo"],d["estado"])
+        args = (d["prestamo"], d["estado"], d["fecha_limite"])
         print(args)
+        
         self.mensaje.visible = False
         self.modal_boton_dinamico.content = None
         self.modal_contenido_dinamico.controls.clear()
 
+        # 2. Poblar tarjeta de usuario (Fija)
         self.modal_nombre.value = d["nombre"]
         self.modal_matricula.value = f"ID: {d['identificador']}"
 
-        # 3. Simular lista de libros prestados
-        libros= self.controlador.obtenerLibros(args[0])
+        # --- NUEVO: ETIQUETA VISUAL DE FECHA LÍMITE ---
+        # Usamos el estado del préstamo para darle un color semántico al icono
+        color_estado = self.colores.get(args[1], self.AZUL)
+        
+        etiqueta_fecha = ft.Container(
+            content=ft.Row([
+                ft.Icon(ft.Icons.EVENT_NOTE, color=color_estado, size=18),
+                ft.Text(f"Fecha límite : {args[2]}", color=self.TEXT, weight="bold", size=13)
+            ], spacing=8),
+            bgcolor="surfaceVariant",
+            padding=ft.padding.symmetric(horizontal=12, vertical=8),
+            border_radius=8
+        )
+        
+        # Inyectamos la etiqueta siempre al principio del área dinámica
+        self.modal_contenido_dinamico.controls.append(etiqueta_fecha)
+        # ----------------------------------------------
+
+        # 3. Obtener y dibujar lista de libros prestados
+        libros = self.controlador.obtenerLibros(args[0])
         print(libros)
         lista_tarjetas_libros = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=10)
         for libro in libros:
@@ -501,7 +536,7 @@ class PantallaPrestamos(ft.Container):
             border_radius=12, padding=10, bgcolor="surface"
         )
 
-        # 4. Configurar según la acción
+        # 4. Configurar el resto del modal según la acción
         if accion == "devolver":
             self.modal_titulo.value = "Devolución de Material"
             self.modal_contenido_dinamico.controls.extend([
@@ -511,19 +546,30 @@ class PantallaPrestamos(ft.Container):
             self.modal_boton_dinamico.content = ft.ElevatedButton(
                 "Confirmar Devolución", bgcolor=self.VERDE, color="white", 
                 data="btn_devolver",
-                on_click=lambda e, p = args: self.controlador.finalizarPrestamo(e, p)
+                on_click=lambda e, p=args: self.controlador.finalizarPrestamo(e, p)
             )
 
         elif accion == "extender":
             self.modal_titulo.value = "Extender Préstamo"
+            
+            # Limpiamos el input por si el usuario abrió otro préstamo antes
+            self.txt_nueva_fecha.value = ""
+            self.txt_nueva_fecha.color = self.TEXT
+            
             self.modal_contenido_dinamico.controls.extend([
                 ft.Text("Ejemplares para extensión:", size=13, weight="bold", color=self.TEXT),
                 contenedor_libros_scroll,
-                ft.TextField(label="Nueva fecha límite", read_only=True, prefix_icon=ft.Icons.CALENDAR_MONTH, border_radius=8)
+                self.txt_nueva_fecha # Insertamos nuestro control referenciado
             ])
+            
+            # Botón de Confirmación (Actualizado para validar que haya fecha)
             self.modal_boton_dinamico.content = ft.ElevatedButton(
                 "Guardar Extensión", bgcolor=self.AZUL, color="white", 
-                on_click=lambda e: self.mostrar_mensaje("El alumno tiene multas pendientes.", "red")
+                on_click=lambda e, p=args: (
+                    self.controlador.extenderPrestamo(e = e,prestamo=p[0], fecha=self.txt_nueva_fecha.value) 
+                    if self.txt_nueva_fecha.value and self.txt_nueva_fecha.color != self.ROJO 
+                    else self.mostrar_mensaje("Selecciona una fecha válida primero.", "orange")
+                )
             )
 
         elif accion == "detalle":
@@ -533,17 +579,39 @@ class PantallaPrestamos(ft.Container):
                 contenedor_libros_scroll
             ])
 
-        # 5. LÓGICA DE INYECCIÓN SEGURA (La corrección principal)
-        # Verificamos si ya está en el overlay, si no, lo inyectamos
+        # 5. LÓGICA DE INYECCIÓN SEGURA
         if self.dialogo_accion not in self._page.overlay:
             self._page.overlay.append(self.dialogo_accion)
             
         self.dialogo_accion.open = True
-        
-        # Le ordenamos a la página completa que se dibuje. 
-        # Esto soluciona el RuntimeError porque Flet asocia el control al árbol.
         self._page.update()
-
     def cerrar_dialogo(self, e):
         self.dialogo_accion.open = False
         self._page.update()
+# ===== LÓGICA DEL DATEPICKER DE EXTENSIÓN =====
+    def abrir_picker_extension(self, e):
+        # Inyección segura en el overlay (Lazy Loading)
+        if self.picker_extension not in self._page.overlay:
+            self._page.overlay.append(self.picker_extension)
+        
+        self.picker_extension.open = True
+        self._page.update()
+
+    def seleccionar_fecha_extension(self, e):
+        fecha_seleccionada = self.picker_extension.value
+        
+        if fecha_seleccionada:
+            # 0=Lunes, 1=Martes... 5=Sábado, 6=Domingo
+            if fecha_seleccionada.weekday() >= 5:
+                # Borramos la selección incorrecta
+                self.picker_extension.value = None 
+                self.txt_nueva_fecha.value = "Día inhábil (Selecciona L-V)"
+                self.txt_nueva_fecha.color = self.ROJO
+                self.mostrar_mensaje("No puedes extender a fines de semana.", "red")
+            else:
+                # Aplicamos el formato ISO nativo
+                self.txt_nueva_fecha.value = fecha_seleccionada.strftime("%d/%b/%Y")
+                self.txt_nueva_fecha.color = self.TEXT
+                self.mostrar_mensaje("Fecha válida para la extensión.", "green")
+                
+        self.txt_nueva_fecha.update()

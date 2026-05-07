@@ -3,6 +3,7 @@ from Infraestructura.API.Interfaces.ResponseObject import ResponseObject
 import requests
 from Negocio.Modelo.Libro import Libro
 from Negocio.Modelo.Ejemplar import Ejemplar
+from Negocio.Modelo.ReporteEstadoEjemplar import ReporteEstadoEjemplar
 
 
 class BibliotecaEjemplares(BibliotecaClientInterface):
@@ -36,6 +37,22 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
             lib.setAutores(args["autores"])
 
         return ejem
+    
+    def getEstado(self, parametro= ""):
+        url = f"{self.URL_BASE+self.ENDPOINT}/estado"
+        r = requests.get(url)
+        reporte = None
+        try:
+            print(self.STATE_CODES[r.status_code])
+        except KeyError:
+            print("Código de respuesta desconocido")
+
+        if r.status_code == 200:
+            args = r.json()
+            reporte = ReporteEstadoEjemplar()
+            reporte.setBody(args)
+        return reporte
+
     
     def post(self, args) -> ResponseObject:
         pass
