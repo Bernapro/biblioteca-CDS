@@ -316,7 +316,8 @@ class PantallaDashboard(ft.Container):
 
         self.label_visitas_totales.value = str(datos["visitas_semana_totales"])
         self.label_usuarios_registrados.value = str(datos["usuarios_registrados"])
-        self.label_libros_disponibles.value = "N/D"
+        libros_disponibles = datos.get("libros_disponibles")
+        self.label_libros_disponibles.value = str(libros_disponibles) if libros_disponibles is not None else "N/D"
         self.label_incidencias_abiertas.value = str(datos["incidencias_abiertas"])
 
         turno = datos.get("turno", {})
