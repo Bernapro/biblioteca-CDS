@@ -85,9 +85,9 @@ class PantallaDashboard(ft.Container):
                 ft.Row(
                     spacing=15,
                     controls=[
-                        self.build_card("Sesiones activas hoy", self.label_sesiones, ft.Icons.PEOPLE_OUTLINED, self.PRIMARY),
+                        self.build_card("Sesiones activas", self.label_sesiones, ft.Icons.PEOPLE_OUTLINED, self.PRIMARY),
                         self.build_card("Préstamos activos", self.label_prestamos, ft.Icons.BOOK_OUTLINED, "#10B981"),
-                        self.build_card("Préstamos vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "error"),
+                        self.build_card("Vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "EF4444"),
                     ]
                 ),
                 ft.Row(
@@ -127,22 +127,73 @@ class PantallaDashboard(ft.Container):
         self.cargar_datos()
 
     def build_card(self, title, value, icon_name, color_hex):
+        if title == "Sesiones activas":
+            color_icono = "#3B82F6"
+            color_fondo = "#DBEAFE"
+            subtitulo = "Usuarios dentro de biblioteca"
+        elif title == "Préstamos activos":
+            color_icono = "#10B981"
+            color_fondo = "#D1FAE5"
+            subtitulo = "Préstamos actualmente vigentes"
+        else:
+            color_icono = "#EF4444"
+            color_fondo = "#FEE2E2"
+            subtitulo = "Préstamos fuera de fecha"
         return ft.Container(
             expand=True,
-            height=120,
-            padding=20,
+            height=135,
             bgcolor=self.CARD,
-            border_radius=15,
-            shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
-            content=ft.Column([
-                ft.Row([
-                    ft.Container(content=ft.Icon(icon_name, color=color_hex, size=66), padding=10),
-                    ft.Column([
-                        ft.Text(title, size=18, color=self.TEXT_SECONDARY, weight="w500"),
-                        value
-                    ], spacing=0, horizontal_alignment=ft.CrossAxisAlignment.END)
-                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
+            border=ft.border.all(
+                1.5,
+                "#BFC8D4"
+            ),
+            border_radius=22,
+            padding=18,
+            shadow=ft.BoxShadow(
+                blur_radius=20,
+                spread_radius=1,
+                color="#00000018",
+                offset=ft.Offset(0, 6)
+            ),
+            content=ft.Row(
+                spacing=20,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                controls=[
+                    ft.Container(
+                        width=72,
+                        height=72,
+                        border_radius=36,
+                        bgcolor=color_fondo,
+                        alignment=ft.Alignment(0, 0),
+                        content=ft.Icon(
+                            icon_name,
+                            color=color_icono,
+                            size=36
+                        )
+                    ),
+                    ft.Column(
+                        expand=True,
+                        alignment=ft.MainAxisAlignment.START,
+                        spacing=2,
+                        controls=[
+                            ft.Text(
+                                title,
+                                size=18,
+                                weight="w600",
+                                text_align=ft.TextAlign.CENTER,
+                                color=self.TEXT_MAIN
+                            ),
+                            value,
+                            ft.Text(
+                                subtitulo,
+                                size=12,
+                                text_align=ft.TextAlign.CENTER,
+                                color=self.TEXT_SECONDARY
+                            )
+                        ]
+                    )
+                ]
+            )
         )
 
     def build_turno_card(self):
@@ -164,9 +215,18 @@ class PantallaDashboard(ft.Container):
         return ft.Container(
             height=415,
             bgcolor=self.CARD,
-            border_radius=20,
+            border=ft.border.all(
+                1.5,
+                "#BFC8D4"
+            ),
+            border_radius=22,
             padding=25,
-            shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
+            shadow=ft.BoxShadow(
+                blur_radius=20,
+                spread_radius=1,
+                color="#00000018",
+                offset=ft.Offset(0, 6)
+            ),
             content=ft.Column(
                 spacing=12,
                 controls=[
@@ -210,11 +270,20 @@ class PantallaDashboard(ft.Container):
             )
 
         return ft.Container(
-            height=480,
+            height=415,
             bgcolor=self.CARD,
-            border_radius=20,
+            border=ft.border.all(
+                1.5,
+                "#BFC8D4"
+            ),
+            border_radius=22,
             padding=25,
-            shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
+            shadow=ft.BoxShadow(
+                blur_radius=20,
+                spread_radius=1,
+                color="#00000018",
+                offset=ft.Offset(0, 6)
+            ),
             content=ft.Column(
                 spacing=30,
                 controls=[
@@ -253,11 +322,20 @@ class PantallaDashboard(ft.Container):
         )
 
         return ft.Container(
-            height=480,
+            height=415,
             bgcolor=self.CARD,
-            border_radius=20,
+            border=ft.border.all(
+                1.5,
+                "#BFC8D4"
+            ),
+            border_radius=22,
             padding=25,
-            shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
+            shadow=ft.BoxShadow(
+                blur_radius=20,
+                spread_radius=1,
+                color="#00000018",
+                offset=ft.Offset(0, 6)
+            ),
             content=ft.Column(
                 spacing=20,
                 controls=[
