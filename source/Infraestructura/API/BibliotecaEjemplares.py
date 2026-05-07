@@ -41,29 +41,3 @@ class BibliotecaEjemplares(BibliotecaClientInterface):
         pass
 
     #
-    def listar(self) -> list[Ejemplar]:
-        url = f"{self.URL_BASE + self.ENDPOINT}"
-        r = requests.get(url)
-        try:
-            print(self.STATE_CODES[r.status_code])
-        except KeyError:
-            print("Código de respuesta desconocido")
-
-        ejemplares = []
-        if r.status_code == 200:
-            items = r.json()
-            ejemplares = [
-                Ejemplar(
-                    id=item.get("id"),
-                    noAdquisicion=item.get("noAdquisicion"),
-                    libro=Libro(),
-                    disponible=item.get("disponible", False)
-                )
-                for item in items
-            ]
-            for ejemplar, item in zip(ejemplares, items):
-                lib = ejemplar.getLibro()
-                lib.setTitulo(item.get("titulo", ""))
-                lib.setAutores(item.get("autores", []))
-
-        return ejemplares
