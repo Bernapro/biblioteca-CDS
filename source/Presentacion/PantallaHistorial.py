@@ -608,7 +608,7 @@ class PantallaHistorial(ft.Container):
 
         registro = next(
             (x for x in self.datos_completos 
-            if x["identificador"] == d["identificador"]),
+            if x["id"] == d["id"]),
             None
         )
 

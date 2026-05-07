@@ -16,6 +16,7 @@ class ControladorHistorial:
         """Mapea datos completos a formato simple para tabla"""
         return [
             {
+                "id": d["id_registro"],
                 "identificador": d["identificador"],
                 "nombre": d["nombre_completo"],
                 "tipo": d["tipo_usuario"].upper(),
