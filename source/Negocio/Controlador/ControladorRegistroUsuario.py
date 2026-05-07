@@ -25,7 +25,6 @@ class ControladorPantallaRegistroUsuario:
     def obtener_siguiente_vis(self):
         return self.__repo_usuarios.obtener_siguiente_vis()
 
-    # 🔹 2. Ya no recibe "instancia_modelo", solo recibe el diccionario de la UI
     def guardar_usuario(self, datos_usuario):
         try:
             tipo = datos_usuario.get("tipo_usuario", "").upper()
