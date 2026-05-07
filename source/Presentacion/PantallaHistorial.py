@@ -11,16 +11,13 @@ class PantallaHistorial(ft.Container):
         super().__init__()
         self._page = page
         
-        # Controlador
         self.controlador_historial = ControladorHistorial()
         
-        # Propiedades del Contenedor Principal
         self.expand = True
         self.padding = 30
         self.bgcolor = "transparent"
         self.border_radius = 30
 
-        # ===== COLORES CONSTANTES =====
         self.AZUL = "#3B82F6"
         self.TEXT = "onSurface"
         self.GRIS_TEXTO = "onSurfaceVariant"
@@ -31,7 +28,6 @@ class PantallaHistorial(ft.Container):
         self.ROJO = "#EF4444"
         self.NARANJA = "#F59E0B"
 
-        # ===== CONTROLES DINÁMICOS =====
         self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXT)
         self.txt_fecha_fin = ft.Text("Fecha fin", color=self.TEXT)
 
@@ -63,7 +59,6 @@ class PantallaHistorial(ft.Container):
             label_style=ft.TextStyle(color=self.GRIS_TEXTO),
         )
         
-        # DROPDOWN TIPO
         self.combo_tipo = ft.Dropdown(
             expand=True,
             label="Tipo de usuario",
@@ -82,7 +77,6 @@ class PantallaHistorial(ft.Container):
             on_select=self.filtrar
         )
 
-        # DROPDOWN ESTADO
         self.combo_estado = ft.Dropdown(
             expand=True,
             label="Estado",
@@ -100,7 +94,6 @@ class PantallaHistorial(ft.Container):
             on_select=self.filtrar
         )
 
-        # BOTÓN EXPORTAR
         self.exportando = False
 
         self.btn_exportar = ft.Container(
@@ -147,7 +140,6 @@ class PantallaHistorial(ft.Container):
 
         self.txt_hoy = ft.Text("0", size=18, weight="bold", color=self.TEXT)
         
-        # CARD HOY
         self.card_hoy = ft.Container(
             padding=ft.padding.symmetric(horizontal=15, vertical=5),
             bgcolor=self.CARD,
@@ -190,7 +182,6 @@ class PantallaHistorial(ft.Container):
         self.controlador_historial.cerrar_registros()
         self.filtrar()
         
-    # ===== LÓGICA =====
     def seleccionar_inicio(self, e):
         if e.control.value:
             self.txt_fecha_inicio.value = e.control.value.strftime("%Y-%m-%d")
@@ -245,14 +236,12 @@ class PantallaHistorial(ft.Container):
     def exportar_excel(self, e):
         nombre = self.generar_nombre_excel()
 
-        # Crear ventana root oculta para el diálogo
         root = tk.Tk()
         root.withdraw()
-        root.attributes('-topmost', True)  # Mantener en primer plano
+        root.attributes('-topmost', True)  
         root.lift()
         root.focus()
         
-        # Abrir diálogo de guardado
         ruta = filedialog.asksaveasfilename(
             title="Guardar Excel",
             defaultextension=".xlsx",
@@ -306,7 +295,6 @@ class PantallaHistorial(ft.Container):
             ]
 
     def limpiar_filtros(self, e=None):
-        # Reset valores usando utilidades
         Herramientas.limpiar_control(self.input_busqueda)
         Herramientas.reset_dropdown(self.combo_tipo)
         Herramientas.reset_dropdown(self.combo_estado)
@@ -318,7 +306,6 @@ class PantallaHistorial(ft.Container):
         self.combo_tipo.value = "Todos"
         self.combo_estado.value = "Todos"
 
-        # Refrescar filtros
         self.filtrar()
 
         if self._page:
@@ -531,7 +518,6 @@ class PantallaHistorial(ft.Container):
             self.card_hoy
         ], spacing=10)
 
-        # Panel de filtros con ancho completo
         filtros_panel = ft.Container(
             bgcolor=self.CARD,
             border_radius=20,
@@ -575,10 +561,6 @@ class PantallaHistorial(ft.Container):
             tabla_panel,
             footer_panel  
         ], spacing=15, expand=True)
-
-    # =======================================================
-    # 🔥 NUEVO: LÓGICA DE LA CREDENCIAL DE DETALLES
-    # =======================================================
     
     def crear_badge_icono(self, icono, color_icono, color_fondo, titulo, valor):
         return ft.Row([
@@ -610,7 +592,6 @@ class PantallaHistorial(ft.Container):
         if not registro:
             return
 
-        # 🔥 USAR registro (NO d)
         nombre = str(registro.get("nombre_completo", "Desconocido"))
         identificador = str(registro.get("identificador", "N/A"))
         tipo = str(registro.get("tipo", "ALUMNO")).upper()
@@ -630,7 +611,6 @@ class PantallaHistorial(ft.Container):
         n_plaza = str(registro.get("n_plaza") or "N/A")
         institucion = str(registro.get("institucion") or "N/A")
 
-        # === DATOS DINÁMICOS DESDE LA BASE DE DATOS SEGÚN EL ROL ===
         badges_dinamicos = []
         
         if tipo == "ALUMNO":
@@ -642,10 +622,8 @@ class PantallaHistorial(ft.Container):
         elif tipo == "VISITANTE":
             badges_dinamicos.append(self.crear_badge_icono(ft.Icons.ACCOUNT_BALANCE_OUTLINED, self.NARANJA, "transparent", "Institución:", institucion))
 
-        # 2. Lógica para saber si sigue en la biblioteca o ya salió
         en_curso = (salida == "" or salida == "-" or salida == "None")
 
-        # Colores y textos dinámicos según el estado
         color_estado = self.NARANJA if en_curso else self.VERDE
         bg_estado = "transparent"
         borde_estado = color_estado
@@ -653,7 +631,6 @@ class PantallaHistorial(ft.Container):
         texto_estado_h2 = "El usuario aún no ha registrado su salida en la biblioteca." if en_curso else "El usuario registró su salida correctamente."
         icono_estado = ft.Icons.ACCESS_TIME if en_curso else ft.Icons.CHECK_CIRCLE
 
-        # ===== SECCIÓN 1: PERFIL =====
         seccion_perfil = ft.Container(
             bgcolor="surfaceVariant", border_radius=15, padding=20,
             content=ft.Row([
@@ -676,8 +653,6 @@ class PantallaHistorial(ft.Container):
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
-        # ===== SECCIÓN 2: TIEMPOS =====
-        # Contenedor dinámico para la salida
         if en_curso:
             ui_salida = ft.Container(
                 width=160,
@@ -703,7 +678,6 @@ class PantallaHistorial(ft.Container):
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
-        # ===== SECCIÓN 3: ESTADO =====
         seccion_estado = ft.Container(
             bgcolor=bg_estado, border=ft.border.all(1, borde_estado), border_radius=15, padding=20,
             content=ft.Row([
@@ -726,7 +700,6 @@ class PantallaHistorial(ft.Container):
             dialogo.open = False
             self._page.update()
 
-        # ===== ENSAMBLAJE DEL DIÁLOGO =====
         dialogo = ft.AlertDialog(
             shape=ft.RoundedRectangleBorder(radius=20),
             bgcolor=self.CARD,
@@ -750,7 +723,6 @@ class PantallaHistorial(ft.Container):
             actions_padding=ft.padding.only(right=20, bottom=20)
         )
 
-        # Abrir el diálogo en la pantalla actual (Compatibilidad con versiones de Flet)
         self._page.overlay.append(dialogo)
         dialogo.open = True
         self._page.update()

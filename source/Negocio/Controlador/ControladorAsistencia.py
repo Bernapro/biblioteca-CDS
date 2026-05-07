@@ -32,7 +32,7 @@ class ControladorAsistencia:
 
             nombre_completo = f"{usuario['nombre']} {usuario['ap_paterno']} {usuario['ap_materno']}"
 
-            # Cerrar registros viejos primero (procedimiento)
+            # Cerrar registros viejos primero 
             self.__repo.ejecutar_procedimiento("cerrar_registros_pendientes")
             
             # Procesar asistencia

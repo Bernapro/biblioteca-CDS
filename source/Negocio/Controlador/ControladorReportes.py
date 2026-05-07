@@ -8,7 +8,6 @@ class ControladorReportes:
 
     def generar_reporte(self, tipo, fecha_inicio=None, fecha_fin=None, tipo_usuario=None):
 
-        # 🔹 normalizar tipo usuario
         if tipo_usuario:
             tipo_usuario = tipo_usuario.upper()
             if tipo_usuario == "ALUMNOS":
@@ -104,15 +103,11 @@ class ControladorReportes:
         ws = wb.active
         ws.title = "Reporte"
 
-        # =========================
         # HEADERS
-        # =========================
         headers = list(datos[0].keys())
         ws.append(headers)
 
-        # =========================
         # DATOS
-        # =========================
         for d in datos:
 
             fila = []
@@ -126,10 +121,7 @@ class ControladorReportes:
                 fila.append(valor)
 
             ws.append(fila)
-
-        # =========================
         # AUTO AJUSTE COLUMNAS
-        # =========================
         for col in ws.columns:
 
             max_length = 0
@@ -146,9 +138,7 @@ class ControladorReportes:
 
             ws.column_dimensions[col_letter].width = max_length + 2
 
-        # =========================
         # GUARDAR
-        # =========================
         wb.save(ruta)
 
         return True
