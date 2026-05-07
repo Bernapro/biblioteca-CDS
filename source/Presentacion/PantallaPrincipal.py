@@ -45,7 +45,7 @@ class PantallaPrincipal(ft.Container):
 
         # CARGAR PRIMERA VISTA MANUALMENTE DESDE AQUÍ
         self.vistas[0] = dsh(self.main_page)
-
+        self.vistas[0].ir_reportes = lambda: self.sidebar.cambiar_seleccion(3)
         # Área de contenido
         self.content_area = ft.Container(
             expand=True,
