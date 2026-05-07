@@ -98,9 +98,6 @@ class ControladorPrestamos:
         if res:
             msg = res.getComentario()
             color = "green" if res.getFechaInicio() != res.getFechaLimite() else "orange"
-            boton = e.control
-            if boton:
-                boton.visible = False
         self.__pantalla.cargar_datos()
         self.__pantalla.mostrar_mensaje(msg, color)
         
