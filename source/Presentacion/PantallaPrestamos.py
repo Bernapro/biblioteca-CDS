@@ -105,7 +105,6 @@ class PantallaPrestamos(ft.Container):
             actions=[], 
         )
         
-        self._page.overlay.append(self.dialogo_accion)
         self.build_ui()
 
     #TARJETAS
@@ -233,14 +232,14 @@ class PantallaPrestamos(ft.Container):
     def cargar_datos(self, e=None):
         # Obtenemos los datos desde el controlador y llenamos las filas
         datos = self.controlador.obtener_prestamos()
-        
-        self.total_registros = len(datos)
+        print("datos",datos)
         inicio = (self.pagina_actual - 1) * self.registros_por_pagina
         fin = inicio + self.registros_por_pagina
-        datos_paginados = datos[inicio:fin]
+        datos_paginados = datos
+        print("datos_paginados",datos_paginados)
 
         self.tabla.rows = [self.build_row(data) for data in datos_paginados]
-        print(data.key for data in self.tabla.rows)
+        #print(data.key for data in self.tabla.rows)
 
         # También actualizamos las tarjetas de resumen dinámicamente
         if hasattr(self, 'resumen'):
@@ -264,6 +263,13 @@ class PantallaPrestamos(ft.Container):
         ]
 
         if e:
+            # 1. Forzamos a que la tabla repinte sus filas
+            self.tabla.update()
+            
+            # 2. Forzamos a que el pie de página repinte los botones
+            self.footer_tabla.update()
+            
+            # 3. Refrescamos el contenedor global por si acaso
             self.update()
 
     # Función detectada por PantallaPrincipal para refrescar al entrar a la vista
@@ -475,24 +481,19 @@ class PantallaPrestamos(ft.Container):
     def abrir_dialogo_prestamo(self, e, d, accion):
         # 1. Resetear el estado visual instantáneamente
         args = (d["prestamo"],d["estado"])
+        print(args)
         self.mensaje.visible = False
         self.modal_boton_dinamico.content = None
         self.modal_contenido_dinamico.controls.clear()
 
-        # 2. Poblar tarjeta de usuario
         self.modal_nombre.value = d["nombre"]
         self.modal_matricula.value = f"ID: {d['identificador']}"
-        self.modal_carrera.value = "Programa: Ing. Software"
-        self.modal_semestre.value = "5to Semestre"
 
         # 3. Simular lista de libros prestados
-        libros_simulados = [
-            {"titulo": "Cien años de soledad", "autor": "Gabriel García Márquez", "adq": "ADQ-001245"},
-            {"titulo": "Estructuras de Datos", "autor": "Luis Joyanes", "adq": "ADQ-008890"}
-        ]
-        
+        libros= self.controlador.obtenerLibros(args[0])
+        print(libros)
         lista_tarjetas_libros = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=10)
-        for libro in libros_simulados:
+        for libro in libros:
             lista_tarjetas_libros.controls.append(self.crear_item_libro_modal(libro["titulo"], libro["autor"], libro["adq"]))
 
         contenedor_libros_scroll = ft.Container(

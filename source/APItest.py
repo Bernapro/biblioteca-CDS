@@ -2,6 +2,6 @@ from Infraestructura.API.BibliotecaEjemplares import BibliotecaEjemplares
 from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
 import uuid
 b = BibliotecaPrestamos()
-res = b.patch("284a9fda-e5c9-4626-a752-0e6b9a076ae2")
-print(res.getBody())
+res = b.getDetalle("f8397485-9703-4490-8662-0afba2f5c143")
+print(res)
 

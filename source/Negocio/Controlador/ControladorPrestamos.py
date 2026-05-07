@@ -13,13 +13,29 @@ class ControladorPrestamos:
         self.__endPrestamos = endPrestamos
         self.__repo = repo
 
+    def obtenerLibros(self, id = ""):
+        print(id)
+        datos = [{}]
+        if id:
+            lista = self.__endPrestamos.getDetalle(id)
+            print(lista)
+            if lista:
+                datos = [
+                    {
+                    "titulo": body["libro"].getTitulo() if body["libro"] else "N/A",
+                    "autor": ", ".join(body["libro"].getAutores()) if body["libro"] else "N/A",
+                    "adq": body["noAdquisicion"], 
+                    }
+                    for ejemplar in lista 
+                    for body in [ejemplar.getBody()]  
+                ]
+        return datos
 
 
     def obtener_prestamos(self, busqueda="", estado="Todos"):
         # Aquí irá la consulta a la base de datos en el futuro
         # Por ahora, retornamos los datos simulados que estaban en la vista
-        print(self.__pantalla.texto_pagina.value)
-        prestamos = self.__endPrestamos.getPage(nPage=int(self.__pantalla.texto_pagina.value)-1,len=10)
+        prestamos = self.__endPrestamos.getPage(nPage=int(self.__pantalla.pagina_actual)-1,len=10)
         datos = [{}]
         identificadores = [prestamo.getUsuario().getIdentificador() for prestamo in prestamos.content]
         diccionarios = self.__repo.obtener_por_bloque(pks=identificadores, tabla="usuario", columna="identificador")
@@ -27,7 +43,8 @@ class ControladorPrestamos:
         datos["identificador"]: Usuario(**datos) 
         for datos in diccionarios
         }
-        print(usuarios_dict)
+        self.__pantalla.total_registros = prestamos.metadata.total_elements
+        
         datos = [
         {
         "prestamo": body["id"],
@@ -50,7 +67,6 @@ class ControladorPrestamos:
             
             if match_texto and match_estado:
                 resultados.append(d)
-                
         return resultados
 
     def obtener_estadisticas(self):
