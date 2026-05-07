@@ -35,7 +35,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             "len": len_p
         }
         
-        r = requests.get(url, params=args)
+        r = requests.get(url, params=args, timeout= 3.0)
         
         try:
             print(self.STATE_CODES[r.status_code])
@@ -80,7 +80,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             return None
         url = f"{self.URL_BASE+self.ENDPOINT}"
         prestamo = None
-        r = requests.post(url,json=args)
+        r = requests.post(url,json=args, timeout= 3.0)
         try:
             print(self.STATE_CODES[r.status_code])
         except KeyError:
@@ -94,7 +94,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
 
     def getEstado(self, parametro = 3) -> ResponseObject:
         url = f"{self.URL_BASE+self.ENDPOINT}/estado/{parametro}"
-        r = requests.get(url)
+        r = requests.get(url, timeout= 3.0)
         try:
             print(self.STATE_CODES[r.status_code])
         except KeyError:
@@ -109,7 +109,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
         if not id:
             return list()
         url = f"{self.URL_BASE+self.ENDPOINT}/detalle/{id}"
-        r = requests.get(url)
+        r = requests.get(url, timeout= 3.0)
         listaEjemplares = list()
         try:
             print(self.STATE_CODES[r.status_code])
@@ -134,7 +134,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             return None
         prestamo = None
         url = f"{self.URL_BASE+self.ENDPOINT}/{args}"
-        r = requests.patch(url)
+        r = requests.patch(url, timeout= 3.0)
         try:
             print(self.STATE_CODES[r.status_code])
         except KeyError:
@@ -151,7 +151,7 @@ class BibliotecaPrestamos(BibliotecaClientInterface):
             return None
         prestamo = None
         url = f"{self.URL_BASE+self.ENDPOINT}/{id}/{fecha}"
-        r = requests.patch(url)
+        r = requests.patch(url, timeout= 3.0)
         try:
             print(self.STATE_CODES[r.status_code])
         except KeyError:
