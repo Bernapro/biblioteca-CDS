@@ -4,10 +4,6 @@ import flet as ft
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from Presentacion.main import run
-from Negocio.Modelo.Alumno import Alumno
-from datetime import date
-from Negocio.Modelo.RepositorioImpl import RepositorioImpl
-from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Persistencia.Postgres.Pool.DBPool import db
 
 
