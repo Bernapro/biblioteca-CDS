@@ -41,6 +41,7 @@ class PantallaDashboard(ft.Container):
             on_click=self.cargar_datos,
             style=ft.ButtonStyle(
                 bgcolor=self.PRIMARY,
+                overlay_color="white24",
                 color="onPrimary",
                 shape=ft.RoundedRectangleBorder(radius=10),
                 padding=ft.padding.symmetric(horizontal=22, vertical=16)
@@ -278,6 +279,7 @@ class PantallaDashboard(ft.Container):
             style=ft.ButtonStyle(
                 bgcolor=self.PRIMARY,
                 color="onPrimary",
+                overlay_color="white24",
                 shape=ft.RoundedRectangleBorder(radius=12),
                 padding=ft.padding.symmetric(
                     horizontal=22,

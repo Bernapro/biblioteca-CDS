@@ -45,7 +45,6 @@ class PantallaAsistencia(ft.Container):
 
     def mostrar_resultado(self, estado, nombre, tipo_usuario):
 
-        # COLORES POR TIPO 
         colores = {
             "ALUMNO": "#3B82F6",
             "PERSONAL": "#10B981",
@@ -171,6 +170,7 @@ class PantallaAsistencia(ft.Container):
                         data="btn_qr",
                         style=ft.ButtonStyle(
                             bgcolor="onSurface",
+                            overlay_color="white24",
                             color="surface"
                         )
                     ),

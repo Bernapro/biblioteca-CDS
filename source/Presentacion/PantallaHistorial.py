@@ -41,6 +41,7 @@ class PantallaHistorial(ft.Container):
                 ft.Text("Limpiar filtros", color="white", size=12, weight="w500")
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=5),
             bgcolor=self.ROJO,
+            ink=True,
             padding=ft.padding.symmetric(horizontal=12, vertical=6),
             border_radius=10,
             on_click=self.limpiar_filtros
@@ -103,6 +104,7 @@ class PantallaHistorial(ft.Container):
             ], alignment=ft.MainAxisAlignment.CENTER, spacing=8),
             bgcolor=self.AZUL,
             border_radius=12,
+            ink=True,
             padding=ft.padding.symmetric(horizontal=15),
             height=38,
             expand=True,
@@ -118,6 +120,7 @@ class PantallaHistorial(ft.Container):
             border_radius=10,
             bgcolor="transparent",
             height=38,
+            ink=True,
             expand=True,
             on_click=self.exportar_excel
         )
@@ -131,6 +134,7 @@ class PantallaHistorial(ft.Container):
             bgcolor="transparent",
             border_radius=10,
             height=38,
+            ink=True,
             expand=True,
             on_click=self.exportar_pdf
         )
