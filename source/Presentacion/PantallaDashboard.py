@@ -1,14 +1,14 @@
 import flet as ft
 
 from Negocio.Controlador.ControladorDashboard import ControladorDashboard
-
+from Presentacion.PantallaReportes import PantallaReportes
 
 class PantallaDashboard(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self._page = page
         self.controlador = ControladorDashboard()
-
+        self.ir_reportes = None
         self.CARD = "surface"
         self.TEXT_SECONDARY = "onSurfaceVariant"
         self.PRIMARY = "primary"
@@ -18,16 +18,16 @@ class PantallaDashboard(ft.Container):
         self.label_prestamos = ft.Text("N/D", size=28, weight="bold", color=self.TEXT_MAIN)
         self.label_vencidos = ft.Text("N/D", size=28, weight="bold", color=self.TEXT_MAIN)
 
-        self.label_visitas_totales = ft.Text("0", size=16, weight="bold", color=self.TEXT_MAIN)
-        self.label_usuarios_registrados = ft.Text("0", size=16, weight="bold", color=self.TEXT_MAIN)
-        self.label_libros_disponibles = ft.Text("N/D", size=16, weight="bold", color=self.TEXT_MAIN)
-        self.label_incidencias_abiertas = ft.Text("0", size=16, weight="bold", color=self.TEXT_MAIN)
+        self.label_visitas_totales = ft.Text("0", size=22, weight="bold", color=self.TEXT_MAIN)
+        self.label_usuarios_registrados = ft.Text("0", size=22, weight="bold", color=self.TEXT_MAIN)
+        self.label_libros_disponibles = ft.Text("N/D", size=22, weight="bold", color=self.TEXT_MAIN)
+        self.label_incidencias_abiertas = ft.Text("0", size=22, weight="bold", color=self.TEXT_MAIN)
 
-        self.turno_estado = ft.Text("Matutino", size=24, weight="bold", color=self.TEXT_MAIN)
-        self.turno_inicio = ft.Text("08:00 AM", size=14, color=self.TEXT_MAIN)
-        self.turno_fin = ft.Text("02:00 PM", size=14, color=self.TEXT_MAIN)
-        self.turno_restante = ft.Text("00:00:00", size=14, color=self.TEXT_MAIN)
-        self.turno_duracion = ft.Text("6 horas", size=14, color=self.TEXT_MAIN)
+        self.turno_estado = ft.Text("Matutino", size=18, weight="bold", color=self.TEXT_MAIN)
+        self.turno_inicio = ft.Text("08:00 AM", size=17, color=self.TEXT_MAIN)
+        self.turno_fin = ft.Text("02:00 PM", size=17, color=self.TEXT_MAIN)
+        self.turno_restante = ft.Text("00:00:00", size=17, color=self.TEXT_MAIN)
+        self.turno_duracion = ft.Text("6 horas", size=17, color=self.TEXT_MAIN)
 
         self.bar_labels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
         self.bar_value_labels = []
@@ -56,18 +56,37 @@ class PantallaDashboard(ft.Container):
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     controls=[
                         ft.Column([
-                            ft.Row([ft.Text("Hola, Toileteros", size=28, weight="bold", color=self.TEXT_MAIN), ft.Text("👋", size=24)]),
-                            ft.Text("Aquí tienes un resumen del sistema hoy.", size=14, color=self.TEXT_SECONDARY),
+                            ft.Row([
+                                ft.Text(
+                                    "Hola, Toileteros",
+                                    size=28,
+                                    weight="bold",
+                                    color=self.TEXT_MAIN
+                                ),
+                                ft.Text("👋", size=24)
+                            ]),
+                            ft.Text(
+                                "Aquí tienes un resumen del sistema hoy.",
+                                size=14,
+                                color=self.TEXT_SECONDARY
+                            ),
                         ], spacing=4),
-                        self.btn_actualizar
-                    ]
+
+                        ft.Row(
+                            spacing=10,
+                            controls=[
+                                self.btn_actualizar,
+                                self.build_boton()
+                            ]
+                        )
+                    ]       
                 ),
                 ft.Row(
                     spacing=15,
                     controls=[
                         self.build_card("Sesiones activas hoy", self.label_sesiones, ft.Icons.PEOPLE_OUTLINED, self.PRIMARY),
                         self.build_card("Préstamos activos", self.label_prestamos, ft.Icons.BOOK_OUTLINED, "#10B981"),
-                        self.build_card("Vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "error"),
+                        self.build_card("Préstamos vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "error"),
                     ]
                 ),
                 ft.Row(
@@ -79,7 +98,6 @@ class PantallaDashboard(ft.Container):
                             spacing=15,
                             controls=[
                                 self.build_turno_card(),
-                                self.build_boton()
                             ]
                         ),
                         ft.Column(
@@ -117,9 +135,9 @@ class PantallaDashboard(ft.Container):
             shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
             content=ft.Column([
                 ft.Row([
-                    ft.Container(content=ft.Icon(icon_name, color=color_hex, size=22), padding=10),
+                    ft.Container(content=ft.Icon(icon_name, color=color_hex, size=66), padding=10),
                     ft.Column([
-                        ft.Text(title, size=12, color=self.TEXT_SECONDARY, weight="w500"),
+                        ft.Text(title, size=18, color=self.TEXT_SECONDARY, weight="w500"),
                         value
                     ], spacing=0, horizontal_alignment=ft.CrossAxisAlignment.END)
                 ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
@@ -132,7 +150,7 @@ class PantallaDashboard(ft.Container):
                 spacing=12,
                 controls=[
                     ft.Container(
-                        content=ft.Icon(icono, size=16, color=self.PRIMARY),
+                        content=ft.Icon(icono, size=18, color=self.PRIMARY),
                         padding=8
                     ),
                     ft.Column([
@@ -149,9 +167,9 @@ class PantallaDashboard(ft.Container):
             padding=25,
             shadow=ft.BoxShadow(blur_radius=15, color="#0000000D"),
             content=ft.Column(
-                spacing=20,
+                spacing=12,
                 controls=[
-                    ft.Text("Turno actual", size=16, weight="bold", color=self.TEXT_MAIN),
+                    ft.Container(content=ft.Text("Turno actual", size=16, weight="bold", color=self.TEXT_MAIN), alignment=ft.Alignment(0, 0), width=float('inf')),
                     ft.Container(
                         content=ft.Row([
                             ft.Icon(ft.Icons.CHECK_CIRCLE_OUTLINED, color=self.PRIMARY, size=20),
@@ -181,9 +199,9 @@ class PantallaDashboard(ft.Container):
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 controls=[
                     ft.Row([
-                        ft.Container(content=ft.Icon(icono, size=18, color=color), padding=8),
+                        ft.Container(content=ft.Icon(icono, size=24, color=color), padding=8),
                         ft.Column([
-                            ft.Text(titulo, size=12, color=self.TEXT_SECONDARY),
+                            ft.Text(titulo, size=16, color=self.TEXT_SECONDARY),
                             valor
                         ], spacing=0)
                     ])
@@ -199,7 +217,7 @@ class PantallaDashboard(ft.Container):
             content=ft.Column(
                 spacing=30,
                 controls=[
-                    ft.Text("Resumen general", size=16, weight="bold", color=self.TEXT_MAIN),
+                    ft.Container(content=ft.Text("Resumen general", size=16, weight="bold", color=self.TEXT_MAIN), alignment=ft.Alignment(0, 0), width=float('inf')),
                     item_lista(ft.Icons.VISIBILITY_OUTLINED, self.PRIMARY, "Visitas totales", self.label_visitas_totales),
                     item_lista(ft.Icons.PERSON_OUTLINE, "#10B981", "Usuarios registrados", self.label_usuarios_registrados),
                     item_lista(ft.Icons.BOOK_OUTLINED, "#8B5CF6", "Libros disponibles", self.label_libros_disponibles),
@@ -242,30 +260,36 @@ class PantallaDashboard(ft.Container):
             content=ft.Column(
                 spacing=20,
                 controls=[
-                    ft.Row(
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        controls=[
-                            ft.Text("Gráfica de la semana", size=16, weight="bold", color=self.TEXT_MAIN),
-                        ]
-                    ),
+                    ft.Container(content=ft.Text("Visitas en la semana", size=16, weight="bold", color=self.TEXT_MAIN), alignment=ft.Alignment(0, 0), width=float('inf')),
                     self.bar_chart_row
                 ]
             )
         )
 
     def build_boton(self):
-        return ft.Container(
-            height=50,
-            width=float("inf"),
-            alignment=ft.Alignment(0, 0),
-            border_radius=12,
-            bgcolor=self.PRIMARY,
-            shadow=ft.BoxShadow(blur_radius=10, color="black12"),
+        return ft.ElevatedButton(
             content=ft.Row([
-                ft.Icon(ft.Icons.PICTURE_AS_PDF_OUTLINED, color="onPrimary", size=20),
-                ft.Text("Generar Reporte PDF", size=14, color="onPrimary", weight="bold")
-            ], alignment=ft.MainAxisAlignment.CENTER, spacing=10)
+                ft.Icon(ft.Icons.ANALYTICS_OUTLINED, size=20),
+                ft.Text("Generar Reportes", size=14, weight="bold")
+            ],
+            spacing=10,
+            alignment=ft.MainAxisAlignment.CENTER),
+            on_click=self.abrir_reportes,
+            style=ft.ButtonStyle(
+                bgcolor=self.PRIMARY,
+                color="onPrimary",
+                shape=ft.RoundedRectangleBorder(radius=12),
+                padding=ft.padding.symmetric(
+                    horizontal=22,
+                    vertical=16
+                )
+            )
         )
+
+    def abrir_reportes(self, e):
+
+        if self.ir_reportes:
+            self.ir_reportes()
 
     def actualizar_barras(self, datos_semana):
         valores = [datos_semana.get(i, 0) for i in range(1, 8)]
