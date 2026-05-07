@@ -46,10 +46,7 @@ class ControladorHistorial:
             }
             for d in datos
         ]
-
-        # =========================
-        # PUBLICOS
-        # =========================
+    
     def obtener_historial(
         self,
         texto="",

@@ -137,10 +137,15 @@ class PantallaRegistroUsuario(ft.Container):
             width=350,
             read_only=True,
             visible=False,
-            border_color=self.GRIS_BORDE,
-            border_radius=12,
-            focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+
+            border_color="transparent",
+            bgcolor="surfaceVariant",
+
+            color=self.TEXT,
+
+            text_style=ft.TextStyle(
+                weight="bold"
+            )
         )
 
         self.contenedor_dinamico = ft.Column(
@@ -314,13 +319,12 @@ class PantallaRegistroUsuario(ft.Container):
             Herramientas.mostrar([self.n_plaza])
         elif tipo == "Visitante":
             Herramientas.mostrar([self.institucion])
-            siguiente = self.controlador.obtener_siguiente_vis()
-            self.identificador_preview.value = siguiente
+            self.identificador_preview.value = "Se generará automáticamente"  
             self.identificador_preview.visible = True
 
         self.update()
 
-        #  asíncrono para solucionar el bug del Flet
+        #  asíncrono 
         def forzar_foco():
             import time
             time.sleep(0.2) 
