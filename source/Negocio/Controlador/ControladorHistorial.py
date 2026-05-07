@@ -16,6 +16,7 @@ class ControladorHistorial:
         """Mapea datos completos a formato simple para tabla"""
         return [
             {
+                "id": d["id_registro"],
                 "identificador": d["identificador"],
                 "nombre": d["nombre_completo"],
                 "tipo": d["tipo_usuario"].upper(),
@@ -31,7 +32,7 @@ class ControladorHistorial:
             {
                 "id": d["id_registro"],
                 "identificador": d["identificador"],
-                "nombre_completo": d["nombre_completo"],  # 🔥 clave
+                "nombre_completo": d["nombre_completo"],  
                 "tipo": d["tipo_usuario"],
                 "fecha_entrada": d["fecha_entrada"],
                 "fecha_salida": d["fecha_salida"],
@@ -45,10 +46,7 @@ class ControladorHistorial:
             }
             for d in datos
         ]
-
-        # =========================
-        # PUBLICOS
-        # =========================
+    
     def obtener_historial(
         self,
         texto="",
@@ -153,9 +151,6 @@ class ControladorHistorial:
         from datetime import date
         return date.today()
 
-    # =========================
-    # EXPORTAR EXCEL
-    # =========================
     def exportar_excel(self, ruta, texto="", fecha_inicio=None, fecha_fin=None, tipo="Todos", estado="Todos"):
         """Exporta historial filtrado a Excel"""
         if fecha_inicio and isinstance(fecha_inicio, str):

@@ -1,5 +1,4 @@
 from datetime import datetime, date, time, timedelta
-
 from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 from Infraestructura.API.BibliotecaPrestamos import BibliotecaPrestamos
@@ -28,57 +27,103 @@ class ControladorDashboard:
 
     def _calcular_turno_actual(self):
         ahora = datetime.now()
+
         hoy = date.today()
+
         inicio_matutino = datetime.combine(hoy, time(8, 0))
         fin_matutino = datetime.combine(hoy, time(14, 0))
-        inicio_vespertino = fin_matutino
+
+        inicio_vespertino = datetime.combine(hoy, time(14, 0))
         fin_vespertino = datetime.combine(hoy, time(20, 0))
+
         duracion_turno = timedelta(hours=6)
 
         if inicio_matutino <= ahora < fin_matutino:
+
             turno = "Matutino"
             inicio = inicio_matutino
             fin = fin_matutino
+
+            transcurrido = ahora - inicio
+            restante = fin - ahora
+
+
         elif inicio_vespertino <= ahora < fin_vespertino:
+
             turno = "Vespertino"
             inicio = inicio_vespertino
             fin = fin_vespertino
-        else:
-            if ahora < inicio_matutino:
-                turno = "Matutino"
-                inicio = inicio_matutino
-                fin = fin_matutino
-                transcurrido = timedelta(0)
-            else:
-                turno = "Vespertino"
-                inicio = inicio_vespertino
-                fin = fin_vespertino
-                transcurrido = duracion_turno
 
-            restante = max(timedelta(0), fin - ahora)
-            porcentaje_restante = max(0.0, min(1.0, restante.total_seconds() / duracion_turno.total_seconds()))
+            transcurrido = ahora - inicio
+            restante = fin - ahora
+
+
+        else:
+
+            turno = "Cerrado"
+
+            # Antes de abrir
+            if ahora < inicio_matutino:
+
+                tiempo_apertura = inicio_matutino - ahora
+
+            # Después de cerrar
+            else:
+
+                manana = hoy + timedelta(days=1)
+
+                proxima_apertura = datetime.combine(
+                    manana,
+                    time(8, 0)
+                )
+
+                tiempo_apertura = proxima_apertura - ahora
+
             return {
-                "turno": turno,
-                "inicio": inicio.strftime("%I:%M %p"),
-                "fin": fin.strftime("%I:%M %p"),
-                "duracion_horas": "6 horas",
-                "transcurrido": self._format_timedelta(transcurrido),
-                "restante_formateado": self._format_timedelta(restante),
-                "porcentaje_restante": porcentaje_restante
+
+                "turno": "Biblioteca cerrada",
+
+                "inicio": "--:--",
+
+                "fin": "--:--",
+
+                "duracion_horas": "Sin servicio",
+
+                "transcurrido": "00:00:00",
+
+                "restante_formateado":
+                    self._format_timedelta(tiempo_apertura),
+
+                "porcentaje_restante": 0
             }
 
-        transcurrido = ahora - inicio
-        restante = fin - ahora
-        porcentaje_restante = max(0.0, min(1.0, restante.total_seconds() / duracion_turno.total_seconds()))
+        porcentaje_restante = max(
+            0.0,
+            min(
+                1.0,
+                restante.total_seconds()
+                / duracion_turno.total_seconds()
+            )
+        )
 
         return {
+
             "turno": turno,
+
             "inicio": inicio.strftime("%I:%M %p"),
+
             "fin": fin.strftime("%I:%M %p"),
+
             "duracion_horas": "6 horas",
-            "transcurrido": self._format_timedelta(transcurrido),
-            "restante_formateado": self._format_timedelta(restante),
-            "porcentaje_restante": porcentaje_restante
+
+            "transcurrido":
+                self._format_timedelta(transcurrido),
+
+            "restante_formateado":
+                self._format_timedelta(restante),
+
+            "porcentaje_restante":
+                porcentaje_restante
         }
 
     def _format_timedelta(self, value: timedelta):

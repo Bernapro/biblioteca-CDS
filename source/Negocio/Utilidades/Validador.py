@@ -1,5 +1,5 @@
 import flet as ft
-
+from datetime import datetime
 
 class Validador:
     COLOR_ERROR = "#EF4444"
@@ -11,7 +11,6 @@ class Validador:
             if hasattr(control, "visible") and not control.visible:
                 continue
             valor = control.value
-            # 🔹 Dropdown
             if isinstance(control, ft.Dropdown):
                 if valor is None or valor in ["", "Todos", "Selecciona"]:
                     Validador._marcar_error(control)
@@ -63,3 +62,80 @@ class Validador:
                 
             elif hasattr(c, "content") and c.content is not None:
                 Validador.limpiar([c.content])
+
+    @staticmethod
+    def validar_rango_fechas(fecha_inicio, fecha_fin):
+
+        if not fecha_inicio or not fecha_fin:
+            return True, None
+
+        try:
+            inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+
+            if inicio > fin:
+                return False, "La fecha inicio no puede ser mayor a la fecha fin"
+
+            return True, None
+
+        except Exception:
+            return False, "Formato de fecha inválido"
+        
+    @staticmethod
+    def validar_fechas_ui(
+        page,
+        fecha_inicio,
+        fecha_fin,
+        txt_inicio=None,
+        txt_fin=None,
+        picker_inicio=None,
+        picker_fin=None,
+        callback=None
+    ):
+        valido, mensaje = Validador.validar_rango_fechas(
+            fecha_inicio,
+            fecha_fin
+        )
+        if valido:
+            return True
+        dialogo = ft.AlertDialog(
+            modal=False,
+            bgcolor="white",
+            shape=ft.RoundedRectangleBorder(radius=15),
+
+            title=ft.Row([
+                ft.Icon(
+                    ft.Icons.WARNING_AMBER_ROUNDED,
+                    color="#EF4444"
+                ),
+                ft.Text(
+                    "Filtro inválido",
+                    weight="bold"
+                )
+            ]),
+            content=ft.Text(mensaje),
+            actions=[
+                ft.TextButton(
+                    "Aceptar",
+                    on_click=lambda e: cerrar_dialogo(e)
+                )
+            ]
+        )
+
+        def cerrar_dialogo(e):
+            dialogo.open = False
+            if txt_inicio:
+                txt_inicio.value = "Fecha inicio"
+            if txt_fin:
+                txt_fin.value = "Fecha fin"
+            if picker_inicio:
+                picker_inicio.value = None
+            if picker_fin:
+                picker_fin.value = None
+            if callback:
+                callback()
+            page.update()
+        page.overlay.append(dialogo)
+        dialogo.open = True
+        page.update()
+        return False

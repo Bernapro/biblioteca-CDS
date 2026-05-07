@@ -3,6 +3,7 @@ from Presentacion.PantallaRegistroIncidencia import PantallaRegistroIncidencia
 from Negocio.Controlador.ControladorIncidencia import ControladorIncidencia
 from Negocio.Utilidades.Herramientas import Herramientas
 from Negocio.Utilidades.FormatearFecha import FormatearFecha
+from Negocio.Utilidades.Validador import Validador
 
 class PantallaIncidencias(ft.Container):
     def __init__(self, page: ft.Page):
@@ -28,13 +29,11 @@ class PantallaIncidencias(ft.Container):
         self.bgcolor = self.FONDO
         self.border_radius = 30
         
-        # ===== VARIABLES DE PAGINACIÓN =====
         self.pagina_actual = 1
         self.registros_por_pagina = 10
         self.total_registros = 0
         self.footer_tabla = ft.Row(alignment=ft.MainAxisAlignment.SPACE_BETWEEN, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
-        # ===== CONTROLES DINÁMICOS DE BÚSQUEDA =====
         self.input_busqueda = ft.TextField(
             expand=True,
             hint_text="Buscar por nombre o identificador...",
@@ -106,7 +105,6 @@ class PantallaIncidencias(ft.Container):
         self.fecha_fin_picker = ft.DatePicker(on_change=self.seleccionar_fin)
 
         self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
-        # 1. Controles referenciables dentro del modal (para actualizar su contenido)
         self.modal_avatar_icon = ft.Icon(ft.Icons.PERSON, size=80, color=self.NARANJA)
         self.modal_nombre = ft.Text("", size=18, weight="bold", color="black")
         self.modal_matricula = ft.Text("", color=self.GRIS_TEXTO, size=13)
@@ -135,13 +133,12 @@ class PantallaIncidencias(ft.Container):
             text_style=ft.TextStyle(color="onSurface", size=13)
         )
 
-        # Definición del AlertDialog rediseñado
         self.dialogo_detalles = ft.AlertDialog(
             modal=True,
             bgcolor="surface", 
             shape=ft.RoundedRectangleBorder(radius=15),
             
-            # TÍTULO: Fila con Texto y Botón Cerrar
+            # TÍTULO
             title=ft.Row([
                 ft.Text("Detalle de Incidencia", size=18, weight="bold", color="onSurface"),
                 ft.IconButton(ft.Icons.CLOSE, icon_color="onSurface", on_click=self.cerrar_dialogo)
@@ -152,10 +149,9 @@ class PantallaIncidencias(ft.Container):
 
             # CONTENIDO PRINCIPAL
             content=ft.Container(
-                width=500, # Ancho similar a la imagen 1
+                width=500, 
                 content=ft.Column([
                     
-                    # SECCIÓN 1: Tarjeta de Datos Personales (Borde gris)
                     ft.Container(
                         padding=15,
                         border=ft.border.all(1, self.GRIS_BORDE),
@@ -174,8 +170,6 @@ class PantallaIncidencias(ft.Container):
                     
                     ft.Divider(height=20, color="transparent"),
                     
-                    # SECCIÓN 2: Detalles de la Incidencia (Filas alineadas)
-                    # Usamos anchos fijos en las etiquetas para alinear los dos puntos
                     ft.Row([ft.Text("Tipo de Incidencia:", width=130, color=self.GRIS_TEXTO), self.modal_tipo]),
                     ft.Row([
                         ft.Text("Categoría:", width=130, color=self.GRIS_TEXTO),
@@ -212,7 +206,6 @@ class PantallaIncidencias(ft.Container):
                 ], tight=True, spacing=8)
             ),
             
-            # ACCIONES: Solo botón guardar a la derecha
             actions=[
                 ft.ElevatedButton(
                     "Guardar cambios", 
@@ -225,11 +218,8 @@ class PantallaIncidencias(ft.Container):
             actions_alignment=ft.MainAxisAlignment.END,
         )
 
-        # Construir y ensamblar la interfaz
         self.build_ui()
 
-    # ===== LÓGICA DEL DIÁLOGO ACTUALIZADA =====
-    # Ahora acepta el evento 'e' y los datos de la incidencia
     def abrir_dialogo(self, e, d):        
         nuevo_icono = self.obtener_icono_tipo(d["tipo_usuario"])
 
@@ -410,7 +400,6 @@ class PantallaIncidencias(ft.Container):
             on_click=(lambda e: self.controlador.cambiar_estado(id_incidencia, "PENDIENTE"))
         )
 
-    # MODIFICADO: Ahora build_btn_detalles acepta una función lambda con los datos
     def build_btn_detalles(self, on_click_action):
         return ft.OutlinedButton(
             "Ver detalles", height=40, 
@@ -418,8 +407,6 @@ class PantallaIncidencias(ft.Container):
             on_click=on_click_action  
         )
 
-    # ===== CARD INCIDENCIA ACTUALIZADA =====
-    # Agregamos carrera y semestre como parámetros requeridos
 
     def build_card(self, d):
         tipo_usuario = d["tipo_usuario"]
@@ -436,7 +423,6 @@ class PantallaIncidencias(ft.Container):
 
         categoria = d["categoria"]
 
-        # Icono por categoría
         icono = ft.Icons.WARNING
         if "Ruido" in categoria:
             icono = ft.Icons.VOLUME_UP
@@ -445,7 +431,6 @@ class PantallaIncidencias(ft.Container):
         elif "Comportamiento" in categoria:
             icono = ft.Icons.PERSON_OFF
 
-        # Estado visual
         color_estado = self.VERDE if d["estado"] == "RESUELTA" else self.ROJO
         icono_estado = ft.Icons.CHECK_CIRCLE if d["estado"] == "RESUELTA" else ft.Icons.CANCEL
 
@@ -455,7 +440,6 @@ class PantallaIncidencias(ft.Container):
             shadow=ft.BoxShadow(blur_radius=25, color="black12"),
             content=ft.Row(
                 controls=[
-                    # BARRA IZQUIERDA DE COLOR
                     ft.Container(width=8, bgcolor=color_borde),
 
                     ft.Container(
@@ -463,7 +447,6 @@ class PantallaIncidencias(ft.Container):
                         padding=15,
                         content=ft.Row(
                             [
-                                #IZQUIERDA (DATOS)
                                 ft.Row([
                                     self.obtener_icono_tipo(tipo_usuario),
                                         ft.Container(  
@@ -501,7 +484,6 @@ class PantallaIncidencias(ft.Container):
 
                                 ], spacing=15),
 
-                                #CENTRO (DESCRIPCIÓN)
                                 ft.Container(
                                     expand=True,
                                     padding=10,
@@ -517,7 +499,6 @@ class PantallaIncidencias(ft.Container):
                                     )
                                 ),
 
-                                # DERECHA 
                                 ft.Row([
                                     ft.Row([
                                         ft.Icon(icono_estado, color=color_estado, size=18),
@@ -538,12 +519,10 @@ class PantallaIncidencias(ft.Container):
         )
                 
 
-    #  LÓGICA DE NAVEGACIÓN 
     def ir_a_registro(self, e):
         self.content = PantallaRegistroIncidencia(self._page, vista_anterior=self)
         self.update()
 
-    #  CONSTRUCCIÓN DE LA INTERFAZ 
     def build_ui(self):
         # --- Botón Nuevo ---
         btn_nueva_incidencia = ft.ElevatedButton(
@@ -589,13 +568,11 @@ class PantallaIncidencias(ft.Container):
             ], spacing=10)
         )
 
-        # Contenedor dinámico para la lista
         self.lista_incidencias = ft.Column(spacing=15, scroll=ft.ScrollMode.AUTO, expand=True)
         self.cargar_datos() # Se llama para popular la lista
 
         self.content = ft.Column([encabezado, filtros, self.lista_incidencias, self.footer_tabla], spacing=20, expand=True)
 
-    # Función detectada automáticamente por PantallaPrincipal para refrescar al entrar a la vista
     def actualizar(self):
         self.cargar_datos()
 
@@ -611,6 +588,31 @@ class PantallaIncidencias(ft.Container):
 
         fecha_inicio = None
         fecha_fin = None
+
+        fecha_inicio_texto = None
+        fecha_fin_texto = None
+
+        if self.fecha_inicio_picker.value:
+            fecha_inicio_texto = self.fecha_inicio_picker.value.strftime("%Y-%m-%d")
+
+        if self.fecha_fin_picker.value:
+            fecha_fin_texto = self.fecha_fin_picker.value.strftime("%Y-%m-%d")
+
+        if not Validador.validar_fechas_ui(
+            page=self._page,
+
+            fecha_inicio=fecha_inicio_texto,
+            fecha_fin=fecha_fin_texto,
+
+            txt_inicio=self.txt_fecha_inicio,
+            txt_fin=self.txt_fecha_fin,
+
+            picker_inicio=self.fecha_inicio_picker,
+            picker_fin=self.fecha_fin_picker,
+
+            callback=lambda: self.cargar_datos()
+        ):
+            return
 
         if self.txt_fecha_inicio.value != "Fecha inicio":
             fecha_inicio = datetime.combine(
@@ -685,7 +687,7 @@ class PantallaIncidencias(ft.Container):
         def cambiar_pagina(nueva):
             if 1 <= nueva <= total_paginas:
                 self.pagina_actual = nueva
-                self.cargar_datos(e=True) # Pasamos 'e' para forzar la actualización visual
+                self.cargar_datos(e=True) 
 
         input_pagina = ft.TextField(
             width=60, height=35, text_align=ft.TextAlign.CENTER,

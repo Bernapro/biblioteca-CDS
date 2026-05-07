@@ -1,18 +1,18 @@
 import flet as ft
 from Presentacion.PantallaPrincipal import PantallaPrincipal
-# Importamos el controlador que hace el trabajo sucio en la BD
 from Negocio.Controlador.ControladorLogin import ControladorLogin
 
 class PantallaLogin:
+    # Inicializa la pagina y los controles del formulario
     def __init__(self, page: ft.Page):
         self.page = page
         
-        # --- COLORES EXACTOS AL DISEÑO ---
+        # Paleta de colores
         self.azul_unach = "#1a56db"
         self.fondo_izquierdo = "#e8f0fe" 
         self.texto_gris = "#6b7280"
         
-        # --- INPUTS DEL FORMULARIO ---
+        # Campo de texto para usuario
         self.usuario_input = ft.TextField(
             label="Usuario",
             hint_text="Ingresa tu usuario",
@@ -26,6 +26,7 @@ class PantallaLogin:
             width=550
         )
         
+        # Campo de texto para contrasena
         self.pass_input = ft.TextField(
             label="Contraseña",
             hint_text="Ingresa tu contraseña",
@@ -38,44 +39,56 @@ class PantallaLogin:
             border_color="#d1d5db",
             focused_border_color=self.azul_unach,
             height=55,
-            width=550
+            width=550,
+            # Inicia sesion al presionar Enter
+            on_submit=self.intentar_login 
         )
 
+    # Muestra notificaciones temporales de 3 segundos
     def mostrar_alerta(self, mensaje, es_error=True):
         alerta = ft.SnackBar(
             content=ft.Text(mensaje, color=ft.Colors.WHITE, weight="bold"),
             bgcolor=ft.Colors.ERROR if es_error else ft.Colors.GREEN_400,
-            # 💡 Quitamos action_color para evitar el crash
-            action="Entendido", 
+            duration=3000 # Cierra la alerta despues de 3 segundos
         )
         self.page.overlay.append(alerta)
         alerta.open = True
         self.page.update()
 
+    # Valida credenciales y maneja el acceso al sistema
     def intentar_login(self, e):
         usuario_ingresado = self.usuario_input.value
         pass_ingresada = self.pass_input.value
 
+        # Evita consultas si hay campos vacios
         if not usuario_ingresado or not pass_ingresada:
             self.mostrar_alerta("Por favor, llena todos los campos.")
             return
 
-        boton = e.control
-        texto_boton = boton.content.controls[0] 
-        texto_original = texto_boton.value
+        boton = None
+        texto_boton = None
+        texto_original = ""
         
-        texto_boton.value = "Verificando..."
-        boton.disabled = True
-        self.page.update()
+        # Bloquea el boton si el evento viene de un clic
+        if isinstance(e.control, ft.ElevatedButton):
+            boton = e.control
+            texto_boton = boton.content.controls[0] 
+            texto_original = texto_boton.value
+            texto_boton.value = "Verificando..."
+            boton.disabled = True
+            self.page.update()
 
+        # Intenta conectar al controlador
         try:
             acceso_valido = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
         except Exception as ex:
-            texto_boton.value = texto_original
-            boton.disabled = False
+            if boton:
+                texto_boton.value = texto_original
+                boton.disabled = False
             self.mostrar_alerta(f"Error de conexión: {ex}")
             return
 
+        # Redirige o muestra error segun el resultado
         if acceso_valido:
             self.page.controls.clear()
             self.page.update()
@@ -86,18 +99,19 @@ class PantallaLogin:
             except Exception as ex:
                 self.mostrar_alerta(f"Error al cargar menú principal: {ex}")
         else:
-            texto_boton.value = texto_original
-            boton.disabled = False
+            if boton:
+                texto_boton.value = texto_original
+                boton.disabled = False
             self.pass_input.value = ""
             self.mostrar_alerta("Usuario o contraseña incorrectos.")
 
+    # Ensambla y retorna la interfaz de dos columnas
     def construir_vista(self):
         panel_izquierdo = ft.Container(
             expand=4, 
             bgcolor=self.fondo_izquierdo,
             border_radius=ft.border_radius.only(top_right=80, bottom_right=80),
             padding=ft.padding.all(30),
-            # CORRECCIÓN: Usamos Alignment(0,0) para evitar AttributeError
             alignment=ft.alignment.Alignment(0, 0), 
             content=ft.Column(
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -143,7 +157,6 @@ class PantallaLogin:
                                 ft.Text("Inicia sesión para continuar", size=14, color=self.texto_gris),
                             ]
                         ),
-                        # CORRECCIÓN: Usamos Alignment(0,0)
                         alignment=ft.alignment.Alignment(0, 0),
                         margin=ft.margin.only(bottom=40) 
                     ),
@@ -154,10 +167,7 @@ class PantallaLogin:
                     ft.Row(
                         width=550,
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        controls=[
-                           
-                           
-                        ]
+                        controls=[]
                     ),
                     ft.Container(height=30),
                     ft.ElevatedButton(
@@ -176,7 +186,6 @@ class PantallaLogin:
                     ft.Container(height=40),
                     ft.Container(
                         content=ft.Text("Sistema de Gestión de Biblioteca", size=11, color="#d1d5db"),
-                        # CORRECCIÓN: Usamos Alignment(0,0)
                         alignment=ft.alignment.Alignment(0, 0) 
                     )
                 ]
@@ -185,7 +194,6 @@ class PantallaLogin:
 
         panel_derecho = ft.Container(
             expand=6, 
-            # CORRECCIÓN: Usamos Alignment(0,0)
             alignment=ft.alignment.Alignment(0, 0), 
             content=formulario
         )

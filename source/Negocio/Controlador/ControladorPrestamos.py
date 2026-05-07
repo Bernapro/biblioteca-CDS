@@ -70,7 +70,7 @@ class ControladorPrestamos:
         return resultados
 
     def obtener_estadisticas(self):
-        # Más adelante esto será un COUNT() a la base de datos
+        #  adelante esto será un COUNT() a la base de datos
         return self.__endPrestamos.getEstado().getBody()
     
     def finalizarPrestamo(self, e, prestamo):

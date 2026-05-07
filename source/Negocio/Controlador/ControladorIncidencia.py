@@ -86,9 +86,6 @@ class ControladorIncidencia:
 
         return resultado, total
 
-    # =========================================
-    # 📌 GUARDAR CAMBIOS DEL MODAL
-    # =========================================
     def guardar_dialogo(self, e):
         try:
             comentario = self.__pantalla.modal_comentario.value
@@ -110,23 +107,17 @@ class ControladorIncidencia:
         except Exception as ex:
             print("Error:", ex)
 
-        # cerrar modal
         self.__pantalla.cerrar_dialogo(e)
 
-        # refrescar lista
-       # refrescar lista correctamente
+       # refrescar lista 
         self.__pantalla.cargar_datos(e=True)
         self.__pantalla.update()
 
-    # =========================================
-    # 📌 CUANDO ABRES EL MODAL
-    # =========================================
+    # CUANDO se abre  MODAL
     def seleccionar_incidencia(self, id_incidencia):
         self.__id_actual = id_incidencia
 
-    # =========================================
-    # 📌 CAMBIAR ESTADO (OPCIONAL PRO)
-    # =========================================
+    #  CAMBIAR ESTADO
     def cambiar_estado(self, id_incidencia, nuevo_estado):
         try:
             with db.get_connection() as conn:

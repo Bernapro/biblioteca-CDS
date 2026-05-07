@@ -45,7 +45,7 @@ class PantallaPrincipal(ft.Container):
 
         # CARGAR PRIMERA VISTA MANUALMENTE DESDE AQUÍ
         self.vistas[0] = dsh(self.main_page)
-
+        self.vistas[0].ir_reportes = lambda: self.sidebar.cambiar_seleccion(3)
         # Área de contenido
         self.content_area = ft.Container(
             expand=True,
@@ -95,9 +95,7 @@ class PantallaPrincipal(ft.Container):
                 self.columna_derecha
             ]
         )
-    # ==========================================
     # MODO OSCURO
-    # ==========================================
     def cambiar_tema(self, e):
         if e.control.value:
             self.main_page.theme_mode = ft.ThemeMode.DARK
@@ -109,9 +107,7 @@ class PantallaPrincipal(ft.Container):
         self.main_page.update()
         self.update()
 
-    # ==========================================
     # ENRUTADOR DE VISTAS
-    # ==========================================
     def cambiar_vista(self, index):
 
         if self.vistas[index] is None:

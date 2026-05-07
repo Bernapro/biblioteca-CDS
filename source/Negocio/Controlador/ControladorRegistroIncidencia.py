@@ -21,10 +21,8 @@ class ControladorRegistroIncidencia:
     # GUARDAR INCIDENCIA
     def guardar_incidencia(self, datos_incidencia):
         try:
-            # 🔹 El Controlador asume la responsabilidad de instanciar el Modelo
             incidencia = Incidencia()
             
-            # Usamos el método que dejaste preparado
             incidencia.set_data(datos_incidencia)
 
             resultado = self.__repo.guardar(incidencia)

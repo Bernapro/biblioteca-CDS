@@ -32,7 +32,7 @@ class ControladorLibros:
         total_paginas = datos.get("totalPaginas", 1)
         total_elementos = datos.get("totalElementos", 0)
 
-        # cálculo de rango (esto ya no va en la vista)
+        # cálculo de rango 
         if total_elementos == 0:
             inicio = 0
             fin = 0

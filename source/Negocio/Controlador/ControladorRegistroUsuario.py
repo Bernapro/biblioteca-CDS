@@ -30,7 +30,6 @@ class ControladorPantallaRegistroUsuario:
         try:
             tipo = datos_usuario.get("tipo_usuario", "").upper()
 
-            # 🔹 3. El Controlador toma la decisión de qué modelo crear
             if tipo == "ALUMNO":
                 instancia_modelo = Alumno()
             elif tipo == "PERSONAL":

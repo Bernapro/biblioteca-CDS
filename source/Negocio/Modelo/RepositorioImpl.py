@@ -12,10 +12,7 @@ class RepositorioImpl(Repositorio):
         with db.get_connection() as conn:
             return self.__crud.get_by_pk_batch(conn = conn, nombre_tabla =tabla, nombre_columna_pk = columna, lista_pks = pks)
 
-
-    # =============================
-    # INTERFAZ (SE RESPETA TAL CUAL)
-    # =============================
+    # INTERFAZ 
 
     def obtener_todos(self, nombre_tabla: str):
         with db.get_connection() as conn:
@@ -64,9 +61,7 @@ class RepositorioImpl(Repositorio):
             self.__crud.execute_procedure(nombre_procedimiento, conn)
             conn.commit()
 
-    # =============================
-    # ASISTENCIA (OPERACIONES ESPECÍFICAS)
-    # =============================
+    # ASISTENCIA 
 
     def obtener_registro_abierto(self, id_usuario):
         """Obtiene registro sin salida para un usuario (para asistencia)"""
@@ -91,19 +86,27 @@ class RepositorioImpl(Repositorio):
             """
             return conn.execute(query, (id_registro,)).fetchone()
 
-    # =============================
     # REGISTRO DE USUARIOS
-    # =============================
-
     def obtener_siguiente_vis(self):
+
         with db.get_connection() as conn:
+
             query = """
-                SELECT last_value + 1 AS numero
-                FROM seq_visitante
+                SELECT COALESCE(
+                    MAX(
+                        CAST(
+                            REPLACE(identificador, 'VIS-', '') AS INTEGER
+                        )
+                    ),
+                0) + 1 AS siguiente
+                FROM usuario
+                WHERE identificador LIKE 'VIS-%'
             """
+
             result = conn.execute(query).fetchone()
-            return f"VIS-{result['numero']}"
-        
+
+            return f"VIS-{result['siguiente']}"
+            
     #
     def obtener_avanzado(
         self,

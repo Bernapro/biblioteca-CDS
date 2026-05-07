@@ -7,6 +7,7 @@ from Negocio.Modelo.RepositorioImpl import RepositorioImpl
 from Persistencia.CRUD.CRUDimpl import CRUDimp
 
 class PantallaNuevoPrestamo(ft.Container):
+    # Inicializa la vista y variables
     def __init__(self, page: ft.Page, vista_anterior=None):
         super().__init__()
         self._page = page
@@ -22,43 +23,38 @@ class PantallaNuevoPrestamo(ft.Container):
         fechaLimite = fechaEstimada if diaFechaEstimada < 5 else (fechaEstimadaDomingo if diaFechaEstimada == 6 else fechaEstimadaSabado)
         numDias = (fechaLimite - fechaHoy).days
 
-        # Instanciamos el controlador
         self.controlador = ControladorNuevoPrestamo(self, BibliotecaEjemplares(), repositorio= RepositorioImpl(crud=CRUDimp()), endPrestamo=BibliotecaPrestamos())
-        self.libros_seleccionados = {}   # {adq: (titulo, autor, adq)}
+        self.libros_seleccionados = {}
         self.libros_cache = []
         
-        # ===== COLORES ADAPTABLES AL MODO OSCURO (Flet 0.84.0) =====
         self.AZUL = "#3B82F6"
         self.VERDE = "#22C55E"
         self.GRIS_BORDE = "outline"          
         self.GRIS_TEXTO = "onSurfaceVariant" 
         self.TEXT = "onSurface"              
         self.CARD = "surface" 
-        self.ROJO = "#E53A2E"               
+        self.ROJO = "#E53A2E"
+        self.AMBER = ft.Colors.AMBER
 
-        # === CONTROLES DEL FORMULARIO ===
-        
-        # 1. Alumno
         self.txt_matricula = ft.TextField(
             hint_text="Ej. 100025787",
             prefix_icon=ft.Icons.PERSON,
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
-            expand=True, height=50, content_padding=10
+            expand=True, height=50, content_padding=10,
+            on_change=self.limpiar_error_borde # Limpia el color rojo al escribir
         )
         self.btn_buscar_alumno = ft.OutlinedButton("Buscar", icon=ft.Icons.SEARCH, style=ft.ButtonStyle(color=self.AZUL, shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.controlador.buscar_alumno)
         
-        # Tarjeta de resultado del alumno
-        self.card_alumno = ft.Container(
-        )
+        self.card_alumno = ft.Container()
 
-        # 2. Libro
         self.txt_adquisicion = ft.TextField(
             hint_text="Ej. ADQ-001245",
             prefix_icon=ft.Icons.MENU_BOOK,
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
             text_style=ft.TextStyle(color=self.TEXT),
-            expand=True, height=50, content_padding=10
+            expand=True, height=50, content_padding=10,
+            on_change=self.limpiar_error_borde # Limpia el color rojo al escribir
         )
 
         self.btn_buscar_libro = ft.OutlinedButton(
@@ -69,19 +65,17 @@ class PantallaNuevoPrestamo(ft.Container):
             on_click=self.controlador.listener
         )
 
-        # === CONTENEDOR CON SCROLL PARA LOS LIBROS ===
         self.lista_libros = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=10)
 
         self.contenedor_resultados = ft.Container(
             content=self.lista_libros,
-            height=250, # Altura fija para forzar el scroll si hay muchos
+            height=250,
             border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=12,
             padding=10,
             bgcolor="surface"
         )
 
-        # 3. Calendarios
         self.picker_fecha_prestamo = ft.DatePicker(
             on_change=self.seleccionar_fecha_prestamo,
             first_date=datetime.datetime(2000, 1, 1),
@@ -94,8 +88,6 @@ class PantallaNuevoPrestamo(ft.Container):
         )
         self._page.overlay.extend([self.picker_fecha_prestamo, self.picker_fecha_limite])
 
-
-        # Campos de texto de fechas
         self.txt_fecha_prestamo = ft.TextField(
             label="Fecha de préstamo",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
@@ -110,10 +102,43 @@ class PantallaNuevoPrestamo(ft.Container):
             expand=True, height=55, read_only=True, value=fechaLimite.strftime("%d/%b/%Y"),
             on_click=self.abrir_picker_limite
         )
-        # Poblar libros de prueba
+
+        self.txt_mensaje_alerta = ft.Text("", color=self.TEXT, size=14, weight="bold")
+        self.icon_mensaje_alerta = ft.Icon(ft.Icons.WARNING, color=self.AMBER, size=20)
+        
+        self.contenedor_mensaje = ft.Container(
+            content=ft.Row([self.icon_mensaje_alerta, self.txt_mensaje_alerta], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
+            border=ft.border.all(2, self.AMBER),
+            border_radius=10,
+            padding=10,
+            visible=False,
+            margin=ft.margin.only(top=20)
+        )
+
         self.build_ui()
 
+    # Pinta el borde de un campo en rojo
+    def marcar_error_borde(self, campo):
+        campo.border_color = self.ROJO
+        campo.update()
 
+    # Restaura el color gris del borde al escribir
+    def limpiar_error_borde(self, e):
+        e.control.border_color = self.GRIS_BORDE
+        e.control.update()
+
+    # Muestra la alerta inferior
+    def mostrar_alerta(self, mensaje, es_error=True):
+        self.txt_mensaje_alerta.value = mensaje
+        self.contenedor_mensaje.visible = True
+        self.update()
+
+    # Oculta la alerta inferior
+    def ocultar_alerta(self):
+        self.contenedor_mensaje.visible = False
+        self.update()
+
+    # Crea item de libro para la lista
     def crear_item_libro(self, id, titulo, autor, adq, disponible):
         disponibilidad = "Disponible" if disponible else "No disponible"
         color = self.VERDE if disponible else ft.Colors.RED_200
@@ -144,45 +169,29 @@ class PantallaNuevoPrestamo(ft.Container):
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
+    # Actualiza lista de libros
     def actualizar_lista(self):
         self.lista_libros.controls.clear()
-
         usados = set()
 
-        # 🔹 Seleccionados primero
         for adq, libro in self.libros_seleccionados.items():
-            self.lista_libros.controls.append(
-                self.crear_item_libro(*libro)
-            )
+            self.lista_libros.controls.append(self.crear_item_libro(*libro))
             usados.add(libro[1])
 
-        # 🔹 Resultados de búsqueda
         for libro in self.libros_cache:
             if libro[1] not in usados:
-                self.lista_libros.controls.append(
-                    self.crear_item_libro(*libro)
-                )
+                self.lista_libros.controls.append(self.crear_item_libro(*libro))
 
         if self.page:
             self.update()
 
-    """
-    def buscar_libros(self, e):
-        filtro = self.txt_adquisicion.value.lower()
-        libros = self.controlador.obtener_libros_prueba()
-
-        if filtro:
-            libros = [l for l in libros if filtro in l[2].lower()]
-
-        self.libros_cache = libros
-        self.actualizar_lista()
-    """
-
+    # Asigna fecha de prestamo
     def seleccionar_fecha_prestamo(self, e):
         if self.picker_fecha_prestamo.value:
             self.txt_fecha_prestamo.value = self.picker_fecha_prestamo.value.strftime("%d/%b/%Y")
             self.txt_fecha_prestamo.update()
 
+    # Asigna fecha limite
     def seleccionar_fecha_limite(self, e):
         fecha = self.picker_fecha_limite.value
         if fecha:
@@ -192,52 +201,46 @@ class PantallaNuevoPrestamo(ft.Container):
                 self.txt_fecha_limite.value = self.picker_fecha_limite.value.strftime("%d/%b/%Y")
                 self.txt_fecha_limite.update()
 
+    # Abre calendario prestamo
     def abrir_picker_prestamo(self, e):
         self.picker_fecha_prestamo.open = True
         self._page.update()
 
+    # Abre calendario limite
     def abrir_picker_limite(self, e):
         self.picker_fecha_limite.open = True
         self._page.update()
 
+    # Regresa a vista anterior
     def cancelar(self, e):
         if self.vista_anterior:
             self.vista_anterior.build_ui()
             self.vista_anterior.update()
 
+    # Agrega o quita libro seleccionado
     def toggle_libro(self, libro, checked):
         adq = libro[3]
-
         if checked:
             self.libros_seleccionados[adq] = libro
-            print(libro)
         else:
             self.libros_seleccionados.pop(adq, None)
-
         self.actualizar_lista()  
-    """
-    def did_mount(self):
-        self.buscar_libros(None)
-    """
+
+    # Construye la interfaz
     def build_ui(self):
         formulario = ft.Column(
             [
-                # SECCIÓN 1
                 ft.Text("Matrícula del alumno", weight="bold", color=self.TEXT),
                 ft.Row([self.txt_matricula, self.btn_buscar_alumno], spacing=10),
                 self.card_alumno,
-                
                 ft.Divider(height=15, color="transparent"),
                 
-                # SECCIÓN 2
                 ft.Text("Número de adquisición del ejemplar", weight="bold", color=self.TEXT),
                 ft.Row([self.txt_adquisicion, self.btn_buscar_libro], spacing=10),
                 ft.Text("Selecciona el libro (Ejemplares disponibles):", size=12, color=self.GRIS_TEXTO),
                 self.contenedor_resultados,
-
                 ft.Divider(height=15, color="transparent"),
 
-                # SECCIÓN 3
                 ft.Row([self.txt_fecha_prestamo, self.txt_fecha_limite], spacing=20)
             ],
             spacing=5,
@@ -255,9 +258,7 @@ class PantallaNuevoPrestamo(ft.Container):
                     ft.Text("Nuevo préstamo", size=26, weight="bold", color=self.TEXT),
                     ft.Text("Registra un préstamo de libro", size=14, color=self.GRIS_TEXTO),
                     ft.Divider(height=20, color="transparent"),
-                    
-                    formulario, # Insertamos el formulario completo
-                    
+                    formulario, 
                     ft.Divider(height=20, color="transparent"),
                     ft.Row(
                         [
@@ -270,7 +271,8 @@ class PantallaNuevoPrestamo(ft.Container):
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         spacing=20
-                    )
+                    ),
+                    self.contenedor_mensaje 
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER
             )
@@ -278,7 +280,6 @@ class PantallaNuevoPrestamo(ft.Container):
         
         self.content = ft.Column(
             [
-                # Contenedor exterior idéntico al de Incidencias
                 ft.Container(
                     width=700, border_radius=40, padding=30,
                     gradient=ft.LinearGradient(
@@ -294,34 +295,30 @@ class PantallaNuevoPrestamo(ft.Container):
             scroll=ft.ScrollMode.AUTO,
             expand=True
         )
-    def limpiar_pantalla(self, e=None):
-        # 1. Limpiar campos de texto principales
-        self.txt_matricula.value = ""
-        self.txt_adquisicion.value = ""
-        
-        # 2. Limpiar el contenedor del alumno (por si se generó una tarjeta al buscar)
-        self.card_alumno.content = None
 
-        # 3. Limpiar la memoria caché, el diccionario de selección y la vista de la lista
+    # Limpia campos y resetea variables
+    def limpiar_pantalla(self, e=None):
+        self.txt_matricula.value = ""
+        self.txt_matricula.border_color = self.GRIS_BORDE
+        self.txt_adquisicion.value = ""
+        self.txt_adquisicion.border_color = self.GRIS_BORDE
+        
+        self.card_alumno.content = None
+        self.card_alumno.bgcolor = ft.Colors.TRANSPARENT
+
         self.libros_seleccionados.clear()
         self.libros_cache.clear()
         self.lista_libros.controls.clear()
 
-        # 4. Restablecer la lógica de fechas
         fecha_actual = datetime.datetime.now()
         fecha_limite_default = fecha_actual + datetime.timedelta(days=7)
+        self.fecha_prestamo = fecha_actual 
         
-        self.fecha_prestamo = fecha_actual # Restablecer la variable interna
-        
-        # Restablecer los campos de texto visuales
         self.txt_fecha_prestamo.value = fecha_actual.strftime("%d/%b/%Y")
         self.txt_fecha_limite.value = fecha_limite_default.strftime("%d/%b/%Y")
         
-        # Resetear los DatePickers. 
-        # Al asignarles None, Flet olvida cualquier selección previa 
-        # y volverá a mostrar el mes actual la próxima vez que se abran.
         self.picker_fecha_prestamo.value = None
         self.picker_fecha_limite.value = None
 
-        # 5. Ordenar a Flet que redibuje todo el contenedor con los nuevos estados
+        self.ocultar_alerta() 
         self.update()
