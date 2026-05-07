@@ -29,5 +29,5 @@ class DBPoolBiblioteca:
 
 
 db_biblioteca = DBPoolBiblioteca(
-    "dbname=db user=usuario password=contraseña"
+    "dbname=biblioteca user=postgres password=bernapro190"
 )

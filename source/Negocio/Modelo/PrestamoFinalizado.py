@@ -19,5 +19,5 @@ class PrestamoFinalizado(Prestamo):
 
     def setBody(self, args):
         super().setBody(args)
-        self.__comentario = args.get("comentario")
+        self.__comentario = args.get("mensaje")
 

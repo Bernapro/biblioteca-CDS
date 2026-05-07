@@ -57,5 +57,18 @@ class ControladorPrestamos:
         # Más adelante esto será un COUNT() a la base de datos
         return self.__endPrestamos.getEstado().getBody()
     
-    def finalizarPrestamo(self, e, prestamo=""):
-        print(prestamo)
+    def finalizarPrestamo(self, e, prestamo):
+        msg = "El préstamo ya fue devuelto" if prestamo[1] == "Devuelto" else "No se puede realizar esta operacion"
+        color = "orange" if prestamo[1] == "Devuelto" else "red"
+        if prestamo[1] != "Devuelto":
+            res = self.__endPrestamos.patch(prestamo[0])
+            if res:
+                dict = res.getBody()
+                msg = dict["comentario"]
+                print(dict["comentario"])
+                color = "green"
+        boton = e.control
+        if boton:
+            boton.visible = False
+        self.__pantalla.cargar_datos()
+        self.__pantalla.mostrar_mensaje(msg, color)

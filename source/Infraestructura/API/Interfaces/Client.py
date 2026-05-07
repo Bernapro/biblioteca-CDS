@@ -24,3 +24,7 @@ class Client(ABC):
     @abstractmethod
     def getEstado(self, parametro) -> ResponseObject:
         pass
+
+    @abstractmethod
+    def patch(self, args) -> ResponseObject:
+        pass

@@ -37,7 +37,7 @@ class PantallaPrestamos(ft.Container):
         # [Añadir esto al final de tu __init__]
         
         # ===== CONTROLES DEL MODAL REUTILIZABLE =====
-        # 1. Controles de la Tarjeta de Usuario
+       # 1. Controles de la Tarjeta de Usuario
         self.modal_avatar_icon = ft.Icon(ft.Icons.PERSON, size=80, color=self.AZUL)
         self.modal_nombre = ft.Text("", size=18, weight="bold", color=self.TEXT)
         self.modal_matricula = ft.Text("", color=self.GRIS_TEXTO, size=13)
@@ -45,57 +45,67 @@ class PantallaPrestamos(ft.Container):
         self.modal_semestre = ft.Text("", color=self.GRIS_TEXTO, size=13, weight="bold")
         self.modal_qr_placeholder = ft.Container(width=80, height=80, bgcolor=self.GRIS_BORDE, border_radius=5)
         
-        # 2. Controles Dinámicos del Modal (Cambian según la acción)
+        # 2. Controles Dinámicos
         self.modal_titulo = ft.Text("", size=18, weight="bold", color=self.TEXT)
-        self.modal_contenido_dinamico = ft.Column(spacing=15) # Aquí inyectaremos los campos futuros
+        self.modal_contenido_dinamico = ft.Column(spacing=15)
+        
+        # --- NUEVO: CONTROLES DE ACCIÓN PERSONALIZADOS ---
+        self.mensaje = ft.Container(
+            visible=False,
+            padding=ft.padding.symmetric(horizontal=12, vertical=8),
+            border_radius=8,
+            expand=True # Para que empuje el botón a la derecha
+        )
+        # Aquí guardaremos el botón que cambia ("Devolver", "Extender")
+        self.modal_boton_dinamico = ft.Container() 
+
+        # Fila que reemplaza al 'actions' nativo
+        self.fila_acciones = ft.Row(
+            [self.mensaje, self.modal_boton_dinamico],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            width=470
+        )
         
         # 3. Definición del AlertDialog Maestro
         self.dialogo_accion = ft.AlertDialog(
             modal=True,
             bgcolor="surface",
             shape=ft.RoundedRectangleBorder(radius=15),
-            
-            # TÍTULO DINÁMICO
             title=ft.Row([
                 self.modal_titulo,
                 ft.IconButton(ft.Icons.CLOSE, icon_color="onSurface", on_click=self.cerrar_dialogo)
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             
-            # CONTENIDO PRINCIPAL
+            # TODO EL DISEÑO VIVE AQUÍ AHORA
             content=ft.Container(
-                width=500, # Mismo ancho que en Incidencias
+                width=500,
                 content=ft.Column([
-                    
-                    # --- TARJETA DE USUARIO (FIJA) ---
+                    # Tarjeta Fija
                     ft.Container(
-                        padding=15,
-                        border=ft.border.all(1, self.GRIS_BORDE),
-                        border_radius=10,
+                        padding=15, border=ft.border.all(1, self.GRIS_BORDE), border_radius=10,
                         content=ft.Row([
                             self.modal_avatar_icon,
-                            ft.Column([
-                                self.modal_nombre,
-                                self.modal_matricula,
-                                self.modal_carrera,
-                                self.modal_semestre
-                            ], spacing=2, expand=True),
-                            self.modal_qr_placeholder # Espacio para el QR
+                            ft.Column([self.modal_nombre, self.modal_matricula, self.modal_carrera, self.modal_semestre], spacing=2, expand=True),
+                            self.modal_qr_placeholder
                         ], spacing=15, vertical_alignment=ft.CrossAxisAlignment.CENTER)
                     ),
+                    ft.Divider(height=10, color="transparent"),
                     
-                    ft.Divider(height=20, color="transparent"),
+                    # Área Dinámica (Los libros)
+                    self.modal_contenido_dinamico,
                     
-                    # --- ÁREA DINÁMICA ---
-                    # Lo que pongamos aquí dependerá de si es Devolver, Extender, etc.
-                    self.modal_contenido_dinamico
+                    ft.Divider(height=10, color="transparent"),
+                    
+                    # Área de Acciones (Mensaje y Botón)
+                    self.fila_acciones
                     
                 ], tight=True, spacing=8)
             ),
-            
-            # LAS ACCIONES (Botones de abajo) SE LLENAN DINÁMICAMENTE
-            actions=[],
-            actions_alignment=ft.MainAxisAlignment.END,
+            # ¡Dejamos actions vacío para evitar los bugs de renderizado!
+            actions=[], 
         )
+        
+        self._page.overlay.append(self.dialogo_accion)
         self.build_ui()
 
     #TARJETAS
@@ -148,7 +158,7 @@ class PantallaPrestamos(ft.Container):
         )
 
     # ===== BOTONES DE ACCIÓN =====
-    def build_btn_accion(self, texto, icono, color, on_click_action=None, data=""):
+    def build_btn_accion(self, texto, icono, color, on_click_action=None, data="", estado = ""):
         return ft.OutlinedButton(
             texto,
             icon=icono,
@@ -160,7 +170,8 @@ class PantallaPrestamos(ft.Container):
             ),
             height=35,
             on_click=on_click_action,
-            data= data
+            data= data,
+            visible= estado != "Devuelto"
         )
 
     # FILAS DE LA TABLA 
@@ -191,14 +202,16 @@ class PantallaPrestamos(ft.Container):
                             ft.Icons.CALENDAR_MONTH, 
                             self.AZUL,
                             on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "extender"),
-                            data= data["prestamo"]
+                            data= data["prestamo"],
+                            estado = data["estado"]
                         ),
                         self.build_btn_accion(
                             "Devolver", 
                             ft.Icons.KEYBOARD_RETURN, 
                             self.VERDE,
                             on_click_action=lambda e, d=data: self.abrir_dialogo_prestamo(e, d, "devolver"),
-                            data= data["prestamo"]
+                            data= data["prestamo"],
+                            estado = data["estado"]
                         ),
                         ft.IconButton(
                             icon=ft.Icons.MORE_VERT, 
@@ -440,115 +453,94 @@ class PantallaPrestamos(ft.Container):
                 
             ], alignment=ft.MainAxisAlignment.START)
         )
-    # ===== LÓGICA DEL DIÁLOGO REUTILIZABLE =====
+    def mostrar_mensaje(self, texto, color):
+        es_exito = (color == "green")
+        color_real = self.VERDE if es_exito else self.ROJO if color == "red" else self.NARANJA
+        icono = ft.Icons.CHECK_CIRCLE if es_exito else ft.Icons.ERROR if color == "red" else ft.Icons.WARNING
+
+        self.mensaje.bgcolor = "transparent"
+        self.mensaje.border = ft.border.all(1, color_real)
+        self.mensaje.content = ft.Row(
+            [
+                ft.Icon(icono, color=color_real, size=20),
+                ft.Text(texto, color=self.TEXT, size=13, weight="w500")
+            ],
+            alignment=ft.MainAxisAlignment.START,
+            spacing=8
+        )
+        self.mensaje.visible = True
+        # Usamos _page.update() para que el overlay completo se entere del cambio
+        self._page.update() 
+
     def abrir_dialogo_prestamo(self, e, d, accion):
-        prestamo = e.control.data
-        
-        # 1. SIMULACIÓN DE DATOS DE LA API (Dummy Data)
-        # Aquí fingimos que con el d["identificador"] fuimos a la BD y trajimos el perfil
-        tipo_usuario_simulado = "ALUMNO"
-        
-        if tipo_usuario_simulado == "ALUMNO":
-            self.modal_avatar_icon.icon = ft.Icons.SCHOOL
-            self.modal_avatar_icon.color = self.AZUL
-            lbl_identificador = "Matrícula"
-            # Datos constantes simulados
-            val_carrera = "Ing. Desarrollo y Tecnologías de Software"
-            val_semestre = "5to Semestre"
-        else:
-            self.modal_avatar_icon.icon = ft.Icons.BADGE
-            self.modal_avatar_icon.color = self.VERDE
-            lbl_identificador = "No. Plaza"
-            val_carrera = "Docente"
-            val_semestre = ""
-
-        # 2. POBLAR TARJETA DE USUARIO
-        self.modal_nombre.value = d["nombre"] # Usamos el nombre que ya viene en la fila
-        self.modal_matricula.value = f"{lbl_identificador}: {d['identificador']}"
-        self.modal_carrera.value = f"Programa: {val_carrera}"
-        self.modal_semestre.value = val_semestre
-
-        # 3. LIMPIAR EL ÁREA DINÁMICA
+        # 1. Resetear el estado visual instantáneamente
+        args = (d["prestamo"],d["estado"])
+        self.mensaje.visible = False
+        self.modal_boton_dinamico.content = None
         self.modal_contenido_dinamico.controls.clear()
 
-        # 4. CONFIGURAR EL DIÁLOGO SEGÚN LA ACCIÓN
-# 4. CONFIGURAR EL DIÁLOGO SEGÚN LA ACCIÓN
-        
-        # --- SIMULACIÓN DE LIBROS PRESTADOS ---
-        # Fingimos que fuimos a la BD y trajimos los libros de este préstamo
+        # 2. Poblar tarjeta de usuario
+        self.modal_nombre.value = d["nombre"]
+        self.modal_matricula.value = f"ID: {d['identificador']}"
+        self.modal_carrera.value = "Programa: Ing. Software"
+        self.modal_semestre.value = "5to Semestre"
+
+        # 3. Simular lista de libros prestados
         libros_simulados = [
             {"titulo": "Cien años de soledad", "autor": "Gabriel García Márquez", "adq": "ADQ-001245"},
-            {"titulo": "El Aleph", "autor": "Jorge Luis Borges", "adq": "ADQ-001246"},
             {"titulo": "Estructuras de Datos", "autor": "Luis Joyanes", "adq": "ADQ-008890"}
         ]
         
-        # Generamos la columna con las tarjetas usando la función que añadimos
         lista_tarjetas_libros = ft.Column(scroll=ft.ScrollMode.AUTO, spacing=10)
         for libro in libros_simulados:
-            lista_tarjetas_libros.controls.append(
-                self.crear_item_libro_modal(libro["titulo"], libro["autor"], libro["adq"])
-            )
+            lista_tarjetas_libros.controls.append(self.crear_item_libro_modal(libro["titulo"], libro["autor"], libro["adq"]))
 
-        # Envolvemos la lista en un contenedor con altura fija (Crucial para el scroll)
         contenedor_libros_scroll = ft.Container(
-            content=lista_tarjetas_libros,
-            height=200, # Altura fija para no desbordar la pantalla
-            border=ft.border.all(1, self.GRIS_BORDE),
-            border_radius=12,
-            padding=10,
-            bgcolor="surface"
+            content=lista_tarjetas_libros, height=180, border=ft.border.all(1, self.GRIS_BORDE),
+            border_radius=12, padding=10, bgcolor="surface"
         )
 
+        # 4. Configurar según la acción
         if accion == "devolver":
             self.modal_titulo.value = "Devolución de Material"
-            
             self.modal_contenido_dinamico.controls.extend([
-                ft.Text("Selecciona los ejemplares a devolver:", size=13, weight="bold", color=self.TEXT),
+                ft.Text("Ejemplares a devolver:", size=13, weight="bold", color=self.TEXT),
                 contenedor_libros_scroll
             ])
-            
-            self.dialogo_accion.actions = [
-                ft.ElevatedButton("Confirmar Devolución", bgcolor=self.VERDE, color="white", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)), on_click=lambda e, p = prestamo: self.controlador.finalizarPrestamo(e, p))
-            ]
+            self.modal_boton_dinamico.content = ft.ElevatedButton(
+                "Confirmar Devolución", bgcolor=self.VERDE, color="white", 
+                data="btn_devolver",
+                on_click=lambda e, p = args: self.controlador.finalizarPrestamo(e, p)
+            )
 
         elif accion == "extender":
             self.modal_titulo.value = "Extender Préstamo"
-            
             self.modal_contenido_dinamico.controls.extend([
-                ft.Text("Selecciona los ejemplares para extender la fecha:", size=13, weight="bold", color=self.TEXT),
+                ft.Text("Ejemplares para extensión:", size=13, weight="bold", color=self.TEXT),
                 contenedor_libros_scroll,
-                # Espacio para que en el futuro agregues el DatePicker
-                ft.TextField(label="Nueva fecha límite", read_only=True, prefix_icon=ft.Icons.CALENDAR_MONTH, border_radius=8, border_color=self.GRIS_BORDE)
+                ft.TextField(label="Nueva fecha límite", read_only=True, prefix_icon=ft.Icons.CALENDAR_MONTH, border_radius=8)
             ])
-            
-            self.dialogo_accion.actions = [
-                ft.ElevatedButton("Guardar Extensión", bgcolor=self.AZUL, color="white", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)), on_click=self.cerrar_dialogo)
-            ]
+            self.modal_boton_dinamico.content = ft.ElevatedButton(
+                "Guardar Extensión", bgcolor=self.AZUL, color="white", 
+                on_click=lambda e: self.mostrar_mensaje("El alumno tiene multas pendientes.", "red")
+            )
 
         elif accion == "detalle":
             self.modal_titulo.value = "Detalles del Préstamo"
-            
-            # Reutilizamos la misma lista pero SIN los checkboxes (para solo lectura)
-            # En tu implementación final, podrías pasar un parámetro booleano a crear_item_libro_modal 
-            # para ocultar el checkbox si es modo "solo lectura".
             self.modal_contenido_dinamico.controls.extend([
                 ft.Text("Ejemplares prestados:", size=13, weight="bold", color=self.TEXT),
                 contenedor_libros_scroll
             ])
-            
-            self.dialogo_accion.actions = []
-            # En el futuro, aquí pondrás los datos de solo lectura
-            self.modal_contenido_dinamico.controls.append(
-                ft.Text("Aquí se mostrará toda la información del libro, ISBN y fechas en formato de solo lectura.", color=self.GRIS_TEXTO, italic=True)
-            )
-            
-            # Para solo lectura, no necesitamos acciones extra, solo cerrar con la 'X' de arriba
-            self.dialogo_accion.actions = []
 
-        # 5. MOSTRAR DIÁLOGO
+        # 5. LÓGICA DE INYECCIÓN SEGURA (La corrección principal)
+        # Verificamos si ya está en el overlay, si no, lo inyectamos
         if self.dialogo_accion not in self._page.overlay:
             self._page.overlay.append(self.dialogo_accion)
+            
         self.dialogo_accion.open = True
+        
+        # Le ordenamos a la página completa que se dibuje. 
+        # Esto soluciona el RuntimeError porque Flet asocia el control al árbol.
         self._page.update()
 
     def cerrar_dialogo(self, e):
