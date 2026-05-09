@@ -186,6 +186,7 @@ class PantallaHistorial(ft.Container):
         self.build_ui()
 
     def did_mount(self):
+        
         self.controlador_historial.cerrar_registros()
         self.filtrar()
         
@@ -324,7 +325,6 @@ class PantallaHistorial(ft.Container):
             self.update()
 
     def filtrar(self, e=None):
-
         if e:
             self.pagina_actual = 1
 

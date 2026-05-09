@@ -59,10 +59,10 @@ class RepositorioImpl(Repositorio):
                 conn
             )
 
-    def ejecutar_procedimiento(self, nombre_procedimiento: str):
-        """Ejecuta un procedimiento SQL (ej: cerrar_registros_pendientes)"""
+    def ejecutar_procedimiento(self, nombre_procedimiento):
         with db.get_connection() as conn:
             self.__crud.execute_procedure(nombre_procedimiento, conn)
+            conn.commit()
 
     # =============================
     # ASISTENCIA (OPERACIONES ESPECÍFICAS)
