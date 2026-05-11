@@ -253,19 +253,16 @@ class PantallaIncidencias(ft.Container):
 
         self.modal_tipo.value = d["tipo"]
 
-        # 🔥 DESCRIPCIÓN REAL
         self.modal_descripcion.value = d["descripcion"]
 
         self.modal_lugar.value = d["lugar"]
         self.modal_fecha.value = d["fecha"]
 
-        # 🔥 ESTADO
         self.modal_estado_texto.value = d["estado"]
         self.modal_estado_texto.color = self.VERDE if d["estado"] == "RESUELTA" else self.ROJO
         self.modal_estado_icono.color = self.modal_estado_texto.color
         self.modal_estado_icono.icon = ft.Icons.CIRCLE
         
-        # 🔥 COMENTARIO
         self.modal_comentario.value = d["comentario"]
 
         self.modal_categoria.value = d["categoria"]

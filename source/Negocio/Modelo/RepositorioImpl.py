@@ -234,7 +234,6 @@ class RepositorioImpl(Repositorio):
             env = os.environ.copy()
             env["PGPASSWORD"] = partes.get("password", "")
 
-            # 🔥 AQUÍ ESTÁ LA CLAVE
             pg_dump = self.obtener_pg_dump()
 
             subprocess.run([
