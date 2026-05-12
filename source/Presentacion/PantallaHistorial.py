@@ -321,50 +321,23 @@ class PantallaHistorial(ft.Container):
 
         inicio = (self.pagina_actual - 1) * self.registros_por_pagina
 
-        valido, mensaje = Validador.validar_rango_fechas(
-            None if self.txt_fecha_inicio.value == "Fecha inicio" else self.txt_fecha_inicio.value,
-            None if self.txt_fecha_fin.value == "Fecha fin" else self.txt_fecha_fin.value
-        )
+        if not Validador.validar_fechas_ui(
+            page=self._page,
 
-        if not valido:
-            dialogo = ft.AlertDialog(
-                modal=False,
-                bgcolor="white",
-                shape=ft.RoundedRectangleBorder(radius=15),
+            fecha_inicio=None if self.txt_fecha_inicio.value == "Fecha inicio"
+            else self.txt_fecha_inicio.value,
 
-                title=ft.Row([
-                    ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED,
-                            color="#EF4444"),
-                    ft.Text(
-                        "Filtro inválido",
-                        weight="bold"
-                    )
-                ]),
-                content=ft.Text(mensaje),
-                actions=[
-                    ft.TextButton(
-                        "Aceptar",
-                        on_click=lambda e: cerrar_dialogo(e)
-                    )
-                ]
-            )
-            def cerrar_dialogo(e):
-                dialogo.open = False
+            fecha_fin=None if self.txt_fecha_fin.value == "Fecha fin"
+            else self.txt_fecha_fin.value,
 
-                self.txt_fecha_inicio.value = "Fecha inicio"
-                self.txt_fecha_fin.value = "Fecha fin"
+            txt_inicio=self.txt_fecha_inicio,
+            txt_fin=self.txt_fecha_fin,
 
-                Herramientas.reset_datepicker(self.fecha_inicio_picker)
-                Herramientas.reset_datepicker(self.fecha_fin_picker)
+            picker_inicio=self.fecha_inicio_picker,
+            picker_fin=self.fecha_fin_picker,
 
-                self.filtrar()
-
-                self._page.update()
-
-            self._page.overlay.append(dialogo)
-            dialogo.open = True
-            self._page.update()
-
+            callback=lambda: self.filtrar()
+        ):
             return
 
         datos, total = self.controlador_historial.obtener_historial(
