@@ -89,9 +89,7 @@ class CRUDimp(CRUD):
         """Ejecuta un procedimiento SQL sin parámetros"""
         query = sql.SQL("CALL {}()").format(sql.Identifier(procedure_name))
         conn.execute(query)
-   # =========================
-    # MOTOR DE FILTROS AVANZADO
-    # =========================
+    # FILTROS AVANZADO
     def read_advanced(
         self,
         conn: Connection,
@@ -104,9 +102,7 @@ class CRUDimp(CRUD):
         columnas: list[str] = None
     ) -> list[dict]:
 
-        # =========================
         # SELECT dinámico
-        # =========================
         if columnas:
             query = sql.SQL("SELECT {} FROM {}").format(
                 sql.SQL(", ").join(map(sql.Identifier, columnas)),
@@ -119,10 +115,7 @@ class CRUDimp(CRUD):
 
         valores = []
         condiciones = []
-
-        # =========================
         # FUNCIÓN INTERNA PARA OPERADORES
-        # =========================
         def procesar_filtro(key, value):
             if "__" not in key:
                 return (
@@ -178,18 +171,14 @@ class CRUDimp(CRUD):
             else:
                 raise ValueError(f"Operador no soportado: {op}")
 
-        # =========================
         # AND filtros
-        # =========================
         if filtros:
             for key, value in filtros.items():
                 condicion, vals = procesar_filtro(key, value)
                 condiciones.append(condicion)
                 valores.extend(vals)
 
-        # =========================
         # OR filtros (YA AVANZADO)
-        # =========================
         if or_filtros:
             grupos = []
             for grupo in or_filtros:
@@ -207,15 +196,11 @@ class CRUDimp(CRUD):
                 sql.SQL("(") + sql.SQL(" OR ").join(grupos) + sql.SQL(")")
             )
 
-        # =========================
         # WHERE
-        # =========================
         if condiciones:
             query += sql.SQL(" WHERE ") + sql.SQL(" AND ").join(condiciones)
 
-        # =========================
         # ORDER BY
-        # =========================
         if order_by:
             orden = []
             for campo, direccion in order_by:
@@ -232,18 +217,14 @@ class CRUDimp(CRUD):
 
             query += sql.SQL(" ORDER BY ") + sql.SQL(", ").join(orden)
 
-        # =========================
         # PAGINACIÓN
-        # =========================
         if limit is not None:
             query += sql.SQL(" LIMIT {}").format(sql.Literal(limit))
 
         if offset is not None:
             query += sql.SQL(" OFFSET {}").format(sql.Literal(offset))
 
-        # =========================
         # EJECUCIÓN
-        # =========================
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(query, valores)
             return cur.fetchall()
@@ -260,7 +241,7 @@ class CRUDimp(CRUD):
         condiciones = []
         valores = []
 
-        # 🔹 filtros AND
+        #  filtros AND
         if filtros:
             for key, value in filtros.items():
                 if "__" in key:
@@ -287,7 +268,7 @@ class CRUDimp(CRUD):
                     condiciones.append(f"{key} = %s")
                     valores.append(value)
 
-        # 🔹 filtros OR
+        #  filtros OR
         if or_filtros:
             or_condiciones = []
             for f in or_filtros:

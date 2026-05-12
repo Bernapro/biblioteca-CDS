@@ -15,7 +15,6 @@ def main(page: ft.Page):
 
     # Instanciamos el Login y lo agregamos a la página
     login_app = PantallaLogin(page)
-    # Suponiendo que tu clase tiene un método "construir_vista" que devuelve el diseño
     page.add(login_app.construir_vista()) 
 
 def run():

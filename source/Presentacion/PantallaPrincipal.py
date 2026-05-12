@@ -95,9 +95,7 @@ class PantallaPrincipal(ft.Container):
                 self.columna_derecha
             ]
         )
-    # ==========================================
     # MODO OSCURO
-    # ==========================================
     def cambiar_tema(self, e):
         if e.control.value:
             self.main_page.theme_mode = ft.ThemeMode.DARK
@@ -109,9 +107,7 @@ class PantallaPrincipal(ft.Container):
         self.main_page.update()
         self.update()
 
-    # ==========================================
     # ENRUTADOR DE VISTAS
-    # ==========================================
     def cambiar_vista(self, index):
 
         if self.vistas[index] is None:

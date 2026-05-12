@@ -6,8 +6,6 @@ class Herramientas:
     def reset_dropdown(dropdown: ft.Dropdown):
         if dropdown is None:
             return
-
-        #EL SECRETO: Flet a veces ignora 'None', pero obedece inmediatamente al string vacío ""
         dropdown.value = "" 
         dropdown.update()
 

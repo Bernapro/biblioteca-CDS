@@ -1,5 +1,5 @@
 import flet as ft
-
+from datetime import datetime
 
 class Validador:
     COLOR_ERROR = "#EF4444"
@@ -11,7 +11,6 @@ class Validador:
             if hasattr(control, "visible") and not control.visible:
                 continue
             valor = control.value
-            # 🔹 Dropdown
             if isinstance(control, ft.Dropdown):
                 if valor is None or valor in ["", "Todos", "Selecciona"]:
                     Validador._marcar_error(control)
@@ -63,3 +62,21 @@ class Validador:
                 
             elif hasattr(c, "content") and c.content is not None:
                 Validador.limpiar([c.content])
+
+    @staticmethod
+    def validar_rango_fechas(fecha_inicio, fecha_fin):
+
+        if not fecha_inicio or not fecha_fin:
+            return True, None
+
+        try:
+            inicio = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+            fin = datetime.strptime(fecha_fin, "%Y-%m-%d")
+
+            if inicio > fin:
+                return False, "La fecha inicio no puede ser mayor a la fecha fin"
+
+            return True, None
+
+        except Exception:
+            return False, "Formato de fecha inválido"

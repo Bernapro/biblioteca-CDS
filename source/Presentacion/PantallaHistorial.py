@@ -1,7 +1,7 @@
 import flet as ft
 from Negocio.Controlador.ControladorHistorial import ControladorHistorial
 from Negocio.Utilidades.Herramientas import Herramientas
-
+from Negocio.Utilidades.Validador import Validador
 from tkinter import filedialog
 import tkinter as tk
 
@@ -320,6 +320,52 @@ class PantallaHistorial(ft.Container):
             self.pagina_actual = 1
 
         inicio = (self.pagina_actual - 1) * self.registros_por_pagina
+
+        valido, mensaje = Validador.validar_rango_fechas(
+            None if self.txt_fecha_inicio.value == "Fecha inicio" else self.txt_fecha_inicio.value,
+            None if self.txt_fecha_fin.value == "Fecha fin" else self.txt_fecha_fin.value
+        )
+
+        if not valido:
+            dialogo = ft.AlertDialog(
+                modal=False,
+                bgcolor="white",
+                shape=ft.RoundedRectangleBorder(radius=15),
+
+                title=ft.Row([
+                    ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED,
+                            color="#EF4444"),
+                    ft.Text(
+                        "Filtro inválido",
+                        weight="bold"
+                    )
+                ]),
+                content=ft.Text(mensaje),
+                actions=[
+                    ft.TextButton(
+                        "Aceptar",
+                        on_click=lambda e: cerrar_dialogo(e)
+                    )
+                ]
+            )
+            def cerrar_dialogo(e):
+                dialogo.open = False
+
+                self.txt_fecha_inicio.value = "Fecha inicio"
+                self.txt_fecha_fin.value = "Fecha fin"
+
+                Herramientas.reset_datepicker(self.fecha_inicio_picker)
+                Herramientas.reset_datepicker(self.fecha_fin_picker)
+
+                self.filtrar()
+
+                self._page.update()
+
+            self._page.overlay.append(dialogo)
+            dialogo.open = True
+            self._page.update()
+
+            return
 
         datos, total = self.controlador_historial.obtener_historial(
             texto=self.input_busqueda.value or "",

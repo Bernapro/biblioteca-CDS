@@ -6,7 +6,6 @@ from datetime import datetime
 from Negocio.Utilidades.Validador import Validador
 
 class ControladorNuevoPrestamo:
-    # Inicializa controlador
     def __init__(self, pantalla, endEjemplares: BibliotecaClientInterface, repositorio: RepositorioImpl, endPrestamo: BibliotecaClientInterface):
         self.__pantalla = pantalla
         self.__endEjemplares = endEjemplares
