@@ -1,41 +1,54 @@
+import os
+from datetime import datetime, timedelta
 import flet as ft
-import flet_charts as fch
-from datetime import datetime
-import tkinter as tk
-from tkinter import filedialog
 from Negocio.Controlador.ControladorReportes import ControladorReportes
 
 
 class PantallaReportes(ft.Container):
 
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, controlador=None):
         super().__init__()
 
         self._page = page
-        self.controlador = ControladorReportes()
+        self.controlador = controlador or ControladorReportes()
 
-        # ===== COLORES =====
+        # ===== COLORES SEMÁNTICOS (COMPATIBLE CON MODO CLARO/OSCURO) =====
         self.AZUL = "#2563EB"
         self.PURPURA = "#7C3AED"
         self.VERDE = "#059669"
+        self.NARANJA = "#F59E0B"
 
+        self.PRIMARY = "primary"
         self.TEXT = "onSurface"
         self.TEXT_SECONDARY = "onSurfaceVariant"
         self.CARD = "surface"
+        self.SURFACE_VARIANT = "surfaceVariant"
         self.BORDER = "outline"
 
         self.expand = True
         self.padding = 20
+        self.bgcolor = "transparent"
 
         # ===== ESTADO =====
         self.tipo_actual = "Alumnos"
-        self.tipo_reporte = "Asistencia"
+        self.tipo_reporte = "Asistencia completa"
+        self.ultimo_reporte = []
+        self.columnas_actuales = []
+        self.filas_actuales = []
 
-        # ===== FECHAS =====
-        self.fecha_inicio = "2026-05-01"
-        self.fecha_fin = "2026-05-31"
+        # ===== FECHAS DINÁMICAS =====
+        hoy = datetime.now()
+        self.fecha_inicio = hoy.replace(day=1).strftime("%Y-%m-%d")
+        self.fecha_fin = hoy.strftime("%Y-%m-%d")
 
         self.build_ui()
+
+    def _safe_page_update(self):
+        try:
+            if self._page is not None and hasattr(self._page, "update"):
+                self._page.update()
+        except Exception:
+            pass
 
     # ================= UI =================
     def build_ui(self):
@@ -52,34 +65,24 @@ class PantallaReportes(ft.Container):
         )
 
         self.content = ft.Container(
-
             expand=True,
-
-            bgcolor=ft.Colors.GREY_100,
-
-            padding=20,
-
+            bgcolor="transparent",
+            padding=10,
             content=ft.Column(
-
                 expand=True,
-
                 spacing=20,
-
                 scroll=ft.ScrollMode.AUTO,
-
                 controls=[
-
                     # ===== HEADER =====
                     ft.Column(
                         spacing=5,
                         controls=[
-
                             ft.Text(
                                 "Reportes",
                                 size=28,
-                                weight="bold"
+                                weight="bold",
+                                color=self.TEXT
                             ),
-
                             ft.Text(
                                 "Estadísticas del sistema",
                                 color=self.TEXT_SECONDARY
@@ -95,54 +98,39 @@ class PantallaReportes(ft.Container):
 
                     # ===== GRAFICAS + TABLAS =====
                     ft.Row(
-
                         expand=True,
-
                         spacing=20,
-
                         vertical_alignment=ft.CrossAxisAlignment.START,
-
                         controls=[
-
                             # ===== GRAFICA =====
                             ft.Container(
-
                                 expand=1,
-
                                 padding=15,
-
-                                bgcolor=ft.Colors.WHITE,
-
+                                bgcolor=self.CARD,
+                                border=ft.Border.all(1, self.BORDER),
                                 border_radius=20,
-
                                 shadow=ft.BoxShadow(
                                     spread_radius=1,
                                     blur_radius=10,
-                                    color=ft.Colors.BLACK12,
+                                    color="black12",
                                     offset=ft.Offset(0, 4)
                                 ),
-
                                 content=self.chart_container
                             ),
 
                             # ===== TABLA =====
                             ft.Container(
-
                                 expand=2,
-
                                 padding=15,
-
-                                bgcolor=ft.Colors.WHITE,
-
+                                bgcolor=self.CARD,
+                                border=ft.Border.all(1, self.BORDER),
                                 border_radius=20,
-
                                 shadow=ft.BoxShadow(
                                     spread_radius=1,
                                     blur_radius=10,
-                                    color=ft.Colors.BLACK12,
+                                    color="black12",
                                     offset=ft.Offset(0, 4)
                                 ),
-
                                 content=self.distribution_container
                             )
                         ]
@@ -178,8 +166,9 @@ class PantallaReportes(ft.Container):
             )
         )
 
-        self._page.overlay.append(self.dp_inicio)
-        self._page.overlay.append(self.dp_fin)
+        if self._page is not None and hasattr(self._page, "overlay"):
+            self._page.overlay.append(self.dp_inicio)
+            self._page.overlay.append(self.dp_fin)
 
         # ===== INPUTS FECHAS =====
         self.input_inicio = ft.TextField(
@@ -187,6 +176,11 @@ class PantallaReportes(ft.Container):
             value=self.fecha_inicio,
             width=150,
             read_only=True,
+            bgcolor=self.CARD,
+            color=self.TEXT,
+            border_color=self.BORDER,
+            text_style=ft.TextStyle(color=self.TEXT),
+            label_style=ft.TextStyle(color=self.TEXT_SECONDARY),
             on_click=lambda e: self.abrir_fecha_inicio()
         )
 
@@ -195,6 +189,11 @@ class PantallaReportes(ft.Container):
             value=self.fecha_fin,
             width=150,
             read_only=True,
+            bgcolor=self.CARD,
+            color=self.TEXT,
+            border_color=self.BORDER,
+            text_style=ft.TextStyle(color=self.TEXT),
+            label_style=ft.TextStyle(color=self.TEXT_SECONDARY),
             on_click=lambda e: self.abrir_fecha_fin()
         )
 
@@ -202,6 +201,9 @@ class PantallaReportes(ft.Container):
         self.dropdown = ft.Dropdown(
             width=180,
             value="Todos",
+            bgcolor=self.CARD,
+            color=self.TEXT,
+            border_color=self.BORDER,
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Alumnos"),
@@ -214,6 +216,9 @@ class PantallaReportes(ft.Container):
         self.tipo_reporte_dd = ft.Dropdown(
             width=240,
             value="Asistencia completa",
+            bgcolor=self.CARD,
+            color=self.TEXT,
+            border_color=self.BORDER,
             options=[
                 ft.dropdown.Option("Asistencia completa"),
                 ft.dropdown.Option("Usuarios más activos"),
@@ -230,12 +235,13 @@ class PantallaReportes(ft.Container):
 
         return ft.Container(
             padding=20,
+            bgcolor=self.CARD,
+            border=ft.Border.all(1, self.BORDER),
             border_radius=15,
             content=ft.Row(
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 controls=[
-
                     # ===== FILTROS =====
                     ft.Row(
                         spacing=10,
@@ -246,26 +252,29 @@ class PantallaReportes(ft.Container):
                             self.tipo_reporte_dd,
 
                             # ===== BOTON ACTUALIZAR =====
-                            ft.ElevatedButton(
+                            ft.Button(
                                 "Actualizar",
                                 icon=ft.Icons.REFRESH,
+                                bgcolor=self.PRIMARY,
+                                color="onPrimary",
                                 on_click=self.actualizar
                             ),
                         ]
                     ),
 
                     # ===== EXPORTAR =====
-                    ft.ElevatedButton(
+                    ft.Button(
                         "Exportar",
                         icon=ft.Icons.DOWNLOAD,
+                        bgcolor=self.VERDE,
+                        color="white",
                         on_click=self.exportar_excel
                     )
                 ]
             )
         )
-    
-    def obtener_tipo_usuario(self):
 
+    def obtener_tipo_usuario(self):
         mapa = {
             "Alumnos": "ALUMNO",
             "Personal": "PERSONAL",
@@ -276,34 +285,40 @@ class PantallaReportes(ft.Container):
             return None
 
         return mapa.get(self.dropdown.value)
-    
+
     def mostrar_sin_datos(self):
+        self.columnas_actuales = []
+        self.filas_actuales = []
 
         self.cards_row.controls = [
             self.card("Sin datos", "0", self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text("Sin datos")
+        self.chart_container.content = ft.Text(
+            "Sin datos",
+            color=self.TEXT_SECONDARY
+        )
 
-        self.distribution_container.content = ft.Text("Sin datos")
+        self.distribution_container.content = ft.Text(
+            "Sin datos",
+            color=self.TEXT_SECONDARY
+        )
 
-        self._page.update()
+        self._safe_page_update()
 
     # ================= ACTUALIZAR =================
-    def actualizar(self, e):
+    def actualizar(self, e=None):
 
         tipo = self.tipo_reporte_dd.value
 
         # validar fechas
         if self.fecha_inicio > self.fecha_fin:
-
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text("La fecha inicio no puede ser mayor a la fecha fin")
-            )
-
-            self._page.snack_bar.open = True
-            self._page.update()
-
+            if self._page is not None:
+                self._page.snack_bar = ft.SnackBar(
+                    ft.Text("La fecha inicio no puede ser mayor a la fecha fin")
+                )
+                self._page.snack_bar.open = True
+                self._safe_page_update()
             return
 
         usuario = self.obtener_tipo_usuario()
@@ -323,25 +338,15 @@ class PantallaReportes(ft.Container):
             return
 
         renderizadores = {
-
             "Asistencia completa": self.render_asistencia,
-
             "Usuarios más activos": self.render_usuarios_activos,
-
             "Horas pico avanzado": self.render_horas_pico,
-
             "Tendencia diaria": self.render_tendencia,
-
             "Reporte por carrera": self.render_carreras,
-
             "Reporte por facultad": self.render_facultades,
-
             "Reporte por semestre": self.render_semestres,
-
             "Visitantes externos": self.render_visitantes,
-
             "Reporte de saturación": self.render_saturacion,
-
             "Reporte de crecimiento": self.render_crecimiento,
         }
 
@@ -355,182 +360,410 @@ class PantallaReportes(ft.Container):
             f"{datetime.now().strftime('%d/%m/%Y %H:%M')}"
         )
 
-        self._page.update()
+        self._safe_page_update()
 
-    # ================= GRAFICA DINAMICA =================
-    def generar_grafica(self, tipo, datos):
+    # ================= GRAFICA DINAMICA CON CONTROLES NATIVOS FLET =================
+    def _construir_barras_dinamicas(self, titulo, items, unidad=""):
+        if not items:
+            return ft.Container(
+                expand=True,
+                padding=20,
+                content=ft.Text("Sin datos para graficar", color=self.TEXT_SECONDARY)
+            )
 
-        if tipo != "Horas pico":
-            return ft.Text("Sin gráfica")
+        valores = [float(val or 0) for _, val, _ in items]
+        max_valor = max(valores, default=0)
+        divisor = max_valor if max_valor > 0 else 1
 
-        grupos = []
+        columnas_barras = []
+        filas_resumen = []
 
-        for i, d in enumerate(datos):
+        for etiqueta, valor, color in items[:12]:
+            val_num = float(valor or 0)
+            proporcion = val_num / divisor
+            altura = max(12, int(proporcion * 160)) if val_num > 0 else 8
+            val_texto = f"{int(val_num)}" if val_num.is_integer() else f"{round(val_num, 2)}"
 
-            grupos.append(
+            columnas_barras.append(
+                ft.Column(
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.END,
+                    spacing=5,
+                    controls=[
+                        ft.Text(
+                            val_texto,
+                            size=11,
+                            weight="bold",
+                            color=self.TEXT
+                        ),
+                        ft.Container(
+                            width=32,
+                            height=altura,
+                            border_radius=6,
+                            bgcolor=color,
+                            tooltip=f"{etiqueta}: {val_texto} {unidad}".strip()
+                        ),
+                        ft.Container(
+                            width=64,
+                            content=ft.Text(
+                                str(etiqueta),
+                                size=10,
+                                color=self.TEXT_SECONDARY,
+                                text_align=ft.TextAlign.CENTER,
+                                max_lines=2,
+                                overflow=ft.TextOverflow.ELLIPSIS
+                            )
+                        )
+                    ]
+                )
+            )
 
-                fch.BarChartGroup(
-
-                    x=i,
-
-                    rods=[
-
-                        fch.BarChartRod(
-
-                            from_y=0,
-
-                            to_y=d["total"],
-
-                            width=30,
-
-                            color=self.AZUL,
+            filas_resumen.append(
+                ft.Column(
+                    spacing=4,
+                    controls=[
+                        ft.Row(
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            controls=[
+                                ft.Text(
+                                    str(etiqueta),
+                                    size=12,
+                                    color=self.TEXT,
+                                    max_lines=1,
+                                    overflow=ft.TextOverflow.ELLIPSIS,
+                                    expand=True
+                                ),
+                                ft.Text(
+                                    f"{val_texto} {unidad}".strip(),
+                                    size=12,
+                                    weight="bold",
+                                    color=color
+                                )
+                            ]
+                        ),
+                        ft.ProgressBar(
+                            value=max(0.0, min(1.0, proporcion)),
+                            color=color,
+                            bgcolor=self.SURFACE_VARIANT,
+                            height=6,
+                            border_radius=4
                         )
                     ]
                 )
             )
 
         return ft.Container(
-
             expand=True,
-
-            padding=20,
-
-            content=fch.BarChart(
-
-                expand=True,
-
-                max_y=max(d["total"] for d in datos) + 5,
-
-                groups=grupos,
-
-                border=ft.border.all(
-                    1,
-                    ft.Colors.GREY_300
-                ),
-
-                left_axis=fch.ChartAxis(
-                    label_size=40
-                ),
-
-                bottom_axis=fch.ChartAxis(
-
-                    label_size=35,
-
-                    labels=[
-
-                        fch.ChartAxisLabel(
-
-                            value=i,
-
-                            label=ft.Text(
-                                f"{int(d['hora'])}:00"
-                            )
+            padding=10,
+            bgcolor=self.CARD,
+            content=ft.Column(
+                spacing=15,
+                scroll=ft.ScrollMode.AUTO,
+                controls=[
+                    ft.Text(
+                        titulo,
+                        size=16,
+                        weight="bold",
+                        color=self.TEXT
+                    ),
+                    ft.Container(
+                        height=230,
+                        padding=ft.Padding.symmetric(horizontal=10, vertical=10),
+                        border_radius=12,
+                        bgcolor=self.SURFACE_VARIANT,
+                        alignment=ft.Alignment(0, 1),
+                        content=ft.Row(
+                            scroll=ft.ScrollMode.AUTO,
+                            alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+                            vertical_alignment=ft.CrossAxisAlignment.END,
+                            spacing=12,
+                            controls=columnas_barras
                         )
+                    ),
+                    ft.Column(
+                        spacing=8,
+                        controls=filas_resumen
+                    )
+                ]
+            )
+        )
 
-                        for i, d in enumerate(datos)
-                    ]
+    def generar_grafica(self, tipo, datos):
+        if not datos:
+            return ft.Container(
+                expand=True,
+                padding=20,
+                content=ft.Text(
+                    "Sin datos para graficar",
+                    color=self.TEXT_SECONDARY
                 )
             )
+
+        paleta = [self.AZUL, self.VERDE, self.PURPURA, self.NARANJA]
+
+        if tipo == "Asistencia completa":
+            activos = sum(
+                1 for d in datos
+                if str(d.get("estado", "")).upper() == "ACTIVO"
+                or (d.get("estado") is None and d.get("fecha_salida") is None)
+            )
+            finalizados = max(0, len(datos) - activos)
+            alumnos = sum(1 for d in datos if str(d.get("tipo_usuario", "")).upper() == "ALUMNO")
+            personal = sum(1 for d in datos if str(d.get("tipo_usuario", "")).upper() == "PERSONAL")
+            visitantes = sum(1 for d in datos if str(d.get("tipo_usuario", "")).upper() == "VISITANTE")
+
+            items = [
+                ("Activos", activos, self.VERDE),
+                ("Finalizados", finalizados, self.AZUL),
+                ("Alumnos", alumnos, self.AZUL),
+                ("Personal", personal, self.PURPURA),
+                ("Visitantes", visitantes, self.NARANJA),
+            ]
+            return self._construir_barras_dinamicas(
+                "Resumen de Asistencia",
+                items,
+                unidad="registros"
+            )
+
+        elif tipo == "Usuarios más activos":
+            items = []
+            for i, d in enumerate(datos[:10]):
+                nombre = str(d.get("nombre_completo", "Usuario"))
+                valor = d.get("horas_totales", 0) or d.get("visitas", 0)
+                items.append((nombre, valor, paleta[i % len(paleta)]))
+            return self._construir_barras_dinamicas(
+                "Top Usuarios Más Activos",
+                items,
+                unidad="hrs"
+            )
+
+        elif tipo in ("Horas pico avanzado", "Horas pico"):
+            items = [
+                (
+                    f"{int(d.get('hora', 0))}:00",
+                    d.get("total", d.get("total_usuarios", 0)),
+                    self.AZUL
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Entradas por Hora del Día",
+                items,
+                unidad="entradas"
+            )
+
+        elif tipo == "Tendencia diaria":
+            items = [
+                (
+                    str(d.get("fecha", "")),
+                    d.get("total_usuarios", d.get("total", 0)),
+                    self.VERDE
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Tendencia Diaria de Visitas",
+                items,
+                unidad="visitas"
+            )
+
+        elif tipo == "Reporte por carrera":
+            items = [
+                (
+                    str(d.get("carrera", "Sin carrera")),
+                    d.get("total_visitas", 0),
+                    paleta[i % len(paleta)]
+                )
+                for i, d in enumerate(datos)
+            ]
+            return self._construir_barras_dinamicas(
+                "Visitas por Carrera",
+                items,
+                unidad="visitas"
+            )
+
+        elif tipo == "Reporte por facultad":
+            items = [
+                (
+                    str(d.get("facultad", "Sin facultad")),
+                    d.get("total_visitas", 0),
+                    paleta[i % len(paleta)]
+                )
+                for i, d in enumerate(datos)
+            ]
+            return self._construir_barras_dinamicas(
+                "Visitas por Facultad",
+                items,
+                unidad="visitas"
+            )
+
+        elif tipo == "Reporte por semestre":
+            items = [
+                (
+                    f"Sem {d.get('semestre', '?')}",
+                    d.get("total_visitas", 0),
+                    self.VERDE
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Visitas por Semestre",
+                items,
+                unidad="visitas"
+            )
+
+        elif tipo == "Visitantes externos":
+            items = [
+                (
+                    str(d.get("institucion", "Sin institución")),
+                    d.get("total_visitas", 0),
+                    self.NARANJA
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Visitantes por Institución",
+                items,
+                unidad="visitas"
+            )
+
+        elif tipo == "Reporte de saturación":
+            items = [
+                (
+                    f"{int(d.get('hora', 0))}:00",
+                    d.get("total_usuarios", d.get("total", 0)),
+                    self.PURPURA
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Saturación por Hora",
+                items,
+                unidad="usuarios"
+            )
+
+        elif tipo == "Reporte de crecimiento":
+            items = [
+                (
+                    str(d.get("mes", "")),
+                    d.get("total_visitas", 0),
+                    self.VERDE
+                )
+                for d in datos
+            ]
+            return self._construir_barras_dinamicas(
+                "Crecimiento Mensual",
+                items,
+                unidad="visitas"
+            )
+
+        return ft.Container(
+            expand=True,
+            padding=20,
+            content=ft.Text("Sin gráfica", color=self.TEXT_SECONDARY)
         )
 
     # ================= DISTRIBUCION =================
     def generar_distribucion(self, datos):
-
-        total = len(datos)
+        total = len(datos) if datos else 0
 
         return ft.Container(
             width=300,
             padding=20,
+            bgcolor=self.CARD,
             content=ft.Column([
-                ft.Text("Total registros"),
-                ft.Text(str(total), size=24, weight="bold")
+                ft.Text("Total registros", color=self.TEXT_SECONDARY),
+                ft.Text(str(total), size=24, weight="bold", color=self.TEXT)
             ])
         )
 
     # ================= EXPORTAR =================
-    def exportar_excel(self, e):
-
-        usuario = self.obtener_tipo_usuario()
-
-        nombre = f"reporte_{self.tipo_reporte_dd.value}.xlsx"
-
-        # ventana oculta
-        root = tk.Tk()
-        root.withdraw()
-        root.attributes('-topmost', True)
-
-        ruta = filedialog.asksaveasfilename(
-            title="Guardar reporte",
-            defaultextension=".xlsx",
-            filetypes=[("Excel files", "*.xlsx")],
-            initialfile=nombre
-        )
-
-        root.destroy()
-
-        if not ruta:
-            return
-
-        try:
-
-            generado = self.controlador.exportar_excel(
-                ruta=ruta,
-                tipo=self.tipo_reporte_dd.value,
-                fecha_inicio=self.fecha_inicio,
-                fecha_fin=self.fecha_fin,
-                tipo_usuario=usuario
-            )
-
-            if generado:
-
-                self._page.snack_bar = ft.SnackBar(
-                    ft.Text("Reporte exportado correctamente")
-                )
-
-            else:
-
+    def exportar_excel(self, e=None, ruta=None):
+        if not self.filas_actuales and not self.ultimo_reporte:
+            if self._page is not None:
                 self._page.snack_bar = ft.SnackBar(
                     ft.Text("No hay datos para exportar")
                 )
+                self._page.snack_bar.open = True
+                self._safe_page_update()
+            return False
 
-        except Exception as ex:
+        usuario = self.obtener_tipo_usuario()
+        tipo = self.tipo_reporte_dd.value
+        nombre_limpio = tipo.lower().replace(" ", "_")
+        nombre = f"reporte_{nombre_limpio}.xlsx"
 
-            self._page.snack_bar = ft.SnackBar(
-                ft.Text(f"Error: {str(ex)}")
+        if not ruta:
+            import tkinter as tk
+            from tkinter import filedialog
+
+            root = tk.Tk()
+            root.withdraw()
+            root.attributes('-topmost', True)
+            root.lift()
+            root.focus()
+            ruta = filedialog.asksaveasfilename(
+                title="Guardar reporte",
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                initialfile=nombre
+            )
+            root.destroy()
+
+        if not ruta:
+            return False
+
+        try:
+            generado = self.controlador.exportar_excel(
+                ruta=ruta,
+                tipo=tipo,
+                fecha_inicio=self.fecha_inicio,
+                fecha_fin=self.fecha_fin,
+                tipo_usuario=usuario,
+                columnas=self.columnas_actuales,
+                filas=self.filas_actuales
             )
 
-        self._page.snack_bar.open = True
-        self._page.update()
+            if generado:
+                mensaje = f"Reporte exportado correctamente en: {ruta}"
+            else:
+                mensaje = "No hay datos para exportar"
+
+        except Exception as ex:
+            generado = False
+            mensaje = f"Error: {str(ex)}"
+
+        if self._page is not None:
+            self._page.snack_bar = ft.SnackBar(
+                ft.Text(mensaje)
+            )
+            self._page.snack_bar.open = True
+            self._safe_page_update()
+
+        return generado
 
     # ================= CARD =================
     def card(self, title, value, color):
-
         return ft.Container(
             expand=True,
-
             padding=20,
-
-            bgcolor=ft.Colors.WHITE,
-
+            bgcolor=self.CARD,
+            border=ft.Border.all(1, self.BORDER),
             border_radius=20,
-
             shadow=ft.BoxShadow(
                 spread_radius=1,
                 blur_radius=12,
-                color=ft.Colors.BLACK12,
+                color="black12",
                 offset=ft.Offset(0, 4)
             ),
-
             content=ft.Column(
                 spacing=10,
                 controls=[
-
                     ft.Text(
                         title,
                         size=14,
-                        color=ft.Colors.GREY_700
+                        color=self.TEXT_SECONDARY
                     ),
-
                     ft.Text(
                         value,
                         size=30,
@@ -540,62 +773,54 @@ class PantallaReportes(ft.Container):
                 ]
             )
         )
-    
+
     def set_fecha_inicio(self, fecha):
         if fecha:
             self.fecha_inicio = fecha.strftime("%Y-%m-%d")
             self.input_inicio.value = self.fecha_inicio
-            self._page.update()
-
+            self._safe_page_update()
 
     def set_fecha_fin(self, fecha):
         if fecha:
             self.fecha_fin = fecha.strftime("%Y-%m-%d")
             self.input_fin.value = self.fecha_fin
-            self._page.update()
+            self._safe_page_update()
 
     def abrir_fecha_inicio(self):
         self.dp_inicio.open = True
-        self._page.update()
-
+        self._safe_page_update()
 
     def abrir_fecha_fin(self):
         self.dp_fin.open = True
-        self._page.update()
+        self._safe_page_update()
 
     def crear_tabla(self, columnas, filas):
+        self.columnas_actuales = list(columnas) if columnas else []
+        self.filas_actuales = list(filas) if filas else []
 
         tabla = ft.DataTable(
-
             heading_row_height=45,
             data_row_min_height=40,
             column_spacing=30,
-
+            heading_row_color=self.SURFACE_VARIANT,
             columns=[
-                ft.DataColumn(ft.Text(col))
+                ft.DataColumn(ft.Text(col, weight="bold", color=self.TEXT))
                 for col in columnas
             ],
-
             rows=[
-
                 ft.DataRow(
-
                     color=(
-                        ft.Colors.GREY_100
+                        self.SURFACE_VARIANT
                         if i % 2 == 0
-                        else ft.Colors.WHITE
+                        else self.CARD
                     ),
-
                     cells=[
-
                         ft.DataCell(
-                            ft.Text(str(valor))
+                            ft.Text(str(valor), color=self.TEXT)
                         )
-
                         for valor in fila
                     ]
                 )
-
                 for i, fila in enumerate(filas)
             ]
         )
@@ -604,10 +829,9 @@ class PantallaReportes(ft.Container):
             expand=True,
             height=500,
             padding=10,
-
+            bgcolor=self.CARD,
             content=ft.Column(
                 scroll=ft.ScrollMode.AUTO,
-
                 controls=[
                     ft.Row(
                         scroll=ft.ScrollMode.AUTO,
@@ -618,28 +842,27 @@ class PantallaReportes(ft.Container):
         )
 
     def render_asistencia(self, datos):
-
+        datos = datos or []
         total = len(datos)
 
         self.cards_row.controls = [
             self.card("Registros", str(total), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte de asistencia completa"
+        self.chart_container.content = self.generar_grafica(
+            "Asistencia completa",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["identificador"],
-                d["nombre_completo"],
-                d["tipo_usuario"],
-                str(d["fecha_entrada"]),
-                str(d["fecha_salida"]) if d["fecha_salida"] else "ACTIVO",
-                d["estado"]
+                d.get("identificador", ""),
+                d.get("nombre_completo", ""),
+                d.get("tipo_usuario", ""),
+                str(d.get("fecha_entrada", "")),
+                str(d["fecha_salida"]) if d.get("fecha_salida") else "ACTIVO",
+                d.get("estado", "ACTIVO" if not d.get("fecha_salida") else "FINALIZADO")
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -655,14 +878,12 @@ class PantallaReportes(ft.Container):
         )
 
     def render_usuarios_activos(self, datos):
-
+        datos = datos or []
         total = len(datos)
-
-        horas = sum(d["horas_totales"] for d in datos)
+        horas = sum(float(d.get("horas_totales", 0) or 0) for d in datos)
 
         self.cards_row.controls = [
             self.card("Usuarios", str(total), self.AZUL),
-
             self.card(
                 "Horas acumuladas",
                 str(round(horas, 2)),
@@ -670,20 +891,19 @@ class PantallaReportes(ft.Container):
             ),
         ]
 
-        self.chart_container.content = ft.Text(
-            "Usuarios más activos"
+        self.chart_container.content = self.generar_grafica(
+            "Usuarios más activos",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["nombre_completo"],
-                d["tipo_usuario"],
-                d["visitas"],
-                d["horas_totales"],
-                d["promedio_horas"]
+                d.get("nombre_completo", ""),
+                d.get("tipo_usuario", ""),
+                d.get("visitas", 0),
+                d.get("horas_totales", 0),
+                d.get("promedio_horas", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -698,12 +918,11 @@ class PantallaReportes(ft.Container):
         )
 
     def render_horas_pico(self, datos):
-
-        total = sum(d["total"] for d in datos)
+        datos = datos or []
+        total = sum(int(d.get("total", 0) or 0) for d in datos)
 
         self.cards_row.controls = [
             self.card("Entradas", str(total), self.AZUL),
-
             self.card(
                 "Horas",
                 str(len(datos)),
@@ -712,20 +931,18 @@ class PantallaReportes(ft.Container):
         ]
 
         self.chart_container.content = self.generar_grafica(
-            "Horas pico",
+            "Horas pico avanzado",
             datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                f"{int(d['hora'])}:00",
-                d["total"],
-                d["alumnos"],
-                d["personal"],
-                d["visitantes"]
+                f"{int(d.get('hora', 0))}:00",
+                d.get("total", 0),
+                d.get("alumnos", 0),
+                d.get("personal", 0),
+                d.get("visitantes", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -740,27 +957,26 @@ class PantallaReportes(ft.Container):
         )
 
     def render_tendencia(self, datos):
-
-        total = sum(d["total_usuarios"] for d in datos)
+        datos = datos or []
+        total = sum(int(d.get("total_usuarios", 0) or 0) for d in datos)
 
         self.cards_row.controls = [
             self.card("Total", str(total), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Tendencia diaria"
+        self.chart_container.content = self.generar_grafica(
+            "Tendencia diaria",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                str(d["fecha"]),
-                d["total_usuarios"],
-                d["alumnos"],
-                d["personal"],
-                d["visitantes"]
+                str(d.get("fecha", "")),
+                d.get("total_usuarios", 0),
+                d.get("alumnos", 0),
+                d.get("personal", 0),
+                d.get("visitantes", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -775,24 +991,23 @@ class PantallaReportes(ft.Container):
         )
 
     def render_carreras(self, datos):
-
+        datos = datos or []
         self.cards_row.controls = [
             self.card("Carreras", str(len(datos)), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte por carrera"
+        self.chart_container.content = self.generar_grafica(
+            "Reporte por carrera",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["carrera"],
-                d["total_visitas"],
-                d["usuarios_unicos"],
-                d["promedio_horas"]
+                d.get("carrera", ""),
+                d.get("total_visitas", 0),
+                d.get("usuarios_unicos", 0),
+                d.get("promedio_horas", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -806,24 +1021,23 @@ class PantallaReportes(ft.Container):
         )
 
     def render_facultades(self, datos):
-
+        datos = datos or []
         self.cards_row.controls = [
             self.card("Facultades", str(len(datos)), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte por facultad"
+        self.chart_container.content = self.generar_grafica(
+            "Reporte por facultad",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["facultad"],
-                d["total_visitas"],
-                d["usuarios_unicos"],
-                d["promedio_horas"]
+                d.get("facultad", ""),
+                d.get("total_visitas", 0),
+                d.get("usuarios_unicos", 0),
+                d.get("promedio_horas", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -837,24 +1051,23 @@ class PantallaReportes(ft.Container):
         )
 
     def render_semestres(self, datos):
-
+        datos = datos or []
         self.cards_row.controls = [
             self.card("Semestres", str(len(datos)), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte por semestre"
+        self.chart_container.content = self.generar_grafica(
+            "Reporte por semestre",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["semestre"],
-                d["total_visitas"],
-                d["usuarios_unicos"],
-                d["promedio_horas"]
+                d.get("semestre", ""),
+                d.get("total_visitas", 0),
+                d.get("usuarios_unicos", 0),
+                d.get("promedio_horas", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -868,24 +1081,23 @@ class PantallaReportes(ft.Container):
         )
 
     def render_visitantes(self, datos):
-
+        datos = datos or []
         self.cards_row.controls = [
             self.card("Instituciones", str(len(datos)), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Visitantes externos"
+        self.chart_container.content = self.generar_grafica(
+            "Visitantes externos",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["institucion"],
-                d["total_visitas"],
-                d["usuarios_unicos"],
-                d["promedio_horas"]
+                d.get("institucion", ""),
+                d.get("total_visitas", 0),
+                d.get("usuarios_unicos", 0),
+                d.get("promedio_horas", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -899,27 +1111,26 @@ class PantallaReportes(ft.Container):
         )
 
     def render_saturacion(self, datos):
-
-        pico = max(d["total_usuarios"] for d in datos)
+        datos = datos or []
+        pico = max((int(d.get("total_usuarios", 0) or 0) for d in datos), default=0)
 
         self.cards_row.controls = [
             self.card("Pico máximo", str(pico), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte de saturación"
+        self.chart_container.content = self.generar_grafica(
+            "Reporte de saturación",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                f"{int(d['hora'])}:00",
-                d["total_usuarios"],
-                d["alumnos"],
-                d["personal"],
-                d["visitantes"]
+                f"{int(d.get('hora', 0))}:00",
+                d.get("total_usuarios", 0),
+                d.get("alumnos", 0),
+                d.get("personal", 0),
+                d.get("visitantes", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -934,26 +1145,25 @@ class PantallaReportes(ft.Container):
         )
 
     def render_crecimiento(self, datos):
-
+        datos = datos or []
         self.cards_row.controls = [
             self.card("Meses", str(len(datos)), self.AZUL)
         ]
 
-        self.chart_container.content = ft.Text(
-            "Reporte de crecimiento"
+        self.chart_container.content = self.generar_grafica(
+            "Reporte de crecimiento",
+            datos
         )
 
         filas = []
-
         for d in datos:
-
             filas.append([
-                d["mes"],
-                d["total_visitas"],
-                d["usuarios_unicos"],
-                d["alumnos"],
-                d["personal"],
-                d["visitantes"]
+                d.get("mes", ""),
+                d.get("total_visitas", 0),
+                d.get("usuarios_unicos", 0),
+                d.get("alumnos", 0),
+                d.get("personal", 0),
+                d.get("visitantes", 0)
             ])
 
         self.distribution_container.content = self.crear_tabla(
@@ -967,6 +1177,3 @@ class PantallaReportes(ft.Container):
             ],
             filas=filas
         )
-
-
-
