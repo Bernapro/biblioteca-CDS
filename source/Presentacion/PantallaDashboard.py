@@ -4,15 +4,27 @@ from Negocio.Controlador.ControladorDashboard import ControladorDashboard
 from Presentacion.PantallaReportes import PantallaReportes
 
 class PantallaDashboard(ft.Container):
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, usuario_actual: dict = None):
         super().__init__()
         self._page = page
+        self.usuario_actual = usuario_actual
         self.controlador = ControladorDashboard()
         self.ir_reportes = None
         self.CARD = "surface"
         self.TEXT_SECONDARY = "onSurfaceVariant"
         self.PRIMARY = "primary"
         self.TEXT_MAIN = "onSurface"
+
+        nombre_mostrar = "Usuario"
+        if isinstance(usuario_actual, dict):
+            nombre_completo = (usuario_actual.get("nombre_completo") or "").strip()
+            usuario_login = (usuario_actual.get("usuario") or "").strip()
+            if nombre_completo:
+                nombre_mostrar = nombre_completo.split()[0]
+            elif usuario_login:
+                nombre_mostrar = usuario_login
+        elif isinstance(usuario_actual, str) and usuario_actual.strip():
+            nombre_mostrar = usuario_actual.strip().split()[0]
 
         self.label_sesiones = ft.Text("0", size=28, weight="bold", color=self.TEXT_MAIN)
         self.label_prestamos = ft.Text("N/D", size=28, weight="bold", color=self.TEXT_MAIN)
@@ -59,7 +71,7 @@ class PantallaDashboard(ft.Container):
                         ft.Column([
                             ft.Row([
                                 ft.Text(
-                                    "Hola, Bernardo",
+                                    f"Hola, {nombre_mostrar}",
                                     size=28,
                                     weight="bold",
                                     color=self.TEXT_MAIN

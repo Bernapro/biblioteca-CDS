@@ -13,9 +13,10 @@ from Persistencia.CRUD.CRUDimpl import CRUDimp
 
 class PantallaPrincipal(ft.Container):
 
-    def __init__(self, main_page: ft.Page):
+    def __init__(self, main_page: ft.Page, usuario_actual: dict = None):
         super().__init__()
         self.main_page = main_page
+        self.usuario_actual = usuario_actual
 
         self.repo = RepositorioImpl(CRUDimp())
         self.repo.backup_bd()
@@ -44,7 +45,7 @@ class PantallaPrincipal(ft.Container):
         self.vistas = [None] * 7
 
         # CARGAR PRIMERA VISTA MANUALMENTE DESDE AQUÍ
-        self.vistas[0] = dsh(self.main_page)
+        self.vistas[0] = dsh(self.main_page, usuario_actual=self.usuario_actual)
         self.vistas[0].ir_reportes = lambda: self.sidebar.cambiar_seleccion(3)
         # Área de contenido
         self.content_area = ft.Container(
@@ -113,7 +114,7 @@ class PantallaPrincipal(ft.Container):
         if self.vistas[index] is None:
 
             if index == 0:
-                self.vistas[index] = dsh(self.main_page)
+                self.vistas[index] = dsh(self.main_page, usuario_actual=self.usuario_actual)
 
             elif index == 1:
                 self.vistas[index] = pa(self.main_page)

@@ -44,6 +44,66 @@ class PantallaLogin:
             on_submit=self.intentar_login 
         )
 
+        # Campos para el modo de registro (Crear cuenta)
+        self.reg_nombre_input = ft.TextField(
+            label="Nombre completo",
+            hint_text="Ingresa tu nombre completo",
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            text_size=14,
+            label_style=ft.TextStyle(color=self.azul_unach),
+            border_color="#d1d5db",
+            focused_border_color=self.azul_unach,
+            height=55,
+            width=550
+        )
+
+        self.reg_usuario_input = ft.TextField(
+            label="Usuario",
+            hint_text="Crea un nombre de usuario",
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            text_size=14,
+            label_style=ft.TextStyle(color=self.azul_unach),
+            border_color="#d1d5db",
+            focused_border_color=self.azul_unach,
+            height=55,
+            width=550
+        )
+
+        self.reg_pass_input = ft.TextField(
+            label="Contraseña",
+            hint_text="Crea una contraseña",
+            password=True,
+            can_reveal_password=True,
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            text_size=14,
+            label_style=ft.TextStyle(color=self.azul_unach),
+            border_color="#d1d5db",
+            focused_border_color=self.azul_unach,
+            height=55,
+            width=550
+        )
+
+        self.reg_confirm_pass_input = ft.TextField(
+            label="Confirmar contraseña",
+            hint_text="Repite tu contraseña",
+            password=True,
+            can_reveal_password=True,
+            border=ft.InputBorder.OUTLINE,
+            border_radius=8,
+            text_size=14,
+            label_style=ft.TextStyle(color=self.azul_unach),
+            border_color="#d1d5db",
+            focused_border_color=self.azul_unach,
+            height=55,
+            width=550,
+            on_submit=self.intentar_registro
+        )
+
+        self.formulario = None
+
     # Muestra notificaciones temporales de 3 segundos
     def mostrar_alerta(self, mensaje, es_error=True):
         alerta = ft.SnackBar(
@@ -54,6 +114,15 @@ class PantallaLogin:
         self.page.overlay.append(alerta)
         alerta.open = True
         self.page.update()
+
+    # Alterna entre el formulario de login y el de crear cuenta
+    def cambiar_modo(self, modo_registro: bool):
+        if self.formulario is not None:
+            if modo_registro:
+                self.formulario.content = self._construir_contenido_registro()
+            else:
+                self.formulario.content = self._construir_contenido_login()
+            self.page.update()
 
     # Valida credenciales y maneja el acceso al sistema
     def intentar_login(self, e):
@@ -80,7 +149,7 @@ class PantallaLogin:
 
         # Intenta conectar al controlador
         try:
-            acceso_valido = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
+            acceso_valido, datos_usuario = ControladorLogin.validar_credenciales(usuario_ingresado, pass_ingresada)
         except Exception as ex:
             if boton:
                 texto_boton.value = texto_original
@@ -93,7 +162,7 @@ class PantallaLogin:
             self.page.controls.clear()
             self.page.update()
             try:
-                app_principal = PantallaPrincipal(self.page)
+                app_principal = PantallaPrincipal(self.page, usuario_actual=datos_usuario)
                 self.page.add(app_principal)
                 self.page.update()
             except Exception as ex:
@@ -104,6 +173,174 @@ class PantallaLogin:
                 boton.disabled = False
             self.pass_input.value = ""
             self.mostrar_alerta("Usuario o contraseña incorrectos.")
+
+    # Registra un nuevo administrador en la base de datos con contraseña encriptada con bcrypt
+    def intentar_registro(self, e):
+        nombre = (self.reg_nombre_input.value or "").strip()
+        usuario = (self.reg_usuario_input.value or "").strip()
+        pass_plana = self.reg_pass_input.value or ""
+        pass_confirm = self.reg_confirm_pass_input.value or ""
+
+        if not nombre or not usuario or not pass_plana or not pass_confirm:
+            self.mostrar_alerta("Por favor, llena todos los campos.")
+            return
+
+        if pass_plana != pass_confirm:
+            self.mostrar_alerta("Las contraseñas no coinciden.")
+            return
+
+        boton = None
+        texto_boton = None
+        texto_original = ""
+
+        if isinstance(e.control, ft.ElevatedButton):
+            boton = e.control
+            texto_boton = boton.content.controls[0]
+            texto_original = texto_boton.value
+            texto_boton.value = "Registrando..."
+            boton.disabled = True
+            self.page.update()
+
+        try:
+            exito, mensaje = ControladorLogin.registrar_administrador(
+                nombre_completo=nombre,
+                usuario=usuario,
+                pass_plana=pass_plana
+            )
+        except Exception as ex:
+            if boton:
+                texto_boton.value = texto_original
+                boton.disabled = False
+            self.mostrar_alerta(f"Error de conexión: {ex}")
+            return
+
+        if boton:
+            texto_boton.value = texto_original
+            boton.disabled = False
+
+        if exito:
+            self.reg_nombre_input.value = ""
+            self.reg_usuario_input.value = ""
+            self.reg_pass_input.value = ""
+            self.reg_confirm_pass_input.value = ""
+            self.usuario_input.value = usuario
+            self.pass_input.value = ""
+            self.cambiar_modo(False)
+            self.mostrar_alerta(mensaje, es_error=False)
+        else:
+            self.mostrar_alerta(mensaje, es_error=True)
+
+    def _construir_contenido_login(self):
+        return ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER, 
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text("¡Bienvenido!", size=32, weight=ft.FontWeight.W_900, color=ft.Colors.BLACK), 
+                            ft.Text("Inicia sesión para continuar", size=14, color=self.texto_gris),
+                        ]
+                    ),
+                    alignment=ft.alignment.Alignment(0, 0),
+                    margin=ft.margin.only(bottom=40) 
+                ),
+                self.usuario_input,
+                ft.Container(height=15),
+                self.pass_input,
+                ft.Container(height=15),
+                ft.Row(
+                    width=550,
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    controls=[]
+                ),
+                ft.Container(height=30),
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text("Iniciar sesión", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE), 
+                        ]
+                    ),
+                    bgcolor=self.azul_unach,
+                    height=50,
+                    width=550,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                    on_click=self.intentar_login
+                ),
+                ft.Container(height=12),
+                ft.TextButton(
+                    content=ft.Text(
+                        "¿No tienes cuenta? Crear usuario",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=self.azul_unach
+                    ),
+                    on_click=lambda e: self.cambiar_modo(True)
+                ),
+                ft.Container(height=20),
+                ft.Container(
+                    content=ft.Text("Sistema de Gestión de Biblioteca", size=11, color="#d1d5db"),
+                    alignment=ft.alignment.Alignment(0, 0) 
+                )
+            ]
+        )
+
+    def _construir_contenido_registro(self):
+        return ft.Column(
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text("Crear cuenta", size=32, weight=ft.FontWeight.W_900, color=ft.Colors.BLACK),
+                            ft.Text("Registra un nuevo usuario en el sistema", size=14, color=self.texto_gris),
+                        ]
+                    ),
+                    alignment=ft.alignment.Alignment(0, 0),
+                    margin=ft.margin.only(bottom=25)
+                ),
+                self.reg_nombre_input,
+                ft.Container(height=12),
+                self.reg_usuario_input,
+                ft.Container(height=12),
+                self.reg_pass_input,
+                ft.Container(height=12),
+                self.reg_confirm_pass_input,
+                ft.Container(height=25),
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        controls=[
+                            ft.Text("Registrar usuario", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE),
+                        ]
+                    ),
+                    bgcolor=self.azul_unach,
+                    height=50,
+                    width=550,
+                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
+                    on_click=self.intentar_registro
+                ),
+                ft.Container(height=12),
+                ft.TextButton(
+                    content=ft.Text(
+                        "¿Ya tienes cuenta? Inicia sesión",
+                        size=13,
+                        weight=ft.FontWeight.W_600,
+                        color=self.azul_unach
+                    ),
+                    on_click=lambda e: self.cambiar_modo(False)
+                ),
+                ft.Container(height=15),
+                ft.Container(
+                    content=ft.Text("Sistema de Gestión de Biblioteca", size=11, color="#d1d5db"),
+                    alignment=ft.alignment.Alignment(0, 0)
+                )
+            ]
+        )
 
     # Ensambla y retorna la interfaz de dos columnas
     def construir_vista(self):
@@ -134,7 +371,7 @@ class PantallaLogin:
             )
         )
 
-        formulario = ft.Container(
+        self.formulario = ft.Container(
             width=650, 
             bgcolor=ft.Colors.WHITE,
             padding=ft.padding.only(left=50, right=50, top=60, bottom=40),
@@ -145,57 +382,13 @@ class PantallaLogin:
                 color=ft.Colors.BLACK12, 
                 offset=ft.Offset(0, 10)
             ),
-            content=ft.Column(
-                alignment=ft.MainAxisAlignment.CENTER, 
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER, 
-                controls=[
-                    ft.Container(
-                        content=ft.Column(
-                            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                            controls=[
-                                ft.Text("¡Bienvenido!", size=32, weight=ft.FontWeight.W_900, color=ft.Colors.BLACK), 
-                                ft.Text("Inicia sesión para continuar", size=14, color=self.texto_gris),
-                            ]
-                        ),
-                        alignment=ft.alignment.Alignment(0, 0),
-                        margin=ft.margin.only(bottom=40) 
-                    ),
-                    self.usuario_input,
-                    ft.Container(height=15),
-                    self.pass_input,
-                    ft.Container(height=15),
-                    ft.Row(
-                        width=550,
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        controls=[]
-                    ),
-                    ft.Container(height=30),
-                    ft.ElevatedButton(
-                        content=ft.Row(
-                            alignment=ft.MainAxisAlignment.CENTER,
-                            controls=[
-                                ft.Text("Iniciar sesión", size=16, weight=ft.FontWeight.W_600, color=ft.Colors.WHITE), 
-                            ]
-                        ),
-                        bgcolor=self.azul_unach,
-                        height=50,
-                        width=550,
-                        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8)),
-                        on_click=self.intentar_login
-                    ),
-                    ft.Container(height=40),
-                    ft.Container(
-                        content=ft.Text("Sistema de Gestión de Biblioteca", size=11, color="#d1d5db"),
-                        alignment=ft.alignment.Alignment(0, 0) 
-                    )
-                ]
-            )
+            content=self._construir_contenido_login()
         )
 
         panel_derecho = ft.Container(
             expand=6, 
             alignment=ft.alignment.Alignment(0, 0), 
-            content=formulario
+            content=self.formulario
         )
 
         return ft.Container(
