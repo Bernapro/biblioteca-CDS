@@ -22,10 +22,8 @@ class PantallaRegistroUsuario(ft.Container):
         )
 
         self.AZUL = "#3B82F6"
-        self.TEXT = "onSurface"
-        self.TEXT_SECONDARY = "onSurfaceVariant"
-        self.CARD = "surface"
-        self.GRIS_BORDE = "outline"
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         self.nombre = self._crear_input("Nombre(s)", width=350)
         self.nombre.on_submit = self._ignorar_escaneo
@@ -56,7 +54,10 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             read_only=True,
             suffix_icon=ft.Icons.CALENDAR_MONTH,
             on_click=self.abrir_calendario
@@ -65,8 +66,13 @@ class PantallaRegistroUsuario(ft.Container):
         self.tipo_usuario = ft.Dropdown(
             label="Tipo de Usuario",
             width=350,
+            border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Alumno"),
                 ft.dropdown.Option("Personal"),
@@ -84,7 +90,10 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[],
             visible=False,
             on_select=self.on_carrera_o_semestre_change 
@@ -96,7 +105,10 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[],
             on_select=self.on_carrera_o_semestre_change 
         )
@@ -107,7 +119,10 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[]
         )
 
@@ -127,7 +142,10 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[],
             visible=False
         )
@@ -137,15 +155,14 @@ class PantallaRegistroUsuario(ft.Container):
             width=350,
             read_only=True,
             visible=False,
-
             border_color="transparent",
-            bgcolor="surfaceVariant",
-
-            color=self.TEXT,
-
+            bgcolor=self.SURFACE_VARIANT,
+            color=self.INPUT_TEXT,
             text_style=ft.TextStyle(
+                color=self.INPUT_TEXT,
                 weight="bold"
-            )
+            ),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR)
         )
 
         self.contenedor_dinamico = ft.Column(
@@ -154,6 +171,62 @@ class PantallaRegistroUsuario(ft.Container):
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
         self.build_ui()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.TEXT_SECONDARY = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+            self.GRADIENT = ["#1E222A", "#242832"]
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.TEXT_SECONDARY = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+            self.GRADIENT = ["#cfe8ff", "#9ec9ff"]
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        for campo in (self.nombre, self.ap_paterno, self.ap_materno, self.fecha_nacimiento, self.matricula, self.n_plaza):
+            campo.bgcolor = self.INPUT_BG
+            campo.color = self.INPUT_TEXT
+            campo.cursor_color = self.INPUT_TEXT
+            campo.border_color = self.GRIS_BORDE
+            campo.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            campo.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+            campo.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        for dd in (self.tipo_usuario, self.licenciatura, self.semestre, self.grupo, self.institucion):
+            dd.bgcolor = self.INPUT_BG
+            dd.color = self.INPUT_TEXT
+            dd.border_color = self.GRIS_BORDE
+            dd.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            dd.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        self.identificador_preview.bgcolor = self.SURFACE_VARIANT
+        self.identificador_preview.color = self.INPUT_TEXT
+        self.identificador_preview.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="bold")
+        self.identificador_preview.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     def did_mount(self):
         carreras, semestres, instituciones = self.controlador.cargar_datos_iniciales()
@@ -276,7 +349,12 @@ class PantallaRegistroUsuario(ft.Container):
             border_color=self.GRIS_BORDE,
             border_radius=12,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             value=""
         )
 
@@ -394,6 +472,7 @@ class PantallaRegistroUsuario(ft.Container):
 
         inner_card = ft.Container(
             bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             padding=40,
             border_radius=30,
             shadow=ft.BoxShadow(blur_radius=20, color="black26"),
@@ -410,7 +489,7 @@ class PantallaRegistroUsuario(ft.Container):
                             ft.OutlinedButton(
                                 "Cancelar",
                                 on_click=self.cancelar,
-                                style=ft.ButtonStyle(color="red")
+                                style=ft.ButtonStyle(color="#EF4444")
                             ),
                             ft.ElevatedButton(
                                 "Guardar",
@@ -435,7 +514,7 @@ class PantallaRegistroUsuario(ft.Container):
             border_radius=40,
             padding=30,
             gradient=ft.LinearGradient(
-                colors=["#cfe8ff", "#9ec9ff"],
+                colors=self.GRADIENT,
                 begin=ft.Alignment(-1, -1),
                 end=ft.Alignment(1, 1)
             ),

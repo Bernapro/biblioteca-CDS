@@ -10,10 +10,8 @@ class PantallaDashboard(ft.Container):
         self.usuario_actual = usuario_actual
         self.controlador = ControladorDashboard()
         self.ir_reportes = None
-        self.CARD = "surface"
-        self.TEXT_SECONDARY = "onSurfaceVariant"
-        self.PRIMARY = "primary"
-        self.TEXT_MAIN = "onSurface"
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         nombre_mostrar = "Usuario"
         if isinstance(usuario_actual, dict):
@@ -25,6 +23,7 @@ class PantallaDashboard(ft.Container):
                 nombre_mostrar = usuario_login
         elif isinstance(usuario_actual, str) and usuario_actual.strip():
             nombre_mostrar = usuario_actual.strip().split()[0]
+        self.nombre_mostrar = nombre_mostrar
 
         self.label_sesiones = ft.Text("0", size=28, weight="bold", color=self.TEXT_MAIN)
         self.label_prestamos = ft.Text("N/D", size=28, weight="bold", color=self.TEXT_MAIN)
@@ -45,6 +44,50 @@ class PantallaDashboard(ft.Container):
         self.bar_value_labels = []
         self.bar_containers = []
 
+        self._construir_layout()
+        self.cargar_datos()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.BORDER = "#2E3440"
+            self.TEXT_MAIN = "#F8F9FA"
+            self.TEXT_SECONDARY = "#E2E8F0"
+            self.PRIMARY = "#3B82F6"
+            self.NOTE_BG = "#242832"
+            self.NOTE_TEXT = "#E2E8F0"
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.BORDER = "#BFC8D4"
+            self.TEXT_MAIN = "#0F172A"
+            self.TEXT_SECONDARY = "#475569"
+            self.PRIMARY = "#2563EB"
+            self.NOTE_BG = "#DBEAFE"
+            self.NOTE_TEXT = "#1E3A8A"
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        for lbl in (
+            self.label_sesiones, self.label_prestamos, self.label_vencidos,
+            self.label_visitas_totales, self.label_usuarios_registrados,
+            self.label_libros_disponibles, self.label_incidencias_abiertas,
+            self.turno_estado, self.turno_inicio, self.turno_fin,
+            self.turno_restante, self.turno_duracion
+        ):
+            lbl.color = self.TEXT_MAIN
+        self._construir_layout()
+        self.cargar_datos()
+
+    def _construir_layout(self):
+        self.bar_value_labels = []
+        self.bar_containers = []
+
         self.btn_actualizar = ft.ElevatedButton(
             content=ft.Row([
                 ft.Icon(ft.Icons.REFRESH, size=18),
@@ -54,7 +97,7 @@ class PantallaDashboard(ft.Container):
             style=ft.ButtonStyle(
                 bgcolor=self.PRIMARY,
                 overlay_color="white24",
-                color="onPrimary",
+                color="#FFFFFF",
                 shape=ft.RoundedRectangleBorder(radius=10),
                 padding=ft.padding.symmetric(horizontal=22, vertical=16)
             )
@@ -71,7 +114,7 @@ class PantallaDashboard(ft.Container):
                         ft.Column([
                             ft.Row([
                                 ft.Text(
-                                    f"Hola, {nombre_mostrar}",
+                                    f"Hola, {self.nombre_mostrar}",
                                     size=28,
                                     weight="bold",
                                     color=self.TEXT_MAIN
@@ -99,7 +142,7 @@ class PantallaDashboard(ft.Container):
                     controls=[
                         self.build_card("Sesiones activas", self.label_sesiones, ft.Icons.PEOPLE_OUTLINED, self.PRIMARY),
                         self.build_card("Préstamos activos", self.label_prestamos, ft.Icons.BOOK_OUTLINED, "#10B981"),
-                        self.build_card("Vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "EF4444"),
+                        self.build_card("Vencidos", self.label_vencidos, ft.Icons.EVENT_BUSY_OUTLINED, "#EF4444"),
                     ]
                 ),
                 ft.Row(
@@ -133,7 +176,6 @@ class PantallaDashboard(ft.Container):
         )
 
         self.content = self.layout_principal
-        self.cargar_datos()
 
     def did_mount(self):
         self.cargar_datos()
@@ -141,15 +183,15 @@ class PantallaDashboard(ft.Container):
     def build_card(self, title, value, icon_name, color_hex):
         if title == "Sesiones activas":
             color_icono = "#3B82F6"
-            color_fondo = "#DBEAFE"
+            color_fondo = "#1E3A8A" if self.es_oscuro else "#DBEAFE"
             subtitulo = "Usuarios dentro de biblioteca"
         elif title == "Préstamos activos":
             color_icono = "#10B981"
-            color_fondo = "#D1FAE5"
+            color_fondo = "#064E3B" if self.es_oscuro else "#D1FAE5"
             subtitulo = "Préstamos actualmente vigentes"
         else:
             color_icono = "#EF4444"
-            color_fondo = "#FEE2E2"
+            color_fondo = "#7F1D1D" if self.es_oscuro else "#FEE2E2"
             subtitulo = "Préstamos fuera de fecha"
         return ft.Container(
             expand=True,
@@ -157,7 +199,7 @@ class PantallaDashboard(ft.Container):
             bgcolor=self.CARD,
             border=ft.border.all(
                 1.5,
-                "#BFC8D4"
+                self.BORDER
             ),
             border_radius=22,
             padding=18,
@@ -229,7 +271,7 @@ class PantallaDashboard(ft.Container):
             bgcolor=self.CARD,
             border=ft.border.all(
                 1.5,
-                "#BFC8D4"
+                self.BORDER
             ),
             border_radius=22,
             padding=25,
@@ -250,17 +292,17 @@ class PantallaDashboard(ft.Container):
                         ], spacing=10),
                         padding=ft.padding.symmetric(horizontal=16, vertical=14),
                         border_radius=14,
-                        bgcolor="surfaceVariant"
+                        bgcolor=self.SURFACE_VARIANT
                     ),
                     detalle_turno(ft.Icons.PLAY_ARROW_OUTLINED, "Inicio", self.turno_inicio),
                     detalle_turno(ft.Icons.FLAG_OUTLINED, "Fin", self.turno_fin),
                     detalle_turno(ft.Icons.ACCESS_TIME, "Duración", self.turno_duracion),
                     detalle_turno(ft.Icons.HOURGLASS_BOTTOM, "Tiempo restante", self.turno_restante),
                     ft.Container(
-                        bgcolor="primaryContainer",
+                        bgcolor=self.NOTE_BG,
                         border_radius=12,
                         padding=ft.padding.all(12),
-                        content=ft.Text("Actualiza los datos manualmente con el botón.", size=12, color="onPrimaryContainer")
+                        content=ft.Text("Actualiza los datos manualmente con el botón.", size=12, color=self.NOTE_TEXT)
                     )
                 ]
             )
@@ -286,7 +328,7 @@ class PantallaDashboard(ft.Container):
             bgcolor=self.CARD,
             border=ft.border.all(
                 1.5,
-                "#BFC8D4"
+                self.BORDER
             ),
             border_radius=22,
             padding=25,
@@ -303,7 +345,7 @@ class PantallaDashboard(ft.Container):
                     item_lista(ft.Icons.VISIBILITY_OUTLINED, self.PRIMARY, "Visitas totales", self.label_visitas_totales),
                     item_lista(ft.Icons.PERSON_OUTLINE, "#10B981", "Usuarios registrados", self.label_usuarios_registrados),
                     item_lista(ft.Icons.BOOK_OUTLINED, "#8B5CF6", "Libros disponibles", self.label_libros_disponibles),
-                    item_lista(ft.Icons.WARNING_AMBER_ROUNDED, "error", "Incidencias abiertas", self.label_incidencias_abiertas),
+                    item_lista(ft.Icons.WARNING_AMBER_ROUNDED, "#EF4444", "Incidencias abiertas", self.label_incidencias_abiertas),
                 ]
             )
         )
@@ -338,7 +380,7 @@ class PantallaDashboard(ft.Container):
             bgcolor=self.CARD,
             border=ft.border.all(
                 1.5,
-                "#BFC8D4"
+                self.BORDER
             ),
             border_radius=22,
             padding=25,
@@ -368,7 +410,7 @@ class PantallaDashboard(ft.Container):
             on_click=self.abrir_reportes,
             style=ft.ButtonStyle(
                 bgcolor=self.PRIMARY,
-                color="onPrimary",
+                color="#FFFFFF",
                 overlay_color="white24",
                 shape=ft.RoundedRectangleBorder(radius=12),
                 padding=ft.padding.symmetric(

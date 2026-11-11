@@ -61,6 +61,13 @@ class RepositorioImpl(Repositorio):
             self.__crud.execute_procedure(nombre_procedimiento, conn)
             conn.commit()
 
+    def cerrar_registros_pendientes(self):
+        """Ejecuta CALL cerrar_registros_pendientes() y confirma la transacción."""
+        try:
+            self.ejecutar_procedimiento("cerrar_registros_pendientes")
+        except Exception as e:
+            print(f"Error al ejecutar cerrar_registros_pendientes: {e}")
+
     # ASISTENCIA 
 
     def obtener_registro_abierto(self, id_usuario):

@@ -29,18 +29,19 @@ class PantallaNuevoPrestamo(ft.Container):
         
         self.AZUL = "#3B82F6"
         self.VERDE = "#22C55E"
-        self.GRIS_BORDE = "outline"          
-        self.GRIS_TEXTO = "onSurfaceVariant" 
-        self.TEXT = "onSurface"              
-        self.CARD = "surface" 
         self.ROJO = "#E53A2E"
         self.AMBER = ft.Colors.AMBER
+
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         self.txt_matricula = ft.TextField(
             hint_text="Ej. 100025787",
             prefix_icon=ft.Icons.PERSON,
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT, cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             expand=True, height=50, content_padding=10,
             on_submit=self.controlador.buscar_alumno,
             on_change=self.limpiar_error_borde # Limpia el color rojo al escribir
@@ -53,7 +54,9 @@ class PantallaNuevoPrestamo(ft.Container):
             hint_text="Ej. ADQ-001245",
             prefix_icon=ft.Icons.MENU_BOOK,
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT, cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             expand=True, height=50, content_padding=10,
             on_change=self.limpiar_error_borde # Limpia el color rojo al escribir
         )
@@ -74,7 +77,7 @@ class PantallaNuevoPrestamo(ft.Container):
             border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=12,
             padding=10,
-            bgcolor="surface"
+            bgcolor=self.SURFACE_VARIANT
         )
 
         self.picker_fecha_prestamo = ft.DatePicker(
@@ -92,14 +95,20 @@ class PantallaNuevoPrestamo(ft.Container):
         self.txt_fecha_prestamo = ft.TextField(
             label="Fecha de préstamo",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_TODAY,
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            prefix_icon=ft.Icons.CALENDAR_TODAY,
             expand=True, height=55, read_only=True, value= fechaHoy.strftime("%d/%b/%Y"),
             on_click=self.abrir_picker_prestamo
         )
         self.txt_fecha_limite = ft.TextField(
             label=f"Fecha límite ({numDias} dias)",
             border_radius=12, border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT), prefix_icon=ft.Icons.CALENDAR_MONTH,
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            prefix_icon=ft.Icons.CALENDAR_MONTH,
             expand=True, height=55, read_only=True, value=fechaLimite.strftime("%d/%b/%Y"),
             on_click=self.abrir_picker_limite
         )
@@ -117,6 +126,52 @@ class PantallaNuevoPrestamo(ft.Container):
         )
 
         self.build_ui()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+            self.GRADIENT = ["#1E222A", "#242832"]
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+            self.GRADIENT = ["#cfe8ff", "#9ec9ff"]
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        for campo in (self.txt_matricula, self.txt_adquisicion, self.txt_fecha_prestamo, self.txt_fecha_limite):
+            campo.bgcolor = self.INPUT_BG
+            campo.color = self.INPUT_TEXT
+            campo.cursor_color = self.INPUT_TEXT
+            campo.border_color = self.GRIS_BORDE
+            campo.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            campo.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+            campo.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+        self.contenedor_resultados.bgcolor = self.SURFACE_VARIANT
+        self.contenedor_resultados.border = ft.border.all(1, self.GRIS_BORDE)
+        self.actualizar_lista()
+        self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     # Pinta el borde de un campo en rojo
     def marcar_error_borde(self, campo):
@@ -250,6 +305,7 @@ class PantallaNuevoPrestamo(ft.Container):
 
         inner_card = ft.Container(
             bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             padding=40,
             border_radius=30,
             shadow=ft.BoxShadow(blur_radius=20, color="black26"),
@@ -263,7 +319,7 @@ class PantallaNuevoPrestamo(ft.Container):
                     ft.Divider(height=20, color="transparent"),
                     ft.Row(
                         [
-                            ft.OutlinedButton("Cancelar", on_click=self.cancelar, style=ft.ButtonStyle(color="onSurface")),
+                            ft.OutlinedButton("Cancelar", on_click=self.cancelar, style=ft.ButtonStyle(color=self.TEXT)),
                             ft.ElevatedButton(
                                 "Registrar préstamo",
                                 bgcolor=self.AZUL, color="white", width=200,
@@ -284,7 +340,7 @@ class PantallaNuevoPrestamo(ft.Container):
                 ft.Container(
                     width=700, border_radius=40, padding=30,
                     gradient=ft.LinearGradient(
-                        colors=["#cfe8ff", "#9ec9ff"],
+                        colors=self.GRADIENT,
                         begin=ft.Alignment(-1, -1),
                         end=ft.Alignment(1, 1)
                     ),

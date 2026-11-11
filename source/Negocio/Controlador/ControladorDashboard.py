@@ -11,6 +11,7 @@ class ControladorDashboard:
         self.__ejemplares_api = BibliotecaEjemplares()
 
     def obtener_datos_dashboard(self):
+        self.__repo.cerrar_registros_pendientes()
         stats = self.__repo.obtener_estadisticas_dashboard() or {}
         visitas_semana = stats.get("visitas_semana", {})
         visitas_semana_normalizadas = {day: visitas_semana.get(day, 0) for day in range(1, 8)}

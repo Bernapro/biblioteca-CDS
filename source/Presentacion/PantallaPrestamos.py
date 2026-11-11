@@ -20,10 +20,9 @@ class PantallaPrestamos(ft.Container):
         self.ROJO = "#EF4444"
         self.NARANJA = "#F59E0B"
         self.FONDO = "transparent" 
-        self.GRIS_TEXTO = "onSurfaceVariant"
-        self.GRIS_BORDE = "outline"
-        self.TEXT = "onSurface"
-        self.CARD = "surface"
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
+
         self.expand = True
         self.padding = 30
         self.bgcolor = self.FONDO
@@ -56,6 +55,10 @@ class PantallaPrestamos(ft.Container):
             prefix_icon=ft.Icons.CALENDAR_MONTH, 
             border_radius=8,
             border_color=self.GRIS_BORDE,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             on_click=self.abrir_picker_extension # Se dispara al hacer clic en el input
         )
         
@@ -122,6 +125,55 @@ class PantallaPrestamos(ft.Container):
         
         self.build_ui()
 
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        self.modal_nombre.color = self.TEXT
+        self.modal_titulo.color = self.TEXT
+        self.modal_matricula.color = self.GRIS_TEXTO
+        self.modal_carrera.color = self.GRIS_TEXTO
+        self.modal_semestre.color = self.GRIS_TEXTO
+        self.dialogo_accion.bgcolor = self.CARD
+
+        self.txt_nueva_fecha.bgcolor = self.INPUT_BG
+        self.txt_nueva_fecha.color = self.INPUT_TEXT
+        self.txt_nueva_fecha.border_color = self.GRIS_BORDE
+        self.txt_nueva_fecha.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+        self.txt_nueva_fecha.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        if isinstance(self.content, PantallaNuevoPrestamo) and hasattr(self.content, "aplicar_tema"):
+            self.content.aplicar_tema(self.es_oscuro)
+        else:
+            self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
+
     #TARJETAS
     def build_card_stat(self, titulo, valor, sub_valor, icono, color):
         color_fondo = color.replace("#", "#20")
@@ -158,7 +210,10 @@ class PantallaPrestamos(ft.Container):
         icono = self.iconos[estado] if estado in self.iconos else ft.Icons.CIRCLE
         
         # DEFINIMOS EL COLOR DE RELLENO (FONDO) AQUÍ
-        color_fondo = "#DCFCE7" if estado == "A tiempo" else "#FEE2E2" # Cambia "#FEE2E2" por el color que más te guste
+        if self.es_oscuro:
+            color_fondo = "#064E3B" if estado == "A tiempo" else "#7F1D1D"
+        else:
+            color_fondo = "#DCFCE7" if estado == "A tiempo" else "#FEE2E2"
 
         return ft.Container(
             content=ft.Row([
@@ -293,13 +348,13 @@ class PantallaPrestamos(ft.Container):
         
     def _input_focus(self, e):
         e.control.value = ""
-        e.control.color = self.TEXT
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def _input_blur(self, e):
         if not e.control.value:
             e.control.value = str(self.pagina_actual)
-            e.control.color = self.GRIS_TEXTO
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def construir_paginacion(self):
@@ -312,7 +367,9 @@ class PantallaPrestamos(ft.Container):
 
         input_pagina = ft.TextField(
             width=60, height=35, text_align=ft.TextAlign.CENTER,
-            value=str(self.pagina_actual), border_radius=8, color=self.GRIS_TEXTO,
+            value=str(self.pagina_actual), border_radius=8,
+            border_color=self.GRIS_BORDE, bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT, text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
@@ -379,9 +436,15 @@ class PantallaPrestamos(ft.Container):
                 expand=True,
                 content=ft.TextField(
                     hint_text="Buscar por matrícula, nombre o cantidad...",
-                    prefix_icon=ft.Icons.SEARCH, border=ft.InputBorder.NONE, content_padding=15
+                    prefix_icon=ft.Icons.SEARCH,
+                    border=ft.InputBorder.NONE,
+                    content_padding=15,
+                    color=self.INPUT_TEXT,
+                    cursor_color=self.INPUT_TEXT,
+                    text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+                    hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR)
                 ),
-                bgcolor=self.CARD, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
+                bgcolor=self.INPUT_BG, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
             ),
             ft.Container(
                 width=200,
@@ -391,9 +454,15 @@ class PantallaPrestamos(ft.Container):
                         ft.dropdown.Option("A tiempo"),
                         ft.dropdown.Option("Atrasado"),
                     ],
-                    border=ft.InputBorder.NONE, content_padding=15, hint_text="Estado: Todos"
+                    border=ft.InputBorder.NONE,
+                    content_padding=15,
+                    hint_text="Estado: Todos",
+                    color=self.INPUT_TEXT,
+                    bgcolor=self.INPUT_BG,
+                    text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+                    hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR)
                 ),
-                bgcolor=self.CARD, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
+                bgcolor=self.INPUT_BG, border_radius=10, border=ft.border.all(1, self.GRIS_BORDE)
             ),
             ft.ElevatedButton(
                 "Buscar", icon=ft.Icons.SEARCH,
@@ -411,7 +480,7 @@ class PantallaPrestamos(ft.Container):
             expand=True,
             column_spacing=38,    
             horizontal_margin=25, 
-            heading_row_color="surfaceVariant",
+            heading_row_color=self.SURFACE_VARIANT,
             heading_row_height=60,
             data_row_min_height=70, 
             data_row_max_height=70,

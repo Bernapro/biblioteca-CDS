@@ -19,14 +19,12 @@ class PantallaHistorial(ft.Container):
         self.border_radius = 30
 
         self.AZUL = "#3B82F6"
-        self.TEXT = "onSurface"
-        self.GRIS_TEXTO = "onSurfaceVariant"
-        self.GRIS_BORDE = "outline"
-        self.FONDO_HEADER = "surfaceVariant"
-        self.CARD = "surface"
         self.VERDE = "#10B981"
         self.ROJO = "#EF4444"
         self.NARANJA = "#F59E0B"
+
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         self.txt_fecha_inicio = ft.Text("Fecha inicio", color=self.TEXT)
         self.txt_fecha_fin = ft.Text("Fecha fin", color=self.TEXT)
@@ -54,10 +52,13 @@ class PantallaHistorial(ft.Container):
             border_radius=12,
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            bgcolor=self.CARD,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            cursor_color=self.INPUT_TEXT,
             on_change=self.filtrar, 
-            text_style=ft.TextStyle(color=self.TEXT),
-            label_style=ft.TextStyle(color=self.GRIS_TEXTO),
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
         )
         
         self.combo_tipo = ft.Dropdown(
@@ -66,8 +67,10 @@ class PantallaHistorial(ft.Container):
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="surface",
-            color="onSurface",
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Alumno"),
@@ -84,8 +87,10 @@ class PantallaHistorial(ft.Container):
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="surface",
-            color="onSurface",
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Activos"),
@@ -179,7 +184,78 @@ class PantallaHistorial(ft.Container):
             vertical_alignment=ft.CrossAxisAlignment.CENTER  
         )
 
+        self.controlador_historial.cerrar_registros()
         self.build_ui()
+        self.filtrar()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.FONDO_HEADER = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+        else:
+            self.CARD = "#FFFFFF"
+            self.FONDO_HEADER = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        self.txt_fecha_inicio.color = self.TEXT
+        self.txt_fecha_fin.color = self.TEXT
+        self.txt_hoy.color = self.TEXT
+
+        self.input_busqueda.bgcolor = self.INPUT_BG
+        self.input_busqueda.color = self.INPUT_TEXT
+        self.input_busqueda.cursor_color = self.INPUT_TEXT
+        self.input_busqueda.border_color = self.GRIS_BORDE
+        self.input_busqueda.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+        self.input_busqueda.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+        self.input_busqueda.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        for combo in (self.combo_tipo, self.combo_estado):
+            combo.bgcolor = self.INPUT_BG
+            combo.color = self.INPUT_TEXT
+            combo.border_color = self.GRIS_BORDE
+            combo.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            combo.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        self.card_hoy = ft.Container(
+            padding=ft.padding.symmetric(horizontal=15, vertical=5),
+            bgcolor=self.CARD,
+            border_radius=20,
+            border=ft.border.all(1, self.GRIS_BORDE),
+            expand=True,
+            content=ft.Row([
+                ft.Container(
+                    content=ft.Icon(ft.Icons.PEOPLE_ALT_ROUNDED, color=self.CARD, size=20),
+                    bgcolor=self.TEXT,
+                    padding=8,
+                    border_radius=12
+                ),
+                ft.Column([
+                    ft.Text("Usuarios únicos hoy", size=12, color=self.GRIS_TEXTO),
+                    self.txt_hoy,
+                    ft.Text("Asistieron hoy a la biblioteca", size=12, color=self.GRIS_TEXTO)
+                ], spacing=0, alignment=ft.MainAxisAlignment.CENTER)
+            ], spacing=10)
+        )
+
+        self.build_ui()
+        self.filtrar()
 
     def did_mount(self):
         
@@ -316,6 +392,7 @@ class PantallaHistorial(ft.Container):
             self.update()
 
     def filtrar(self, e=None):
+        self.controlador_historial.cerrar_registros()
         if e:
             self.pagina_actual = 1
 
@@ -440,13 +517,13 @@ class PantallaHistorial(ft.Container):
         
     def _input_focus(self, e):
         e.control.value = ""
-        e.control.color = self.TEXT
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def _input_blur(self, e):
         if not e.control.value:
             e.control.value = str(self.pagina_actual)
-            e.control.color = self.GRIS_TEXTO
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def construir_paginacion(self):
@@ -467,7 +544,10 @@ class PantallaHistorial(ft.Container):
             text_align=ft.TextAlign.CENTER,
             value=str(self.pagina_actual),
             border_radius=8,
-            color=self.GRIS_TEXTO,
+            border_color=self.GRIS_BORDE,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
@@ -543,6 +623,7 @@ class PantallaHistorial(ft.Container):
 
         filtros_panel = ft.Container(
             bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=20,
             padding=10,
             width=float('inf'),
@@ -555,6 +636,7 @@ class PantallaHistorial(ft.Container):
             expand=True,
             height=520,
             bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=20,
             padding=15,
             width=float('inf'),

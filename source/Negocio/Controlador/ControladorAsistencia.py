@@ -10,6 +10,10 @@ class ControladorAsistencia:
     def __init__(self, pantalla):
         self.__pantalla = pantalla
         self.__repo = RepositorioImpl(CRUDimp())
+        self.cerrar_registros()
+
+    def cerrar_registros(self):
+        self.__repo.cerrar_registros_pendientes()
 
     def procesar_qr(self, e):
         estado = "NO_ENCONTRADO"

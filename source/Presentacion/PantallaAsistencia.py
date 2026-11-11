@@ -17,10 +17,9 @@ class PantallaAsistencia(ft.Container):
         self.border_radius = 30
         self.alignment = ft.alignment.Alignment(0, 0)
         self.AZUL = "#3B82F6"
-        self.CARD = "surface"
-        self.TEXT = "onSurface"
-        self.TEXT_SECONDARY = "onSurfaceVariant"
-        self.GRIS_BORDE = "outline"
+
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         self.mensaje_final = ft.Column(
             [],
@@ -32,16 +31,67 @@ class PantallaAsistencia(ft.Container):
             hint_text="Ingresa código QR",
             width=240,
             autofocus=True,
-            text_style=ft.TextStyle(color=self.TEXT),
-            hint_style=ft.TextStyle(color=self.TEXT_SECONDARY),
+            color=self.INPUT_TEXT,
+            bgcolor=self.INPUT_BG,
+            cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             border_radius=12,
             border_color=self.GRIS_BORDE,
+            focused_border_color=self.AZUL,
             prefix_icon=ft.Icons.PERSON,
             on_submit=self.procesar_qr,
             on_change=lambda e: self.limpiar_mensaje()
         )
 
         self.build_ui()
+
+    def did_mount(self):
+        self.control.cerrar_registros()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.TEXT_SECONDARY = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#181A1F"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+            self.GRADIENT = ["#1E222A", "#242832"]
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.TEXT_SECONDARY = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+            self.GRADIENT = ["#cfe8ff", "#9ec9ff"]
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        self.input_qr.color = self.INPUT_TEXT
+        self.input_qr.bgcolor = self.INPUT_BG
+        self.input_qr.cursor_color = self.INPUT_TEXT
+        self.input_qr.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+        self.input_qr.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+        self.input_qr.border_color = self.GRIS_BORDE
+        if isinstance(self.content, PantallaRegistroUsuario) and hasattr(self.content, "aplicar_tema"):
+            self.content.aplicar_tema(self.es_oscuro)
+        else:
+            self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     def mostrar_resultado(self, estado, nombre, tipo_usuario):
 
@@ -139,9 +189,10 @@ class PantallaAsistencia(ft.Container):
         panel_qr = ft.Container(
             expand=1,
             height=260,
-            bgcolor="surfaceVariant",
+            bgcolor=self.SURFACE_VARIANT,
             border_radius=20,
             padding=20,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column(
                 [
                     ft.Icon(ft.Icons.QR_CODE_SCANNER, size=140, color=self.AZUL),
@@ -157,9 +208,10 @@ class PantallaAsistencia(ft.Container):
         panel_input = ft.Container(
             expand=1,
             height=260,
-            bgcolor="surfaceVariant",
+            bgcolor=self.SURFACE_VARIANT,
             border_radius=20,
             padding=20,
+            border=ft.border.all(1, self.GRIS_BORDE),
             content=ft.Column(
                 [
                     ft.Icon(ft.Icons.ACCOUNT_CIRCLE, size=120, color=self.AZUL),
@@ -169,9 +221,9 @@ class PantallaAsistencia(ft.Container):
                         on_click=self.procesar_qr,
                         data="btn_qr",
                         style=ft.ButtonStyle(
-                            bgcolor="onSurface",
+                            bgcolor=self.AZUL if self.es_oscuro else "#0F172A",
                             overlay_color="white24",
-                            color="surface"
+                            color="#FFFFFF"
                         )
                     ),
                 ],
@@ -186,7 +238,7 @@ class PantallaAsistencia(ft.Container):
             border_radius=40,
             padding=30,
             gradient=ft.LinearGradient(
-                colors=["#cfe8ff", "#9ec9ff"],
+                colors=self.GRADIENT,
                 begin=ft.Alignment(-1, -1),
                 end=ft.Alignment(1, 1)
             ),
@@ -194,6 +246,7 @@ class PantallaAsistencia(ft.Container):
                 expand=True,
                 bgcolor=self.CARD,
                 border_radius=30,
+                border=ft.border.all(1, self.GRIS_BORDE),
                 padding=30,
                 shadow=ft.BoxShadow(blur_radius=25, color="black26"),
                 content=ft.Column(

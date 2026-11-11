@@ -13,10 +13,8 @@ class PantallaRegistroIncidencia(ft.Container):
         self.alignment = ft.alignment.Alignment(0, 0)
 
         self.AZUL = "#3B82F6"
-        self.GRIS_BORDE = "outline"          
-        self.GRIS_TEXTO = "onSurfaceVariant" 
-        self.TEXT = "onSurface"             
-        self.CARD = "surface"  
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         self.controlador = ControladorRegistroIncidencia(self)
         self.id_usuario_actual = None
@@ -24,11 +22,71 @@ class PantallaRegistroIncidencia(ft.Container):
         self._iniciar_controles()
         self.build_ui()
 
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+            self.GRADIENT = ["#1E222A", "#242832"]
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+            self.GRADIENT = ["#cfe8ff", "#9ec9ff"]
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        self.txt_nombre.bgcolor = self.SURFACE_VARIANT
+        self.txt_nombre.color = self.INPUT_TEXT
+        self.txt_nombre.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="bold")
+        self.txt_nombre.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        for campo in (self.text_identificador, self.txt_desc, self.txt_lugar):
+            campo.bgcolor = self.INPUT_BG
+            campo.color = self.INPUT_TEXT
+            campo.cursor_color = self.INPUT_TEXT
+            campo.border_color = self.GRIS_BORDE
+            campo.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            campo.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+            campo.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        for dd in (self.drop_tipo, self.drop_cat):
+            dd.bgcolor = self.INPUT_BG
+            dd.color = self.INPUT_TEXT
+            dd.border_color = self.GRIS_BORDE
+            dd.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            dd.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        self.txt_previa.color = self.TEXT
+        self.container_previa.bgcolor = self.SURFACE_VARIANT
+        self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
+
     def _iniciar_controles(self):
         self.txt_nombre = ft.TextField(
             label="Usuario encontrado", width=350, read_only=True,
-            border_color="transparent", bgcolor="surfaceVariant",    
-            color=self.TEXT, text_style=ft.TextStyle(weight="bold")
+            border_color="transparent", bgcolor=self.SURFACE_VARIANT,    
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="bold"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR)
         )
 
         self.text_identificador = self._crear_input("Identificador (Matrícula/Plaza/Visitante)", 350)
@@ -38,18 +96,28 @@ class PantallaRegistroIncidencia(ft.Container):
             value="PARCIAL", label="Tipo de incidencia",
             width=350, border_radius=12, border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[ft.dropdown.Option("PARCIAL"), ft.dropdown.Option("DEFINITIVA")]
         )
 
         self.txt_desc = ft.TextField(
             label="Descripción", width=350, border_radius=12, 
             border_color=self.GRIS_BORDE, focused_border_color=self.AZUL,
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT, cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             multiline=True, min_lines=3, hint_text="Describe lo sucedido..."
         )
 
         self.drop_cat = ft.Dropdown(
             label="Categoría", width=165, border_radius=12, border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL, value="Libros", 
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Ruido"), ft.dropdown.Option("Equipo"),
                 ft.dropdown.Option("Comportamiento"), ft.dropdown.Option("Libros")
@@ -58,11 +126,11 @@ class PantallaRegistroIncidencia(ft.Container):
         )
 
         self.icono_previa = ft.Icon(ft.Icons.WARNING, color=self.AZUL, size=30)
-        self.txt_previa = ft.Text("Libros", size=13, weight="bold")
+        self.txt_previa = ft.Text("Libros", size=13, weight="bold", color=self.TEXT)
         
         self.container_previa = ft.Container(
             content=ft.Row([self.icono_previa, self.txt_previa], spacing=8, alignment=ft.MainAxisAlignment.CENTER),
-            width=165, height=60, bgcolor="surfaceVariant", border_radius=12, padding=10
+            width=165, height=60, bgcolor=self.SURFACE_VARIANT, border_radius=12, padding=10
         )
 
         self.row_cat_previa = ft.Row([self.drop_cat, self.container_previa], spacing=20, alignment=ft.MainAxisAlignment.CENTER)
@@ -73,7 +141,10 @@ class PantallaRegistroIncidencia(ft.Container):
         return ft.TextField(
             label=label, width=width, border_color=self.GRIS_BORDE,
             border_radius=12, focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT)
+            bgcolor=self.INPUT_BG, color=self.INPUT_TEXT, cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR)
         )
 
     #acciones
@@ -183,7 +254,7 @@ class PantallaRegistroIncidencia(ft.Container):
         ], spacing=15, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
         inner_card = ft.Container(
-            bgcolor=self.CARD, padding=40, border_radius=30,
+            bgcolor=self.CARD, border=ft.border.all(1, self.GRIS_BORDE), padding=40, border_radius=30,
             shadow=ft.BoxShadow(blur_radius=20, color="black26"),
             content=ft.Column([
                 ft.Icon(ft.Icons.ADD_ALERT_ROUNDED, size=50, color=self.AZUL),
@@ -193,7 +264,7 @@ class PantallaRegistroIncidencia(ft.Container):
                 formulario,
                 ft.Divider(height=15, color="transparent"),
                 ft.Row([
-                    ft.OutlinedButton("Cancelar", on_click=self.cancelar, style=ft.ButtonStyle(color="red")),
+                    ft.OutlinedButton("Cancelar", on_click=self.cancelar, style=ft.ButtonStyle(color="#EF4444")),
                     ft.ElevatedButton(
                         "Guardar Reporte", bgcolor=self.AZUL, color="white", width=180,
                         on_click=self.guardar_handler
@@ -207,7 +278,7 @@ class PantallaRegistroIncidencia(ft.Container):
             ft.Container(
                 width=660, border_radius=40, padding=30,
                 gradient=ft.LinearGradient(
-                    colors=["#cfe8ff", "#9ec9ff"], begin=ft.Alignment(-1, -1), end=ft.Alignment(1, 1)
+                    colors=self.GRADIENT, begin=ft.Alignment(-1, -1), end=ft.Alignment(1, 1)
                 ),
                 content=inner_card
             )

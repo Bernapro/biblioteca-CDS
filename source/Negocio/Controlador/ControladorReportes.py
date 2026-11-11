@@ -1,14 +1,18 @@
 import os
 from decimal import Decimal
 from Persistencia.Postgres.ReporteRepositoryImpl import ReporteRepositoryImpl
+from Negocio.Modelo.RepositorioImpl import RepositorioImpl
+from Persistencia.CRUD.CRUDimpl import CRUDimp
 
 
 class ControladorReportes:
 
     def __init__(self, repo=None):
         self.repo = repo or ReporteRepositoryImpl()
+        self._repo_general = RepositorioImpl(CRUDimp())
 
     def generar_reporte(self, tipo, fecha_inicio=None, fecha_fin=None, tipo_usuario=None):
+        self._repo_general.cerrar_registros_pendientes()
 
         if tipo_usuario:
             tipo_usuario = str(tipo_usuario).upper()

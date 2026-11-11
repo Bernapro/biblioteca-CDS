@@ -15,10 +15,8 @@ class PantallaRegistrarLibro(ft.Container):
 
         # Colores
         self.AZUL = "#3B82F6"
-        self.GRIS_BORDE = "outline"
-        self.GRIS_TEXTO = "onSurfaceVariant"
-        self.TEXT = "onSurface"
-        self.CARD = "surface"
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         # Datos dinámicos
         self.autores_seleccionados = []
@@ -89,12 +87,61 @@ class PantallaRegistrarLibro(ft.Container):
             border_radius=12,
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             suffix_icon=ft.Icons.CALENDAR_MONTH,
             on_click=self.abrir_calendario
         )
 
         self.build_ui()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+            self.GRADIENT = ["#1E222A", "#242832"]
+        else:
+            self.CARD = "#FFFFFF"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+            self.GRADIENT = ["#cfe8ff", "#9ec9ff"]
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        for campo in (
+            self.txt_isbn, self.txt_titulo, self.txt_editorial,
+            self.txt_edicion, self.txt_ejemplares, self.txt_dewey,
+            self.txt_cdu, self.txt_lcc, self.txt_autor,
+            self.txt_categoria, self.txt_fecha
+        ):
+            campo.bgcolor = self.INPUT_BG
+            campo.color = self.INPUT_TEXT
+            campo.cursor_color = self.INPUT_TEXT
+            campo.border_color = self.GRIS_BORDE
+            campo.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            campo.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+            campo.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+        self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     # HELPERS
     def crear_input(self, label, width):
@@ -104,7 +151,12 @@ class PantallaRegistrarLibro(ft.Container):
             border_radius=12,
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
-            text_style=ft.TextStyle(color=self.TEXT),
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             on_change=self.verificar_campos_completos
         )
 
@@ -444,6 +496,7 @@ class PantallaRegistrarLibro(ft.Container):
 
         inner_card = ft.Container(
             bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             padding=40,
             border_radius=30,
             shadow=ft.BoxShadow(
@@ -486,7 +539,7 @@ class PantallaRegistrarLibro(ft.Container):
                             ft.OutlinedButton(
                                 "Regresar",
                                 on_click=self.regresar,
-                                style=ft.ButtonStyle(color="error")
+                                style=ft.ButtonStyle(color="#EF4444")
                             ),
 
                             self.btn_guardar
@@ -506,7 +559,7 @@ class PantallaRegistrarLibro(ft.Container):
                     border_radius=40,
                     padding=30,
                     gradient=ft.LinearGradient(
-                        colors=["#cfe8ff", "#9ec9ff"],
+                        colors=self.GRADIENT,
                         begin=ft.Alignment(-1, -1),
                         end=ft.Alignment(1, 1)
                     ),

@@ -18,12 +18,10 @@ class PantallaReportes(ft.Container):
         self.VERDE = "#059669"
         self.NARANJA = "#F59E0B"
 
-        self.PRIMARY = "primary"
-        self.TEXT = "onSurface"
-        self.TEXT_SECONDARY = "onSurfaceVariant"
-        self.CARD = "surface"
-        self.SURFACE_VARIANT = "surfaceVariant"
-        self.BORDER = "outline"
+        self.es_oscuro = (
+            getattr(page, "theme_mode", None) == ft.ThemeMode.DARK
+        )
+        self._configurar_tema(self.es_oscuro)
 
         self.expand = True
         self.padding = 20
@@ -41,7 +39,71 @@ class PantallaReportes(ft.Container):
         self.fecha_inicio = hoy.replace(day=1).strftime("%Y-%m-%d")
         self.fecha_fin = hoy.strftime("%Y-%m-%d")
 
+        # ===== DATE PICKERS =====
+        self.dp_inicio = ft.DatePicker(
+            on_change=lambda e: self.set_fecha_inicio(e.control.value)
+        )
+        self.dp_fin = ft.DatePicker(
+            on_change=lambda e: self.set_fecha_fin(e.control.value)
+        )
+        if self._page is not None and hasattr(self._page, "overlay"):
+            self._page.overlay.append(self.dp_inicio)
+            self._page.overlay.append(self.dp_fin)
+
         self.build_ui()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (
+                getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK
+            )
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.PRIMARY = "#3B82F6"
+            self.BG_PANEL = "#181A1F"
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.BORDER = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.TEXT_SECONDARY = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+        else:
+            self.PRIMARY = "#2563EB"
+            self.BG_PANEL = "transparent"
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.BORDER = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.TEXT_SECONDARY = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        val_usuario = getattr(self, "dropdown", None).value if hasattr(self, "dropdown") else "Todos"
+        val_reporte = getattr(self, "tipo_reporte_dd", None).value if hasattr(self, "tipo_reporte_dd") else "Asistencia completa"
+        texto_act = getattr(self, "text_actualizacion", None).value if hasattr(self, "text_actualizacion") else "Sin actualizar"
+
+        self._configurar_tema(es_oscuro)
+        self.build_ui(recargar_datos=False)
+
+        self.dropdown.value = val_usuario
+        self.tipo_reporte_dd.value = val_reporte
+        self.text_actualizacion.value = texto_act
+
+        if self.ultimo_reporte:
+            self._renderizar_datos_actuales(val_reporte, self.ultimo_reporte)
+        else:
+            self.mostrar_sin_datos()
+
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     def _safe_page_update(self):
         try:
@@ -51,7 +113,7 @@ class PantallaReportes(ft.Container):
             pass
 
     # ================= UI =================
-    def build_ui(self):
+    def build_ui(self, recargar_datos: bool = True):
 
         self.cards_row = ft.Row(spacing=20)
 
@@ -66,7 +128,8 @@ class PantallaReportes(ft.Container):
 
         self.content = ft.Container(
             expand=True,
-            bgcolor="transparent",
+            bgcolor=self.BG_PANEL,
+            border_radius=20,
             padding=10,
             content=ft.Column(
                 expand=True,
@@ -112,7 +175,7 @@ class PantallaReportes(ft.Container):
                                 shadow=ft.BoxShadow(
                                     spread_radius=1,
                                     blur_radius=10,
-                                    color="black12",
+                                    color="black26" if self.es_oscuro else "black12",
                                     offset=ft.Offset(0, 4)
                                 ),
                                 content=self.chart_container
@@ -128,7 +191,7 @@ class PantallaReportes(ft.Container):
                                 shadow=ft.BoxShadow(
                                     spread_radius=1,
                                     blur_radius=10,
-                                    color="black12",
+                                    color="black26" if self.es_oscuro else "black12",
                                     offset=ft.Offset(0, 4)
                                 ),
                                 content=self.distribution_container
@@ -148,27 +211,11 @@ class PantallaReportes(ft.Container):
         )
 
         # ===== CARGA INICIAL =====
-        self.actualizar(None)
+        if recargar_datos:
+            self.actualizar(None)
 
     # ================= FILTROS =================
     def build_filtros(self):
-
-        # ===== DATE PICKERS =====
-        self.dp_inicio = ft.DatePicker(
-            on_change=lambda e: self.set_fecha_inicio(
-                e.control.value
-            )
-        )
-
-        self.dp_fin = ft.DatePicker(
-            on_change=lambda e: self.set_fecha_fin(
-                e.control.value
-            )
-        )
-
-        if self._page is not None and hasattr(self._page, "overlay"):
-            self._page.overlay.append(self.dp_inicio)
-            self._page.overlay.append(self.dp_fin)
 
         # ===== INPUTS FECHAS =====
         self.input_inicio = ft.TextField(
@@ -176,11 +223,13 @@ class PantallaReportes(ft.Container):
             value=self.fecha_inicio,
             width=150,
             read_only=True,
-            bgcolor=self.CARD,
-            color=self.TEXT,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
             border_color=self.BORDER,
-            text_style=ft.TextStyle(color=self.TEXT),
-            label_style=ft.TextStyle(color=self.TEXT_SECONDARY),
+            focused_border_color=self.PRIMARY,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             on_click=lambda e: self.abrir_fecha_inicio()
         )
 
@@ -189,11 +238,13 @@ class PantallaReportes(ft.Container):
             value=self.fecha_fin,
             width=150,
             read_only=True,
-            bgcolor=self.CARD,
-            color=self.TEXT,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
             border_color=self.BORDER,
-            text_style=ft.TextStyle(color=self.TEXT),
-            label_style=ft.TextStyle(color=self.TEXT_SECONDARY),
+            focused_border_color=self.PRIMARY,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             on_click=lambda e: self.abrir_fecha_fin()
         )
 
@@ -201,9 +252,12 @@ class PantallaReportes(ft.Container):
         self.dropdown = ft.Dropdown(
             width=180,
             value="Todos",
-            bgcolor=self.CARD,
-            color=self.TEXT,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
             border_color=self.BORDER,
+            focused_border_color=self.PRIMARY,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Alumnos"),
@@ -216,9 +270,12 @@ class PantallaReportes(ft.Container):
         self.tipo_reporte_dd = ft.Dropdown(
             width=240,
             value="Asistencia completa",
-            bgcolor=self.CARD,
-            color=self.TEXT,
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
             border_color=self.BORDER,
+            focused_border_color=self.PRIMARY,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Asistencia completa"),
                 ft.dropdown.Option("Usuarios más activos"),
@@ -256,7 +313,7 @@ class PantallaReportes(ft.Container):
                                 "Actualizar",
                                 icon=ft.Icons.REFRESH,
                                 bgcolor=self.PRIMARY,
-                                color="onPrimary",
+                                color="#FFFFFF",
                                 on_click=self.actualizar
                             ),
                         ]
@@ -267,7 +324,7 @@ class PantallaReportes(ft.Container):
                         "Exportar",
                         icon=ft.Icons.DOWNLOAD,
                         bgcolor=self.VERDE,
-                        color="white",
+                        color="#FFFFFF",
                         on_click=self.exportar_excel
                     )
                 ]
@@ -337,6 +394,19 @@ class PantallaReportes(ft.Container):
             self.mostrar_sin_datos()
             return
 
+        render = self._obtener_renderizador(tipo)
+
+        if render:
+            render(datos)
+
+        self.text_actualizacion.value = (
+            f"Actualizado: "
+            f"{datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        )
+
+        self._safe_page_update()
+
+    def _obtener_renderizador(self, tipo):
         renderizadores = {
             "Asistencia completa": self.render_asistencia,
             "Usuarios más activos": self.render_usuarios_activos,
@@ -349,18 +419,12 @@ class PantallaReportes(ft.Container):
             "Reporte de saturación": self.render_saturacion,
             "Reporte de crecimiento": self.render_crecimiento,
         }
+        return renderizadores.get(tipo)
 
-        render = renderizadores.get(tipo)
-
+    def _renderizar_datos_actuales(self, tipo, datos):
+        render = self._obtener_renderizador(tipo)
         if render:
             render(datos)
-
-        self.text_actualizacion.value = (
-            f"Actualizado: "
-            f"{datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        )
-
-        self._safe_page_update()
 
     # ================= GRAFICA DINAMICA CON CONTROLES NATIVOS FLET =================
     def _construir_barras_dinamicas(self, titulo, items, unidad=""):
@@ -803,6 +867,8 @@ class PantallaReportes(ft.Container):
             data_row_min_height=40,
             column_spacing=30,
             heading_row_color=self.SURFACE_VARIANT,
+            border=ft.border.all(1, self.BORDER),
+            horizontal_lines=ft.border.BorderSide(1, self.BORDER),
             columns=[
                 ft.DataColumn(ft.Text(col, weight="bold", color=self.TEXT))
                 for col in columnas

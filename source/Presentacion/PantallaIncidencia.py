@@ -18,10 +18,9 @@ class PantallaIncidencias(ft.Container):
         self.NARANJA = "#F59E0B"   # Icono Usuario / Texto Parcial
         self.TURQUESA = "#0F766E" 
         self.FONDO = "transparent"
-        
-        # Nuevos colores específicos para el modal
-        self.GRIS_TEXTO = "onSurfaceVariant"
-        self.GRIS_BORDE = "outline"
+
+        self.es_oscuro = (getattr(page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self._configurar_tema(self.es_oscuro)
 
         # Propiedades del Contenedor Principal
         self.expand = True
@@ -38,11 +37,12 @@ class PantallaIncidencias(ft.Container):
             expand=True,
             hint_text="Buscar por nombre o identificador...",
             prefix_icon=ft.Icons.SEARCH,
-            color="onSurface",
+            color=self.INPUT_TEXT,
+            cursor_color=self.INPUT_TEXT,
             border=ft.InputBorder.NONE,
             content_padding=ft.padding.symmetric(horizontal=15, vertical=15),
-            text_style=ft.TextStyle(size=15),
-
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, size=15, weight="w500"),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR, size=15),
             on_change=self.cargar_datos
         )
 
@@ -52,8 +52,10 @@ class PantallaIncidencias(ft.Container):
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="surface",
-            color="onSurface",
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Alumno"),
@@ -70,8 +72,10 @@ class PantallaIncidencias(ft.Container):
             border_color=self.GRIS_BORDE,
             focused_border_color=self.AZUL,
             border_radius=12,
-            bgcolor="surface",
-            color="onSurface",
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
+            label_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR),
             options=[
                 ft.dropdown.Option("Todos"),
                 ft.dropdown.Option("Pendiente"),
@@ -106,7 +110,7 @@ class PantallaIncidencias(ft.Container):
 
         self._page.overlay.extend([self.fecha_inicio_picker, self.fecha_fin_picker])
         self.modal_avatar_icon = ft.Icon(ft.Icons.PERSON, size=80, color=self.NARANJA)
-        self.modal_nombre = ft.Text("", size=18, weight="bold", color="black")
+        self.modal_nombre = ft.Text("", size=18, weight="bold", color=self.TEXT)
         self.modal_matricula = ft.Text("", color=self.GRIS_TEXTO, size=13)
         self.modal_carrera = ft.Text("", color=self.GRIS_TEXTO, size=13)
         self.modal_semestre = ft.Text("", color=self.GRIS_TEXTO, size=13, weight="bold")
@@ -115,10 +119,10 @@ class PantallaIncidencias(ft.Container):
         self.modal_qr_placeholder = ft.Container(width=80, height=80, bgcolor=self.GRIS_BORDE, border_radius=5)
 
         self.modal_tipo = ft.Text("", color=self.NARANJA, weight="bold")
-        self.modal_categoria = ft.Text("", color="onSurface")
-        self.modal_descripcion = ft.Text("", color="onSurface")
-        self.modal_lugar = ft.Text("", color="onSurface")
-        self.modal_fecha = ft.Text("", color="onSurface")
+        self.modal_categoria = ft.Text("", color=self.TEXT)
+        self.modal_descripcion = ft.Text("", color=self.TEXT)
+        self.modal_lugar = ft.Text("", color=self.TEXT)
+        self.modal_fecha = ft.Text("", color=self.TEXT)
         
         self.modal_estado_icono = ft.Icon(ft.Icons.CIRCLE, size=12, color=self.VERDE)
         self.modal_estado_texto = ft.Text("", color=self.VERDE, weight="w500")
@@ -130,7 +134,11 @@ class PantallaIncidencias(ft.Container):
             hint_text="Escribe un comentario sobre el seguimiento...",
             border_color=self.GRIS_BORDE,
             border_radius=10,
-            text_style=ft.TextStyle(color="onSurface", size=13)
+            bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT,
+            cursor_color=self.INPUT_TEXT,
+            text_style=ft.TextStyle(color=self.INPUT_TEXT, size=13),
+            hint_style=ft.TextStyle(color=self.PLACEHOLDER_COLOR, size=13)
         )
 
         self.dialogo_detalles = ft.AlertDialog(
@@ -219,6 +227,70 @@ class PantallaIncidencias(ft.Container):
         )
 
         self.build_ui()
+
+    def _configurar_tema(self, es_oscuro: bool = None):
+        if es_oscuro is None:
+            es_oscuro = (getattr(self._page, "theme_mode", None) == ft.ThemeMode.DARK)
+        self.es_oscuro = bool(es_oscuro)
+
+        if self.es_oscuro:
+            self.CARD = "#1E222A"
+            self.SURFACE_VARIANT = "#242832"
+            self.GRIS_BORDE = "#2E3440"
+            self.TEXT = "#F8F9FA"
+            self.GRIS_TEXTO = "#E2E8F0"
+            self.INPUT_TEXT = "#FFFFFF"
+            self.INPUT_BG = "#242832"
+            self.PLACEHOLDER_COLOR = "#9CA3AF"
+        else:
+            self.CARD = "#FFFFFF"
+            self.SURFACE_VARIANT = "#F1F5F9"
+            self.GRIS_BORDE = "#CBD5E1"
+            self.TEXT = "#0F172A"
+            self.GRIS_TEXTO = "#475569"
+            self.INPUT_TEXT = "#000000"
+            self.INPUT_BG = "#FFFFFF"
+            self.PLACEHOLDER_COLOR = "#6C757D"
+
+    def aplicar_tema(self, es_oscuro: bool = None):
+        self._configurar_tema(es_oscuro)
+        self.input_busqueda.color = self.INPUT_TEXT
+        self.input_busqueda.cursor_color = self.INPUT_TEXT
+        self.input_busqueda.text_style = ft.TextStyle(color=self.INPUT_TEXT, size=15, weight="w500")
+        self.input_busqueda.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR, size=15)
+
+        for dd in (self.dropdown_tipo, self.dropdown_estado):
+            dd.bgcolor = self.INPUT_BG
+            dd.color = self.INPUT_TEXT
+            dd.border_color = self.GRIS_BORDE
+            dd.text_style = ft.TextStyle(color=self.INPUT_TEXT, weight="w500")
+            dd.label_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR)
+
+        self.modal_comentario.bgcolor = self.INPUT_BG
+        self.modal_comentario.color = self.INPUT_TEXT
+        self.modal_comentario.cursor_color = self.INPUT_TEXT
+        self.modal_comentario.border_color = self.GRIS_BORDE
+        self.modal_comentario.text_style = ft.TextStyle(color=self.INPUT_TEXT, size=13)
+        self.modal_comentario.hint_style = ft.TextStyle(color=self.PLACEHOLDER_COLOR, size=13)
+
+        self.txt_fecha_inicio.color = self.TEXT
+        self.txt_fecha_fin.color = self.TEXT
+        self.modal_nombre.color = self.TEXT
+        self.modal_categoria.color = self.TEXT
+        self.modal_descripcion.color = self.TEXT
+        self.modal_lugar.color = self.TEXT
+        self.modal_fecha.color = self.TEXT
+        self.dialogo_detalles.bgcolor = self.CARD
+
+        if isinstance(self.content, PantallaRegistroIncidencia) and hasattr(self.content, "aplicar_tema"):
+            self.content.aplicar_tema(self.es_oscuro)
+        else:
+            self.build_ui()
+        try:
+            if self.page is not None:
+                self.update()
+        except Exception:
+            pass
 
     def abrir_dialogo(self, e, d):        
         nuevo_icono = self.obtener_icono_tipo(d["tipo_usuario"])
@@ -362,7 +434,7 @@ class PantallaIncidencias(ft.Container):
             border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=12,
             padding=ft.padding.symmetric(horizontal=12),
-            bgcolor="surface",
+            bgcolor=self.INPUT_BG,
             on_click=lambda e: self.abrir_picker(e, picker),
             content=ft.Row(
                 [ft.Icon(ft.Icons.CALENDAR_MONTH, size=18, color=self.AZUL), texto_ref],
@@ -432,7 +504,8 @@ class PantallaIncidencias(ft.Container):
         icono_estado = ft.Icons.CHECK_CIRCLE if d["estado"] == "RESUELTA" else ft.Icons.CANCEL
 
         return ft.Container(
-            bgcolor="surface",
+            bgcolor=self.CARD,
+            border=ft.border.all(1, self.GRIS_BORDE),
             border_radius=20,
             shadow=ft.BoxShadow(blur_radius=25, color="black12"),
             content=ft.Row(
@@ -449,7 +522,7 @@ class PantallaIncidencias(ft.Container):
                                         ft.Container(  
                                             padding=ft.padding.only(left=10),
                                             content=ft.Column([
-                                                ft.Text(d["nombre"], weight="bold", size=18),  
+                                                ft.Text(d["nombre"], weight="bold", size=18, color=self.TEXT),  
 
                                                 ft.Text(
                                                     f"{label_id}: {identificador}",
@@ -465,13 +538,14 @@ class PantallaIncidencias(ft.Container):
                                                 ),
 
                                                 ft.Row([
-                                                    ft.Icon(icono, size=18),  
-                                                    ft.Text(d["categoria"], size=14)
+                                                    ft.Icon(icono, size=18, color=self.TEXT),  
+                                                    ft.Text(d["categoria"], size=14, color=self.TEXT)
                                                 ], spacing=6),
 
                                                 ft.Text(
                                                     f"{d['lugar']} | {d['fecha']}",
-                                                    size=13
+                                                    size=13,
+                                                    color=self.GRIS_TEXTO
                                                 )
 
                                             ], spacing=6)
@@ -485,7 +559,7 @@ class PantallaIncidencias(ft.Container):
                                     expand=True,
                                     padding=10,
                                     border_radius=10,
-                                    bgcolor="surfaceVariant",
+                                    bgcolor=self.SURFACE_VARIANT,
                                     content=ft.Text(
                                         d["descripcion"] or "Sin descripción",
                                         size=13,
@@ -533,8 +607,8 @@ class PantallaIncidencias(ft.Container):
 
         btn_limpiar = ft.ElevatedButton(
             "Limpiar filtros",
-            bgcolor="white",
-            color="onSurface",
+            bgcolor=self.CARD,
+            color=self.TEXT,
             height=45,
             style=ft.ButtonStyle(
                 shape=ft.RoundedRectangleBorder(radius=10),
@@ -545,14 +619,14 @@ class PantallaIncidencias(ft.Container):
 
         encabezado = ft.Row([
             ft.Column([
-                ft.Text("Gestión de Incidencias", size=32, weight="bold", color="onSurface"),
+                ft.Text("Gestión de Incidencias", size=32, weight="bold", color=self.TEXT),
                 ft.Text("Busca y gestiona el catálogo de incidencias registradas en el sistema.", color=self.GRIS_TEXTO)
             ]),
             ft.Row([btn_limpiar, btn_nueva_incidencia], spacing=10)
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
         filtros = ft.Container(
-            bgcolor="surface", border_radius=35, padding=ft.padding.only(left=10, right=10, top=5, bottom=5),
+            bgcolor=self.CARD, border=ft.border.all(1, self.GRIS_BORDE), border_radius=35, padding=ft.padding.only(left=10, right=10, top=5, bottom=5),
             shadow=ft.BoxShadow(blur_radius=20, spread_radius=2, color="black12", offset=ft.Offset(0, 4)),
             content=ft.Row([
                 self.input_busqueda,
@@ -659,13 +733,13 @@ class PantallaIncidencias(ft.Container):
 
     def _input_focus(self, e):
         e.control.value = ""
-        e.control.color = "onSurface"
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def _input_blur(self, e):
         if not e.control.value:
             e.control.value = str(self.pagina_actual)
-            e.control.color = "onSurfaceVariant"
+        e.control.color = self.INPUT_TEXT
         self.update()
 
     def obtener_icono_tipo(self, tipo):
@@ -688,7 +762,9 @@ class PantallaIncidencias(ft.Container):
 
         input_pagina = ft.TextField(
             width=60, height=35, text_align=ft.TextAlign.CENTER,
-            value=str(self.pagina_actual), border_radius=8, color="onSurfaceVariant",
+            value=str(self.pagina_actual), border_radius=8,
+            border_color=self.GRIS_BORDE, bgcolor=self.INPUT_BG,
+            color=self.INPUT_TEXT, text_style=ft.TextStyle(color=self.INPUT_TEXT, weight="w500"),
             content_padding=5, 
             on_focus=lambda e: self._input_focus(e),
             on_blur=lambda e: self._input_blur(e),
@@ -698,8 +774,8 @@ class PantallaIncidencias(ft.Container):
 
 
         botones = [
-            ft.IconButton(ft.Icons.FIRST_PAGE, icon_color="onSurface", on_click=lambda e: cambiar_pagina(1)),
-            ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color="onSurface", on_click=lambda e: cambiar_pagina(self.pagina_actual - 1))
+            ft.IconButton(ft.Icons.FIRST_PAGE, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(1)),
+            ft.IconButton(ft.Icons.CHEVRON_LEFT, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(self.pagina_actual - 1))
         ]
 
         rango = 2
@@ -716,16 +792,16 @@ class PantallaIncidencias(ft.Container):
 
         for p in paginas:
             if p == "...":
-                botones.append(ft.Text("...", color="onSurface"))
+                botones.append(ft.Text("...", color=self.TEXT))
             else:
                 botones.append(ft.TextButton(
                     content=ft.Text(str(p)), on_click=lambda e, p=p: cambiar_pagina(p),
-                    style=ft.ButtonStyle(bgcolor=self.AZUL if p == self.pagina_actual else None, color="white" if p == self.pagina_actual else "black")
+                    style=ft.ButtonStyle(bgcolor=self.AZUL if p == self.pagina_actual else None, color="white" if p == self.pagina_actual else self.TEXT)
                 ))
 
         botones.extend([
-            ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color="onSurface", on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)),
-            ft.IconButton(ft.Icons.LAST_PAGE, icon_color="onSurface", on_click=lambda e: cambiar_pagina(total_paginas)),
+            ft.IconButton(ft.Icons.CHEVRON_RIGHT, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(self.pagina_actual + 1)),
+            ft.IconButton(ft.Icons.LAST_PAGE, icon_color=self.TEXT, on_click=lambda e: cambiar_pagina(total_paginas)),
             input_pagina
         ])
 
